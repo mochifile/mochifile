@@ -1,0 +1,27 @@
+{
+  "name": "mochifile",
+  "private": true,
+  "description": "Simple, private file tools that run in your browser.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "packageManager": "pnpm@12.8.1",
+  "engines": {
+    "node": ">=24.12.0 <25",
+    "pnpm": ">=12"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@mochifile/web",
+    "build": "turbo run build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "turbo": "2.11.7",
+    "typescript": "6.0.3"
+  }
+}
