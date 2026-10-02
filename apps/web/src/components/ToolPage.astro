@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import type { ToolPageProps } from '../lib/tools'
+import ToolIsland from './ToolIsland'
+
+type Props = ToolPageProps
+
+const { tool, locale, paths } = Astro.props
+const meta = tool.manifest.meta[locale]
+---
+
+<BaseLayout locale={locale} title={`${meta.title} — Mochifile`} description={meta.description} paths={paths}>
+  <h1 class="mb-2 text-3xl font-bold tracking-tight">{meta.title}</h1>
+  <p class="mb-8 text-text-muted">{meta.description}</p>
+  {/*
+    client:only: the tool UI is useless without JavaScript, and server-rendering it would show a
+    file input that silently ignores files picked before hydration finishes.
+  */}
+  <ToolIsland client:only="react" dir={tool.dir} locale={locale}>
+    <div slot="fallback" class="min-h-48 animate-pulse rounded-card bg-surface-raised"></div>
+  </ToolIsland>
+</BaseLayout>
