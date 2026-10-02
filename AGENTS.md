@@ -148,8 +148,10 @@ Follow [docs/contributing/adding-a-tool.md](docs/contributing/adding-a-tool.md).
 ## Known constraints
 
 - **TypeScript is pinned to 6.x**: `@astrojs/check` does not support TypeScript 7 yet.
-- **Paraglide's message plugin is loaded from jsDelivr** at compile time (pinned version in
-  `packages/i18n/project.inlang/settings.json`), so `pnpm build` needs network access.
+- **Builds are offline and reproducible.** Inlang plugins are pinned npm devDependencies of
+  `@mochifile/i18n`, referenced by local path in `packages/i18n/project.inlang/settings.json`.
+  Never point `modules` at a URL (a test enforces this) or fetch any other remote code at
+  build time.
 
 <!-- BEGIN:turborepo-agent-rules -->
 

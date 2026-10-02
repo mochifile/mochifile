@@ -266,6 +266,9 @@ importers:
       '@inlang/paraglide-js':
         specifier: 2.25.4
         version: 2.25.4(typescript@6.0.3)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+      '@inlang/plugin-message-format':
+        specifier: 4.4.4
+        version: 4.4.4
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.1
@@ -1114,6 +1117,9 @@ packages:
         optional: true
       vite:
         optional: true
+
+  '@inlang/plugin-message-format@4.4.4':
+    resolution: {integrity: sha512-50tkyH/qMFudcIOZSCRdi+BeCVuJQo3BWbvfRTVKr8pEslBiRaZDTKBC1NkCI3ivmkyqzK8k+ktBci3NtDu3Lg==}
 
   '@inlang/recommend-sherlock@0.2.1':
     resolution: {integrity: sha512-ckv8HvHy/iTqaVAEKrr+gnl+p3XFNwe5D2+6w6wJk2ORV2XkcRkKOJ/XsTUJbPSiyi4PI+p+T3bqbmNx/rDUlg==}
@@ -2008,6 +2014,11 @@ packages:
   find-proc@0.2.0:
     resolution: {integrity: sha512-a6h2nTrgB3g5Wrn4au9Ux4kMk7IJtyF6oA8uGn+mk3weLZssUtc1cp6meHIzzuW2o1srrBAxzkmXLbqjRkgB6w==}
     engines: {node: ^20.19.0 || >=22.12.0}
+
+  flat@6.0.1:
+    resolution: {integrity: sha512-/3FfIa8mbrg3xE7+wAhWeV+bd7L2Mof+xtZb5dRDKZ+wDvYJK4WDYeIOuOhre5Yv5aQObZrlbRmk3RTSiuQBtw==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   flattie@1.1.1:
     resolution: {integrity: sha512-9UbaD6XdAL97+k/n+N7JwX46K/M6Zc6KcFYskrYL8wbBV/Uyk0CTAMY0VT+qiK5PM7AIc9aTWYtq65U7T+aCNQ==}
@@ -3655,6 +3666,10 @@ snapshots:
       typescript: 6.0.3
       vite: 8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
 
+  '@inlang/plugin-message-format@4.4.4':
+    dependencies:
+      flat: 6.0.1
+
   '@inlang/recommend-sherlock@0.2.1':
     dependencies:
       comment-json: 4.6.2
@@ -4465,6 +4480,8 @@ snapshots:
   fflate@0.8.3: {}
 
   find-proc@0.2.0: {}
+
+  flat@6.0.1: {}
 
   flattie@1.1.1: {}
 

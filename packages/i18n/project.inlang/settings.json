@@ -6,7 +6,7 @@
     "pt"
   ],
   "modules": [
-    "https://cdn.jsdelivr.net/npm/@inlang/plugin-message-format@4.4.4/dist/index.js"
+    "./node_modules/@inlang/plugin-message-format/dist/index.js"
   ],
   "plugin.inlang.messageFormat": {
     "pathPattern": [

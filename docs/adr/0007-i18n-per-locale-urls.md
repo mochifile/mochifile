@@ -31,5 +31,8 @@ another language.
 - Each locale is independently indexable; links are shareable and stable.
 - Adding a locale touches the locale list, message files, tool manifests and two page files.
 - Tests enforce that all locales have the same message keys and that keys are unique.
-- Paraglide loads its message-format plugin from jsDelivr at compile time (pinned version),
-  so builds need network access.
+- Paraglide's inlang plugin (`@inlang/plugin-message-format`) is installed from npm as a
+  pinned devDependency and referenced by local path in `project.inlang/settings.json`, instead
+  of the default jsDelivr URL. Builds are reproducible, covered by the lockfile and Renovate,
+  and work offline. Tests reject remote plugin URLs and check that every message compiled,
+  because Paraglide only warns when a plugin fails to load.
