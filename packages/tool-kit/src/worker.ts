@@ -20,16 +20,24 @@ export function createWorkerApi<O extends ToolOptions>(tool: ToolDefinition<O>):
     async run(jobId, files, options, onProgress): Promise<RunOutcome> {
       const controller = new AbortController()
       jobs.set(jobId, controller)
+      // Progress is posted on its own MessagePort, which is not ordered with the result.
+      // Track delivery so the result is only sent once every progress update has arrived.
+      const inFlight = new Set<Promise<void>>()
+      const report = (progress: ToolProgress) => {
+        const delivery = Promise.resolve(
+          onProgress({ ...progress, ratio: Math.min(1, Math.max(0, progress.ratio)) }),
+        ).catch(() => {})
+        inFlight.add(delivery)
+        void delivery.finally(() => inFlight.delete(delivery))
+      }
       try {
         validateFiles(files, tool.manifest)
         const merged = { ...tool.manifest.defaults, ...options } as O
-        const report = (progress: ToolProgress) => {
-          onProgress({ ...progress, ratio: Math.min(1, Math.max(0, progress.ratio)) })
-        }
         const results = await tool.process(files, merged, {
           signal: controller.signal,
           onProgress: report,
         })
+        await Promise.all(inFlight)
         if (controller.signal.aborted)
           return { ok: false, error: { code: 'aborted', message: 'Aborted' } }
         return { ok: true, results }
