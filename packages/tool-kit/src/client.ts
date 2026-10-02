@@ -56,16 +56,18 @@ export function createToolClient<O extends ToolOptions>(
       const jobId = `job-${jobCounter}`
       const onAbort = () => void api.abort(jobId)
       signal?.addEventListener('abort', onAbort, { once: true })
+      // The worker delivers all progress before the result. This guard also drops anything a
+      // misbehaving tool reports later, so callers never see progress after `run()` settles.
+      let settled = false
+      const reportProgress = proxy((progress: ToolProgress) => {
+        if (!settled) onProgress?.(progress)
+      })
       try {
-        const outcome = await api.run(
-          jobId,
-          files,
-          options as ToolOptions,
-          proxy((progress: ToolProgress) => onProgress?.(progress)),
-        )
+        const outcome = await api.run(jobId, files, options as ToolOptions, reportProgress)
         if (!outcome.ok) throw deserializeError(outcome.error)
         return outcome.results
       } finally {
+        settled = true
         signal?.removeEventListener('abort', onAbort)
       }
     },

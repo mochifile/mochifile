@@ -45,7 +45,21 @@ describe('tool worker round trip', () => {
     expect(results[0]?.name).toBe('a.png')
     expect(results[0]?.meta).toEqual({ quality: 80, size: 3 })
     expect(await results[0]?.file.arrayBuffer()).toEqual(new Uint8Array([1, 2, 3]).buffer)
-    await expect.poll(() => progress).toEqual([{ ratio: 0.5, stage: 'working' }, { ratio: 1 }])
+    // Delivered before the result resolves, not merely eventually.
+    expect(progress).toEqual([{ ratio: 0.5, stage: 'working' }, { ratio: 1 }])
+  })
+
+  it('never reports progress after the run has settled', async () => {
+    let lateProgress: ((p: ToolProgress) => void) | undefined
+    const client = connect(async (files, _options, { onProgress }) => {
+      lateProgress = onProgress
+      return [{ file: files[0] as File, name: 'x' }]
+    })
+    const progress: ToolProgress[] = []
+    await client.run([png()], {}, { onProgress: (p) => progress.push(p) })
+    lateProgress?.({ ratio: 1 })
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(progress).toEqual([])
   })
 
   it('passes user options over defaults', async () => {

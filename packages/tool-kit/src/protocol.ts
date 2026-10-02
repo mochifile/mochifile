@@ -13,7 +13,8 @@ export interface ToolWorkerApi {
     jobId: string,
     files: File[],
     options: ToolOptions,
-    onProgress: (progress: ToolProgress) => void,
+    /** Through Comlink this returns a promise that settles once the UI has received it. */
+    onProgress: (progress: ToolProgress) => void | Promise<void>,
   ): Promise<RunOutcome>
   abort(jobId: string): void
 }
