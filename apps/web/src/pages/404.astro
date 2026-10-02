@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { samePathInAllLocales } from '../lib/seo'
+---
+
+<BaseLayout
+  locale="en"
+  title="Page not found — Mochifile"
+  description="This page does not exist."
+  paths={samePathInAllLocales('/')}
+  noindex
+>
+  <h1 class="text-3xl font-bold">Page not found</h1>
+  <p class="mt-4"><a class="underline" href="/">Go to the home page</a></p>
+</BaseLayout>

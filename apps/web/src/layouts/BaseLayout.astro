@@ -1,0 +1,87 @@
+---
+import { type Locale, localeNames, localePath, locales, localeTags } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import { buildAlternates } from '../lib/seo'
+import '../styles/global.css'
+
+interface Props {
+  locale: Locale
+  title: string
+  description: string
+  /** Path of this page in every locale. */
+  paths: Record<Locale, string>
+  /** For pages that must not be indexed (e.g. 404): no canonical, no hreflang. */
+  noindex?: boolean
+}
+
+const { locale, title, description, paths, noindex = false } = Astro.props
+const site = Astro.site ?? Astro.url
+const canonical = new URL(paths[locale], site).href
+const alternates = buildAlternates(paths, site)
+---
+
+<!doctype html>
+<html lang={localeTags[locale]} dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    {!noindex && <link rel="canonical" href={canonical} />}
+    {!noindex && alternates.map((alt) => <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />)}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mochifile" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={localeTags[locale]} />
+    <meta name="color-scheme" content="light dark" />
+  </head>
+  <body class="flex min-h-dvh flex-col bg-surface text-text antialiased">
+    <header class="border-b border-border">
+      <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
+        <a href={localePath(locale)} class="text-lg font-bold tracking-tight">
+          {m.site_name({}, { locale })}
+        </a>
+        <nav aria-label={m.nav_language({}, { locale })}>
+          <ul class="flex gap-3 text-sm">
+            {
+              locales.map((target) => (
+                <li>
+                  <a
+                    href={paths[target]}
+                    hreflang={localeTags[target]}
+                    lang={localeTags[target]}
+                    aria-current={target === locale ? 'true' : undefined}
+                    class:list={[
+                      'rounded-control px-2 py-1 hover:bg-accent-soft',
+                      target === locale && 'font-semibold text-accent',
+                    ]}
+                  >
+                    {localeNames[target]}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-12">
+      <slot />
+    </main>
+    <footer class="border-t border-border text-sm text-text-muted">
+      <div class="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-6">
+        <p>{m.footer_privacy_note({}, { locale })}</p>
+        <p>
+          <a class="underline hover:text-accent" href="https://github.com/mochifile/mochifile">
+            {m.footer_open_source({}, { locale })}
+          </a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

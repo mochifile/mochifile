@@ -1,0 +1,12 @@
+---
+import ToolPage from '../components/ToolPage.astro'
+import { buildToolRoutes, type ToolPageProps, tools } from '../lib/tools'
+
+export function getStaticPaths() {
+  return buildToolRoutes(tools, 'en')
+}
+
+const props = Astro.props as ToolPageProps
+---
+
+<ToolPage {...props} />

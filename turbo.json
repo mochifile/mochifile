@@ -4,7 +4,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "src/paraglide/**"]
+      "outputs": ["dist/**", "src/paraglide/**"],
+      "env": ["MOCHIFILE_INCLUDE_TEMPLATE"]
     },
     "typecheck": {
       "dependsOn": ["^build"]
@@ -14,7 +15,8 @@
       "outputs": ["coverage/**"]
     },
     "test:e2e": {
-      "dependsOn": ["build"],
+      "dependsOn": ["^build"],
+      "env": ["CI"],
       "outputs": ["playwright-report/**", "test-results/**"]
     },
     "dev": {

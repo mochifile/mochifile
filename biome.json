@@ -7,7 +7,14 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/src/paraglide", "!**/project.inlang", "!**/.astro", "!**/dist"]
+    "includes": [
+      "**",
+      "!**/src/paraglide",
+      "!**/project.inlang",
+      "!**/.astro",
+      "!**/dist",
+      "!**/dist-e2e"
+    ]
   },
   "formatter": {
     "enabled": true,

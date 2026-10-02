@@ -1,0 +1,46 @@
+---
+import type { Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { samePathInAllLocales } from '../lib/seo'
+import { toolPaths, tools } from '../lib/tools'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+---
+
+<BaseLayout
+  locale={locale}
+  title={m.home_title({}, { locale })}
+  description={m.home_description({}, { locale })}
+  paths={samePathInAllLocales('/')}
+>
+  <section class="flex flex-col gap-4 py-8 text-center">
+    <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">{m.home_heading({}, { locale })}</h1>
+    <p class="mx-auto max-w-2xl text-lg text-text-muted">{m.home_lead({}, { locale })}</p>
+  </section>
+  {
+    tools.length > 0 ? (
+      <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {tools.map(({ manifest }) => (
+          <li>
+            <a
+              href={toolPaths(manifest)[locale]}
+              class="block h-full rounded-card border border-border bg-surface-raised p-5 hover:border-accent"
+            >
+              <span class="font-semibold">{manifest.meta[locale].title}</span>
+              <span class="mt-1 block text-sm text-text-muted">
+                {manifest.meta[locale].description}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="text-center text-text-muted">{m.home_coming_soon({}, { locale })}</p>
+    )
+  }
+</BaseLayout>

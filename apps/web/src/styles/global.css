@@ -1,0 +1,12 @@
+@import "tailwindcss";
+@import "@mochifile/ui/styles.css";
+
+@layer base {
+  html {
+    color-scheme: light dark;
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+}
