@@ -9,5 +9,9 @@
   "home_coming_soon": "The first tools are on their way.",
   "nav_language": "Language",
   "footer_privacy_note": "Files are processed on your device whenever possible.",
-  "footer_open_source": "Mochifile is open source."
+  "footer_open_source": "Mochifile is open source.",
+  "tool_about_heading": "How it works",
+  "tool_privacy_browser": "Your files are processed right here in your browser. They are never uploaded to our servers.",
+  "tool_max_file_size": "Maximum file size: {maxSize}.",
+  "tool_requires_js": "This tool needs JavaScript. Please enable it in your browser to continue."
 }
