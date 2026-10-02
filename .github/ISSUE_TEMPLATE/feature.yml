@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest an improvement to Mochifile.
+labels: [enhancement, triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered

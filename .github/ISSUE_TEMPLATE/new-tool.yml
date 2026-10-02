@@ -1,0 +1,53 @@
+name: New tool proposal
+description: Propose a new file tool.
+labels: [new-tool, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mochifile tools are simple, fast and private. Read
+        [Adding a tool](https://github.com/mochifile/mochifile/blob/main/docs/contributing/adding-a-tool.md)
+        before proposing one.
+  - type: input
+    id: name
+    attributes:
+      label: Tool name
+      placeholder: Compress video for WhatsApp
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options: [image, media, pdf]
+    validations:
+      required: true
+  - type: textarea
+    id: user-need
+    attributes:
+      label: Who needs it and why?
+      description: What would a non-technical person search for? Include example search terms.
+    validations:
+      required: true
+  - type: textarea
+    id: io
+    attributes:
+      label: Input, output and options
+      placeholder: "Input: MP4/MOV up to 2 GB. Output: MP4 under 16 MB. Options: quality."
+    validations:
+      required: true
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Can it run entirely in the browser?
+      options:
+        - "Yes"
+        - "Probably (needs a WebAssembly engine)"
+        - "No, it needs a server (explain below)"
+    validations:
+      required: true
+  - type: textarea
+    id: engine
+    attributes:
+      label: Engine and libraries
+      description: Libraries or WebAssembly builds that could power it, with their licenses.

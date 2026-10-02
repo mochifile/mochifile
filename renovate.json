@@ -1,0 +1,59 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":pinAllExceptPeerDependencies",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "labels": ["dependencies"],
+  "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict",
+  "lockFileMaintenance": { "enabled": true, "schedule": ["before 6am on monday"] },
+  "schedule": ["before 6am on monday"],
+  "timezone": "America/Sao_Paulo",
+  "packageRules": [
+    {
+      "description": "Group Astro and its integrations",
+      "matchPackageNames": ["astro", "@astrojs/**"],
+      "groupName": "astro"
+    },
+    {
+      "description": "Group React and its types",
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"],
+      "groupName": "react"
+    },
+    {
+      "description": "Group Tailwind CSS",
+      "matchPackageNames": ["tailwindcss", "@tailwindcss/**"],
+      "groupName": "tailwind"
+    },
+    {
+      "description": "Group test tooling",
+      "matchPackageNames": [
+        "vitest",
+        "@vitest/**",
+        "@playwright/test",
+        "@testing-library/**",
+        "jsdom"
+      ],
+      "groupName": "test tooling"
+    },
+    {
+      "description": "TypeScript 7 is blocked until @astrojs/check supports it (see AGENTS.md)",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7"
+    },
+    {
+      "description": "Stay on the active Node.js LTS line",
+      "matchPackageNames": ["node", "@types/node"],
+      "allowedVersions": "<25"
+    },
+    {
+      "description": "Automerge patch updates of dev tooling once CI passes",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    }
+  ]
+}
