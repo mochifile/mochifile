@@ -1,11 +1,12 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { defaultLocale, isLocale, localePath, locales } from './index.ts'
+import * as compiledMessages from './paraglide/messages.js'
 import { baseLocale, locales as paraglideLocales } from './paraglide/runtime.js'
 
 const settings = JSON.parse(
   readFileSync(new URL('../project.inlang/settings.json', import.meta.url), 'utf8'),
-) as { baseLocale: string; locales: string[] }
+) as { baseLocale: string; locales: string[]; modules: string[] }
 
 type Settings = { 'plugin.inlang.messageFormat': { pathPattern: string | string[] } }
 const pathPatterns = [
@@ -36,6 +37,22 @@ describe('locale configuration', () => {
     const base = readMessageFiles(defaultLocale)
     for (const locale of locales) {
       expect(readMessageFiles(locale), locale).toEqual(base)
+    }
+  })
+
+  it('loads inlang plugins from local files only, so builds work offline', () => {
+    expect(settings.modules.length).toBeGreaterThan(0)
+    for (const module of settings.modules) {
+      expect(module, module).not.toMatch(/^[a-z]+:\/\//i)
+      expect(existsSync(new URL(`../${module}`, import.meta.url)), module).toBe(true)
+    }
+  })
+
+  it('compiles every message key into a function', () => {
+    // Paraglide only warns when a plugin fails to load and then emits no messages.
+    const exported = compiledMessages as unknown as Record<string, unknown>
+    for (const { pattern, keys } of readMessageFiles(defaultLocale)) {
+      for (const key of keys) expect(typeof exported[key], `${key} (${pattern})`).toBe('function')
     }
   })
 
