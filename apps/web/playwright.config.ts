@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const PORT = 4321
+// Not 4321, so a running `astro dev` is never mistaken for the e2e server.
+const PORT = 4329
 const CI = Boolean(process.env.CI)
 
 /**
