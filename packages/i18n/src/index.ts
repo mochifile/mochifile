@@ -26,13 +26,14 @@ export function isLocale(value: unknown): value is Locale {
 }
 
 /**
- * Builds a site-relative path for a locale. The default locale has no prefix.
+ * Builds a site-relative path for a locale. The default locale has no prefix, and paths
+ * always end with a slash (pages are built as `<path>/index.html`).
  *
- * @example localePath('pt', '/compress-image') // => '/pt/compress-image'
- * @example localePath('en', '/') // => '/'
+ * @example localePath('pt', 'compress-image') // => '/pt/compress-image/'
+ * @example localePath('en') // => '/'
  */
 export function localePath(locale: Locale, path = '/'): string {
-  const normalized = path.startsWith('/') ? path : `/${path}`
-  if (locale === defaultLocale) return normalized
-  return normalized === '/' ? `/${locale}/` : `/${locale}${normalized}`
+  const trimmed = path.replace(/^\/+|\/+$/g, '')
+  const prefix = locale === defaultLocale ? '' : `/${locale}`
+  return trimmed ? `${prefix}/${trimmed}/` : `${prefix}/`
 }
