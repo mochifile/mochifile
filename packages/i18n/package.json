@@ -1,0 +1,23 @@
+{
+  "name": "@mochifile/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./messages": "./src/paraglide/messages.js",
+    "./runtime": "./src/paraglide/runtime.js"
+  },
+  "scripts": {
+    "build": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --strategy baseLocale --emit-ts-declarations --no-emit-readme --no-emit-prettier-ignore --silent",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@inlang/paraglide-js": "2.25.4",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

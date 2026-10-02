@@ -8,8 +8,8 @@ dist/
 
 # Generated
 packages/i18n/src/paraglide/
-packages/i18n/project.inlang/cache/
-packages/i18n/project.inlang/.gitignore
+**/project.inlang/*
+!**/project.inlang/settings.json
 
 # Tests
 coverage/

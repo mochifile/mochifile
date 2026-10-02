@@ -1,0 +1,13 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "site_name": "Mochifile",
+  "site_tagline": "Simple file tools that run in your browser",
+  "home_title": "Mochifile — simple, private file tools",
+  "home_description": "Compress, convert and resize your files right in your browser. Fast, free and private: your files never leave your device.",
+  "home_heading": "File tools that just work",
+  "home_lead": "Compress images, convert photos, shrink videos and more — right in your browser. Your files stay on your device.",
+  "home_coming_soon": "The first tools are on their way.",
+  "nav_language": "Language",
+  "footer_privacy_note": "Files are processed on your device whenever possible.",
+  "footer_open_source": "Mochifile is open source."
+}
