@@ -1,4 +1,6 @@
 ---
+import { m } from '@mochifile/i18n/messages'
+import { formatBytes } from '@mochifile/tool-kit'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import type { ToolPageProps } from '../lib/tools'
 import ToolIsland from './ToolIsland'
@@ -6,10 +8,13 @@ import ToolIsland from './ToolIsland'
 type Props = ToolPageProps
 
 const { tool, locale, paths } = Astro.props
-const meta = tool.manifest.meta[locale]
+const { manifest } = tool
+const meta = manifest.meta[locale]
+const maxSize = formatBytes(manifest.limits.maxFileSizeBytes, locale)
 ---
 
 <BaseLayout locale={locale} title={`${meta.title} — Mochifile`} description={meta.description} paths={paths}>
+  {/* Everything except the interactive widget is static HTML, for SEO and no-JS visitors. */}
   <h1 class="mb-2 text-3xl font-bold tracking-tight">{meta.title}</h1>
   <p class="mb-8 text-text-muted">{meta.description}</p>
   {/*
@@ -19,4 +24,14 @@ const meta = tool.manifest.meta[locale]
   <ToolIsland client:only="react" dir={tool.dir} locale={locale}>
     <div slot="fallback" class="min-h-48 animate-pulse rounded-card bg-surface-raised"></div>
   </ToolIsland>
+  <noscript>
+    <p class="rounded-card border border-border bg-surface-raised p-6 text-center">
+      {m.tool_requires_js({}, { locale })}
+    </p>
+  </noscript>
+  <section class="mt-12 flex flex-col gap-2" aria-labelledby="tool-about">
+    <h2 id="tool-about" class="text-xl font-semibold">{m.tool_about_heading({}, { locale })}</h2>
+    {manifest.runtime === 'browser' && <p>{m.tool_privacy_browser({}, { locale })}</p>}
+    <p>{m.tool_max_file_size({ maxSize }, { locale })}</p>
+  </section>
 </BaseLayout>
