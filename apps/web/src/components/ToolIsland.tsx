@@ -5,10 +5,22 @@ export interface ToolUiProps {
   locale: Locale
 }
 
-/** Every tool's UI component, loaded on demand so each page only ships its own tool. */
-const uis = import.meta.glob<{ default: ComponentType<ToolUiProps> }>(
-  '../../../../packages/tools/*/src/Ui.tsx',
-)
+type UiModule = { default: ComponentType<ToolUiProps> }
+
+/**
+ * Every tool's UI component, loaded on demand so each page only ships its own tool.
+ * The template is a separate glob behind a statically known flag, so production builds
+ * contain none of its code.
+ */
+const uis: Record<string, () => Promise<UiModule>> = {
+  ...import.meta.glob<UiModule>([
+    '../../../../packages/tools/*/src/Ui.tsx',
+    '!../../../../packages/tools/_template/src/Ui.tsx',
+  ]),
+  ...(import.meta.env.DEV || import.meta.env.MOCHIFILE_INCLUDE_TEMPLATE
+    ? import.meta.glob<UiModule>('../../../../packages/tools/_template/src/Ui.tsx')
+    : {}),
+}
 
 interface Props extends ToolUiProps {
   /** Folder name of the tool under `packages/tools/`. */

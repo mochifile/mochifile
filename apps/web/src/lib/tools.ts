@@ -40,7 +40,7 @@ export function toolDirOf(path: string): string {
 }
 
 export const tools = loadTools(modules, {
-  includeTemplate: import.meta.env.DEV || process.env.MOCHIFILE_INCLUDE_TEMPLATE === 'true',
+  includeTemplate: import.meta.env.DEV || import.meta.env.MOCHIFILE_INCLUDE_TEMPLATE,
 })
 
 export interface ToolPageProps {
