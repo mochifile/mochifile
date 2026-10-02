@@ -7,6 +7,9 @@ import cspHashes from './integrations/csp-hashes.ts'
 
 export const SITE_URL = 'https://mochifile.com'
 
+/** Include the `_template` tool in a production build (used by e2e tests only). */
+const includeTemplateTool = process.env.MOCHIFILE_INCLUDE_TEMPLATE === 'true'
+
 export default defineConfig({
   site: SITE_URL,
   output: 'static',
@@ -40,5 +43,9 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     worker: { format: 'es' },
+    define: {
+      // Statically replaced, so production builds drop the template tool's code entirely.
+      'import.meta.env.MOCHIFILE_INCLUDE_TEMPLATE': JSON.stringify(includeTemplateTool),
+    },
   },
 })

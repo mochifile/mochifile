@@ -35,6 +35,12 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - name: Production build excludes the template tool
+        run: |
+          if grep -rqE 'template_tool|template-tool' apps/web/dist; then
+            echo "::error::The _template tool leaked into the production build"
+            exit 1
+          fi
 
   e2e:
     name: E2E (${{ matrix.browser }})
