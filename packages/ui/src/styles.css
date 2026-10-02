@@ -1,0 +1,10 @@
+/*
+ * Entry stylesheet for @mochifile/ui. Import it after `@import "tailwindcss";` in the app:
+ *
+ *   @import "tailwindcss";
+ *   @import "@mochifile/ui/styles.css";
+ */
+@import "./tokens.css";
+
+/* Let Tailwind find the utility classes used by the shared components. */
+@source "./components";
