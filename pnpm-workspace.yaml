@@ -19,3 +19,6 @@ catalog:
   react-dom: 19.3.0
   typescript: 6.0.3
   vitest: 5.0.3
+# Dependencies allowed to run install scripts. Review before adding anything here.
+allowBuilds:
+  esbuild: true

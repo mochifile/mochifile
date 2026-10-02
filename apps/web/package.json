@@ -1,0 +1,36 @@
+{
+  "name": "@mochifile/web",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@astrojs/react": "7.0.0",
+    "@astrojs/sitemap": "3.7.4",
+    "@mochifile/i18n": "workspace:*",
+    "@mochifile/tool-kit": "workspace:*",
+    "@mochifile/ui": "workspace:*",
+    "@tailwindcss/vite": "4.3.3",
+    "astro": "7.3.5",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tailwindcss": "4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@playwright/test": "1.63.0",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
