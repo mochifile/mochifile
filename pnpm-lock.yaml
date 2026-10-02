@@ -239,6 +239,9 @@ importers:
       '@astrojs/check':
         specifier: 0.9.10
         version: 0.9.10(@emnapi/runtime@1.11.3)(prettier@3.9.9)(typescript@6.0.3)
+      '@mochifile/tool-template':
+        specifier: workspace:*
+        version: link:../../packages/tools/_template
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
@@ -285,6 +288,31 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+
+  packages/tools/_template:
+    dependencies:
+      '@mochifile/i18n':
+        specifier: workspace:*
+        version: link:../../i18n
+      '@mochifile/tool-kit':
+        specifier: workspace:*
+        version: link:../../tool-kit
+      '@mochifile/ui':
+        specifier: workspace:*
+        version: link:../../ui
+    devDependencies:
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.3.0
+      react:
+        specifier: 'catalog:'
+        version: 19.3.0
       typescript:
         specifier: 'catalog:'
         version: 6.0.3

@@ -1,0 +1,30 @@
+{
+  "name": "@mochifile/tool-template",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Template for new Mochifile tools. Copy this folder; see README.md.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    "./manifest": "./src/manifest.ts",
+    "./ui": "./src/Ui.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mochifile/i18n": "workspace:*",
+    "@mochifile/tool-kit": "workspace:*",
+    "@mochifile/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "react": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "template_tool_drop_label": "Choose a text file or drop it here",
+  "template_tool_drop_hint": "Plain text (.txt), up to {maxSize}",
+  "template_tool_processing": "Working… {percent}%",
+  "template_tool_cancel": "Cancel",
+  "template_tool_download": "Download {name}",
+  "template_tool_error": "Something went wrong. Please try another file.",
+  "template_tool_error_unsupported": "This file type is not supported.",
+  "template_tool_error_too_large": "This file is too large."
+}
