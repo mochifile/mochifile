@@ -2,8 +2,9 @@
  * Decoding in the browser (ADR 0016). Three paths, chosen once per session by small probes:
  *
  * 1. `image-decoder`: WebCodecs `ImageDecoder` for JPEG, when a probe proves it decodes at a
- *    reduced size (JPEG DCT scaling) and applies EXIF orientation. Lowest memory for huge
- *    photos (Chromium today).
+ *    reduced size (JPEG DCT scaling) and applies EXIF orientation (Chromium today). It has the
+ *    lowest memory use but is slower, so it is used only for photos above
+ *    `IMAGE_DECODER_MIN_PIXELS`; smaller ones take the `bitmap` route.
  * 2. `bitmap`: `createImageBitmap` with orientation and resize options, then a canvas readback.
  * 3. `wasm`: jSquash decoders at full size, then a WebAssembly resize. Used when the canvas
  *    readback is not exact, as when a browser's anti-fingerprinting adds noise to it (private
@@ -26,6 +27,18 @@ export interface Size {
 
 /** Display pixels the WebAssembly path accepts: a full-size decode of 24 MP needs ~200 MB. */
 export const WASM_MAX_PIXELS = 24_000_000
+/**
+ * Below this, `ImageDecoder` is not worth it: in Chromium on an M2 it took 1.8–1.9 s for a
+ * 12–42 MP photo against 0.2–0.4 s for `createImageBitmap` (ADR 0016), and below 24 MP the
+ * bitmap route's memory use is safe on phones.
+ */
+export const IMAGE_DECODER_MIN_PIXELS = 24_000_000
+
+/**
+ * The WebAssembly path decodes at full size; keep the last decode so asking for a preview and
+ * then for the working size decodes the file once. Keyed by the bytes object of one run.
+ */
+let lastFullDecode: { bytes: Uint8Array; image: ImageData } | undefined
 
 // 4×4 PNG with distinct opaque pixels; the readback must return exactly `CANARY_PIXELS`.
 const CANARY_PNG =
@@ -206,11 +219,26 @@ export async function decodeImage({
         details: { maxMegapixels: WASM_MAX_PIXELS / 1_000_000 },
       })
     }
-    return fit(await decoding(codecs.decode(info.format, bytes)))
+    if (lastFullDecode?.bytes !== bytes) {
+      // Drop the previous file's pixels before decoding the next one.
+      lastFullDecode = undefined
+      lastFullDecode = { bytes, image: await decoding(codecs.decode(info.format, bytes)) }
+    }
+    const full = lastFullDecode.image
+    if (full.width > target.width || full.height > target.height) return fit(full)
+    // Handed over unresized: the caller may modify it (e.g. flatten transparency), so it must
+    // not stay in the cache.
+    lastFullDecode = undefined
+    return full
   }
 
   const ImageDecoder = imageDecoderClass()
-  if (path === 'image-decoder' && info.format === 'jpeg' && ImageDecoder) {
+  if (
+    path === 'image-decoder' &&
+    info.format === 'jpeg' &&
+    ImageDecoder &&
+    display.width * display.height > IMAGE_DECODER_MIN_PIXELS
+  ) {
     // Ask for the smallest DCT scale that is still at least the target, then resize exactly.
     const desired = dctScaledSize(display, target)
     const decoder = new ImageDecoder({
