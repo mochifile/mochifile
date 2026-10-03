@@ -46,12 +46,16 @@ test('never redirects based on the browser language', async ({ browser }) => {
     locale: 'pt-BR',
     extraHTTPHeaders: { 'Accept-Language': 'pt-BR,pt;q=0.9' },
   })
-  const page = await context.newPage()
-  const response = await page.goto('/')
-  expect(response?.status()).toBe(200)
-  expect(new URL(page.url()).pathname).toBe('/')
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-  await context.close()
+  try {
+    const page = await context.newPage()
+    const response = await page.goto('/')
+    expect(response?.status()).toBe(200)
+    expect(new URL(page.url()).pathname).toBe('/')
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  } finally {
+    // Never leak this context into later tests, even when the test fails (issue #10).
+    await context.close()
+  }
 })
 
 test('language switcher links between locales', async ({ page }) => {
