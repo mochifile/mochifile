@@ -1,5 +1,5 @@
 import { ALLOW_SEARCH_INDEXING } from '../search-indexing.ts'
-import { expect, test } from './fixtures.ts'
+import { expect, projectContextOptions, test } from './fixtures.ts'
 
 const SITE = 'https://mochifile.com'
 
@@ -41,8 +41,9 @@ for (const { path, lang, heading, canonical } of pages) {
   })
 }
 
-test('never redirects based on the browser language', async ({ browser }) => {
-  const context = await browser.newContext({
+test('never redirects based on the browser language', async ({ testBrowser }) => {
+  const context = await testBrowser.newContext({
+    ...projectContextOptions(),
     locale: 'pt-BR',
     extraHTTPHeaders: { 'Accept-Language': 'pt-BR,pt;q=0.9' },
   })
