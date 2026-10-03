@@ -215,21 +215,27 @@ for (const [locale, path] of [
         zone.y < panel.y + panel.height
       expect(overlaps).toBe(false)
 
-      // A tap on the visible part of the file picker reaches it, not the banner.
-      const x = zone.x + zone.width / 2
-      const y = (zone.y + Math.min(zone.y + zone.height, PHONE.height)) / 2
-      expect(
-        await page.evaluate(
-          (point) =>
-            Boolean(
-              document
-                .elementFromPoint(point.x, point.y)
-                ?.closest('label')
-                ?.querySelector('input[type="file"]'),
-            ),
-          { x, y },
-        ),
-      ).toBe(true)
+      // A tap on the part of the file picker visible on first view reaches it, not the banner.
+      // With taller text (fonts differ between systems) the picker can start below the fold;
+      // then nothing on screen can cover it and there is nothing to tap.
+      const visibleTop = Math.max(zone.y, 0)
+      const visibleBottom = Math.min(zone.y + zone.height, PHONE.height)
+      if (visibleBottom > visibleTop) {
+        const x = zone.x + zone.width / 2
+        const y = (visibleTop + visibleBottom) / 2
+        expect(
+          await page.evaluate(
+            (point) =>
+              Boolean(
+                document
+                  .elementFromPoint(point.x, point.y)
+                  ?.closest('label')
+                  ?.querySelector('input[type="file"]'),
+              ),
+            { x, y },
+          ),
+        ).toBe(true)
+      }
 
       // Clear of the iOS safe areas at whichever edge it uses.
       const classes = (await banner(page).getAttribute('class')) ?? ''
