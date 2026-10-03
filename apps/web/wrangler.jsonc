@@ -12,7 +12,12 @@
     // Unknown paths get `404.html` with a 404 status.
     "not_found_handling": "404-page"
   },
-  // Production is reachable at mochifile.<account>.workers.dev until a custom domain is added.
+  // The canonical host (ADR 0015). Cloudflare creates the apex DNS record and certificate on
+  // deploy, and never overwrites an existing record, so the Email Routing records are safe.
+  // Domains live only here: a deploy removes Custom Domains that were added in the dashboard.
+  // www.mochifile.com and mochifile.app redirect here through Cloudflare Redirect Rules.
+  "routes": [{ "pattern": "mochifile.com", "zone_name": "mochifile.com", "custom_domain": true }],
+  // Kept while the site is noindexed; must be set to false at launch (ADR 0014).
   "workers_dev": true,
   // Pull request previews (`wrangler preview`). Empty: an assets-only site has no
   // preview-specific variables or bindings.
