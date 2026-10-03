@@ -7,7 +7,7 @@ The site is deployed to Cloudflare by the `Deploy` GitHub Actions workflow
 | Event | Result |
 | --- | --- |
 | Pull request opened or updated (from this repository) | A Preview at `https://pr-<number>-mochifile.<subdomain>.workers.dev`, linked from the PR ("View deployment") |
-| Merge to `main` | Production at `https://mochifile.<subdomain>.workers.dev` |
+| Merge to `main` | Production at `https://mochifile.com` (also `https://mochifile.<subdomain>.workers.dev` until launch) |
 | Pull request closed or merged | Its Preview is deleted |
 
 Until launch, every deployment is hidden from search engines
@@ -80,8 +80,88 @@ The first run creates two GitHub environments, `preview` and `production`. To en
 1. Open any pull request from this repository → **Checks** → **Deploy**. If it failed with
    "Add the CLOUDFLARE_API_TOKEN…", click **Re-run all jobs**.
 2. When **Preview** turns green, the PR shows **View deployment**. It opens the Preview.
-3. After the next merge to `main`, **Actions** → **Deploy** → **Production** shows the
-   production URL in its log.
+3. After the next merge to `main`, **Actions** → **Deploy** → **Production** turns green and
+   links to `https://mochifile.com/`.
+
+## Domains
+
+`https://mochifile.com` is the only canonical host
+([ADR 0015](../adr/0015-canonical-host-and-domain-redirects.md)). Every other host redirects to
+it with a 301, keeping the path and query string:
+
+| Visitor opens | Ends up at | Handled by |
+| --- | --- | --- |
+| `https://mochifile.com/pt/` | (served) | Worker Custom Domain in `apps/web/wrangler.jsonc`, created by each deploy |
+| `https://www.mochifile.com/pt/?a=1` | `https://mochifile.com/pt/?a=1` | Redirect Rule in zone `mochifile.com` |
+| `https://mochifile.app/pt/` | `https://mochifile.com/pt/` | Redirect Rule in zone `mochifile.app` |
+| `https://www.mochifile.app/pt/` | `https://mochifile.com/pt/` | Redirect Rule in zone `mochifile.app` |
+
+The apex `mochifile.com` needs no manual step: the deploy creates its DNS record (type
+**Worker**) and its certificate. Never add an `A`, `AAAA` or `CNAME` record for `@` on
+`mochifile.com`, and never edit or delete the **MX** and **TXT** records there: they belong to
+Email Routing. Never add the domain by hand under the Worker's **Domains & Routes** either; the
+next deploy would remove it.
+
+The redirects are configured by hand in the Cloudflare dashboard, once, as follows.
+
+### A. Placeholder DNS records
+
+Redirect Rules only run for hostnames that Cloudflare proxies, so each redirected hostname needs
+a proxied record. `100::` is Cloudflare's reserved placeholder address; traffic never reaches it.
+
+1. Sign in at <https://dash.cloudflare.com> → **Domains** in the left sidebar (older layouts:
+   **Websites**) → click **mochifile.com**.
+2. Left sidebar: **DNS** → **Records** → **Add record**.
+3. Fill in: **Type** `AAAA`, **Name** `www`, **IPv6 address** `100::`, **Proxy status** on
+   (orange cloud, "Proxied"), **TTL** `Auto`. Click **Save**.
+4. Go back to **Domains** → click **mochifile.app** → **DNS** → **Records**, and add two records
+   the same way:
+   - **Type** `AAAA`, **Name** `@`, **IPv6 address** `100::`, **Proxied**, **TTL** `Auto`;
+   - **Type** `AAAA`, **Name** `www`, **IPv6 address** `100::`, **Proxied**, **TTL** `Auto`.
+
+If Cloudflare says a record with that name already exists, stop and ask a maintainer rather
+than replacing it.
+
+### B. Redirect Rules
+
+1. **Domains** → **mochifile.com** → left sidebar **Rules** → **Overview** → **Create rule** →
+   **Redirect Rule**.
+2. **Rule name:** `www.mochifile.com to mochifile.com`.
+3. **If incoming requests match…:** choose **Custom filter expression**, then **Field**
+   `Hostname`, **Operator** `equals`, **Value** `www.mochifile.com`.
+4. **Then… URL redirect:** **Type** `Dynamic`, **Expression**
+   `concat("https://mochifile.com", http.request.uri.path)`, **Status code** `301`, and tick
+   **Preserve query string**.
+5. Click **Deploy**.
+6. **Domains** → **mochifile.app** → **Rules** → **Overview** → **Create rule** → **Redirect
+   Rule**.
+7. **Rule name:** `mochifile.app to mochifile.com`. **If incoming requests match…:** **All
+   incoming requests**. **Then:** the same as step 4 (**Dynamic**, the same expression, `301`,
+   **Preserve query string** ticked). Click **Deploy**.
+
+### C. Always Use HTTPS
+
+For each of **mochifile.com** and **mochifile.app**: **Domains** → the domain → **SSL/TLS** →
+**Edge Certificates** → turn **Always Use HTTPS** on. This changes no DNS records.
+
+### Check the domains
+
+After the redirects are set up and `main` has deployed, every command below should print what
+its comment says. Maintainers can run them; anyone else can open the URLs in a browser and
+check where they land.
+
+```sh
+curl -sI https://mochifile.com/pt/ | head -1                 # HTTP/2 200
+curl -sI "https://www.mochifile.com/pt/?a=1" | grep -iE '^HTTP|^location'
+#   HTTP/2 301 + location: https://mochifile.com/pt/?a=1
+curl -sI https://mochifile.app/pt/ | grep -iE '^HTTP|^location'
+#   HTTP/2 301 + location: https://mochifile.com/pt/
+curl -sI https://www.mochifile.app/ | grep -iE '^HTTP|^location'
+#   HTTP/2 301 + location: https://mochifile.com/
+curl -sI http://mochifile.com/ | grep -iE '^HTTP|^location'
+#   HTTP/1.1 301 + location: https://mochifile.com/
+dig +short MX mochifile.com                                  # the three route*.mx.cloudflare.net
+```
 
 ## Rotating the token
 

@@ -39,9 +39,9 @@ at launch, so this does not matter in practice.
 
 ## How to remove it at launch
 
-1. On a new branch (e.g. `chore/allow-search-indexing`), set
-   `export const ALLOW_SEARCH_INDEXING = true` in `apps/web/search-indexing.ts`. Change nothing
-   else for indexing.
+1. On a new branch (e.g. `chore/allow-search-indexing`), make exactly two changes:
+   - `export const ALLOW_SEARCH_INDEXING = true` in `apps/web/search-indexing.ts`;
+   - `"workers_dev": false` in `apps/web/wrangler.jsonc` (required, see step 7).
 2. Run `pnpm build` and check:
    - `apps/web/dist/robots.txt` contains `Allow: /` and
      `Sitemap: https://mochifile.com/sitemap-index.xml`;
@@ -52,9 +52,11 @@ at launch, so this does not matter in practice.
    and `https://mochifile.com/robots.txt` shows `Allow: /`.
 6. Submit `https://mochifile.com/sitemap-index.xml` in Google Search Console and Bing Webmaster
    Tools.
-7. Set `"workers_dev": false` in `apps/web/wrangler.jsonc` (in the same or a follow-up PR) once
-   the custom domain serves production, so the `workers.dev` copy of the site goes away. Before
-   merging, confirm on that PR that Previews still deploy.
+7. **Confirm the `workers.dev` host is gone:** `https://mochifile.mochifile.workers.dev/` no
+   longer serves the site. Disabling it (step 1) is required, not optional: it serves the same
+   pages as `https://mochifile.com`, so once noindex is lifted search engines could index it
+   as duplicate content and split ranking between the two hosts. Also check on the launch PR,
+   before step 4, that its Preview still deploys with `workers_dev` off.
 8. Mark this ADR **Superseded** by the launch ADR, or **Deprecated**.
 
 ## Consequences
@@ -63,3 +65,10 @@ at launch, so this does not matter in practice.
 - Launch is one reviewed line change plus checks, not a hunt across files.
 - Until launch, SEO tooling (Search Console, Lighthouse "is indexable") reports the site as
   blocked; that is expected.
+
+## Updates
+
+- **2026-10-02:** production moved to `https://mochifile.com`
+  ([ADR 0015](0015-canonical-host-and-domain-redirects.md)). The `workers.dev` host stays enabled
+  until launch so it can be compared with the custom domain, and step 7 makes disabling it part
+  of the launch change.

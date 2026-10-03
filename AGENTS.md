@@ -99,7 +99,7 @@ published to npm (for example for the private cloud repo), it will first need a 
    mechanism, outside the launch steps in that ADR.
 10. **Deploys** run from `.github/workflows/deploy.yml` with `apps/web/wrangler.jsonc` (ADR
     0013). `_headers` rules with the same path do not merge on Cloudflare; add headers to the
-    existing rule.
+    existing rule. Custom domains are declared only in `wrangler.jsonc` (ADR 0015).
 11. Significant decisions get an ADR in `docs/adr/` (copy `0000-template.md`).
 
 ## How to add a tool

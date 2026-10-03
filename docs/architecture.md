@@ -135,4 +135,6 @@ The static output (`apps/web/dist`) is served by an assets-only Cloudflare Worke
 `Deploy` workflow publishes a Preview for each pull request and production from `main`
 ([ADR 0013](adr/0013-deploy-workers-static-assets-from-github-actions.md),
 [setup](contributing/deployment.md)). Until launch every response carries
-`X-Robots-Tag: noindex` ([ADR 0014](adr/0014-block-search-indexing-until-launch.md)).
+`X-Robots-Tag: noindex` ([ADR 0014](adr/0014-block-search-indexing-until-launch.md)). The
+canonical host is `https://mochifile.com`; `www.mochifile.com` and `mochifile.app` redirect to
+it ([ADR 0015](adr/0015-canonical-host-and-domain-redirects.md)).
