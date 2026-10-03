@@ -3,6 +3,7 @@ import { Font } from 'astro:assets'
 import { type Locale, localeNames, localePath, locales, localeTags } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import LanguageSuggestion from '../components/LanguageSuggestion.astro'
+import Logo from '../components/Logo.astro'
 import { buildAlternates } from '../lib/seo'
 import '../styles/global.css'
 
@@ -45,13 +46,11 @@ const alternates = buildAlternates(paths, site)
     <meta name="color-scheme" content="light dark" />
   </head>
   <body class="flex min-h-dvh flex-col bg-surface-page text-ink antialiased">
-    <header class="border-b border-line">
-      <div class="mx-auto flex max-w-content-max items-center justify-between gap-4 px-4 py-4">
-        <a href={localePath(locale)} class="type-title-sm">
-          {m.site_name({}, { locale })}
-        </a>
+    <header>
+      <div class="mx-auto flex max-w-content-max items-center justify-between gap-4 px-4 py-2">
+        <Logo href={localePath(locale)} />
         <nav aria-label={m.nav_language({}, { locale })}>
-          <ul class="flex gap-3 type-body-sm">
+          <ul class="flex gap-1 type-body-sm font-semibold">
             {
               locales.map((target) => (
                 <li>
@@ -62,8 +61,10 @@ const alternates = buildAlternates(paths, site)
                     data-language-switch
                     aria-current={target === locale ? 'true' : undefined}
                     class:list={[
-                      'rounded-pill px-2 py-1 hover:bg-mango-tint',
-                      target === locale && 'font-semibold text-ink underline',
+                      'press inline-flex min-h-target-min items-center rounded-pill border-chip px-3 focus-ring',
+                      target === locale
+                        ? 'border-ink font-bold'
+                        : 'border-transparent hover:border-border-control',
                     ]}
                   >
                     {localeNames[target]}
@@ -77,18 +78,18 @@ const alternates = buildAlternates(paths, site)
     </header>
     {/* Pages without alternates (e.g. 404) have nothing to suggest. */}
     {!noindex && <LanguageSuggestion locale={locale} paths={paths} />}
-    <main class="mx-auto w-full max-w-content-max flex-1 px-4 py-10">
+    <main class="mx-auto w-full max-w-content-max flex-1 px-4 pt-4 pb-16 sm:pt-6">
       <slot />
     </main>
-    <footer class="border-t border-line type-body-sm text-ink-muted">
-      <div class="mx-auto flex max-w-content-max flex-col gap-1 px-4 py-6">
+    <footer class="rounded-t-2xl bg-surface-inverse type-body-sm text-ink-on-inverse-muted">
+      <div class="mx-auto flex max-w-content-max flex-col gap-2 px-6 py-10">
         <p>{m.footer_privacy_note({}, { locale })}</p>
         <p>
-          <a class="underline hover:underline" href="https://github.com/mochifile/mochifile">
+          <a class="rounded-sm text-ink-on-inverse underline focus-ring" href="https://github.com/mochifile/mochifile">
             {m.footer_open_source({}, { locale })}
           </a>
           ·
-          <a class="underline hover:underline" href="/third-party-licenses.txt">
+          <a class="rounded-sm text-ink-on-inverse underline focus-ring" href="/third-party-licenses.txt">
             {m.footer_licenses({}, { locale })}
           </a>
         </p>

@@ -1,0 +1,34 @@
+---
+/**
+ * The Mochifile logo: the symbol plus the lowercase "mochifile" wordmark, whose i-dots are
+ * small squished drops (first strawberry, second matcha). Provisional, per the design system
+ * README › Logo. The dotless "ı" is visual only: the link's accessible name is "Mochifile" and
+ * everything inside is hidden from assistive technology, so screen readers, titles, meta tags
+ * and structured data only ever see the plain name.
+ */
+interface Props {
+  href: string
+}
+
+const { href } = Astro.props
+---
+
+<a href={href} aria-label="Mochifile" class="inline-flex min-h-target-min items-center gap-2 rounded-md text-ink focus-ring">
+  <svg viewBox="10 4 100 100" aria-hidden="true" class="size-10 shrink-0">
+    <path
+      d="M22 30 Q22 12 40 12 L80 12 L102 34 L102 76 Q104 99 80 100 L38 100 Q16 99 18 78 Z"
+      stroke-width="5"
+      stroke-linejoin="round"
+      class="fill-mochi-body stroke-mochi-outline"
+    />
+    <path
+      d="M80 12 L80 26 Q80 34 88 34 L102 34 Z"
+      stroke-width="5"
+      stroke-linejoin="round"
+      class="fill-ube stroke-mochi-outline"
+    />
+    <circle cx="46" cy="58" r="5" class="fill-mochi-outline" />
+    <circle cx="76" cy="58" r="5" class="fill-mochi-outline" />
+  </svg>
+  <span aria-hidden="true" class="type-title-sm font-bold">moch<span class="relative inline-block">ı<svg viewBox="0 0 10 8" class="absolute top-1 left-1/2 w-2 -translate-x-1/2"><ellipse cx="5" cy="4" rx="4.6" ry="3.4" transform="rotate(-12 5 4)" class="fill-strawberry" /></svg></span>f<span class="relative inline-block">ı<svg viewBox="0 0 10 8" class="absolute top-1 left-1/2 w-2 -translate-x-1/2"><ellipse cx="5" cy="4" rx="4.6" ry="3.4" transform="rotate(10 5 4)" class="fill-matcha" /></svg></span>le</span>
+</a>
