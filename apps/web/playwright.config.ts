@@ -18,7 +18,9 @@ export default defineConfig({
   reporter: CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
-    trace: 'on-first-retry',
+    // Keep the trace of a failed first attempt even when a retry passes, so flaky tests can be
+    // diagnosed (issue #10).
+    trace: 'retain-on-first-failure',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
