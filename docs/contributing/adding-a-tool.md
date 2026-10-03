@@ -25,7 +25,7 @@ Defined in [`packages/tool-kit/src/contract.ts`](../../packages/tool-kit/src/con
 | Manifest | `src/manifest.ts` | Plain data via `defineToolManifest()`: `id`, `category` (`image`, `media`, `pdf`), `runtime` (`browser`, `server`), `accepts` (MIME types), `limits`, `defaults`, `meta` per locale (`slug`, `title` ≤ 70 chars, `description` ≤ 160 chars) optional `variants` (`key`, preset `options`, `meta` per locale) and optional `relatedPagesLabel` per locale (heading above the links between the tool's pages, ≤ 40 chars; defaults to "Popular options"). Validated when imported. |
 | Process | `src/process.ts` | `(files, options, { signal, onProgress }) => Promise<ToolResult[]>`. Pure: no DOM, no network, no logging of file data. Check `signal` with `throwIfAborted`. Throw `ToolError` for expected failures. |
 | Worker | `src/worker.ts` | `exposeTool(defineTool(manifest, processFiles, { prepare }))`. `prepare` is optional: it loads what `process()` needs (e.g. WebAssembly) before the user picks a file. Nothing else. |
-| UI | `src/Ui.tsx` | Default export `({ locale, initialOptions }) => JSX`. `initialOptions` are a variant's options, as untyped data: narrow them. Uses `createToolClient` to run the worker (call `client.prepare()` on the first sign of intent if the tool has a `prepare` hook), `@mochifile/ui` components and Paraglide messages. |
+| UI | `src/Ui.tsx` | Default export `({ locale, initialOptions }) => JSX`. `initialOptions` are a variant's options, as untyped data: narrow them. Uses `createToolClient` to run the worker (call `client.prepare()` on the first sign of intent if the tool has a `prepare` hook), `@mochifile/ui` components and Paraglide messages. Follow `docs/design-system/` (the component READMEs); the page wraps the UI in the tool panel, under the category's colour block. |
 | Messages | `messages/{en,pt}.json` | Short UI strings. Keys prefixed with the tool id in snake_case (`compress_image_…`). |
 | Page copy | `content/<locale>/<key>.md` | Long-form copy for each page: `index.md` for the main page, `<variant key>.md` per variant, in every locale. Start with `##` headings (the page already has the `h1`). The build fails if one is missing. See [ADR 0018](../adr/0018-tool-variants-and-markdown-page-copy.md). |
 | Tests | `src/*.test.ts` | Unit tests for `process()`: success, options, limits, abort. |
@@ -48,5 +48,10 @@ Defined in [`packages/tool-kit/src/contract.ts`](../../packages/tool-kit/src/con
 - [ ] An e2e smoke test in `apps/web/e2e/` if the tool has a notable flow
 - [ ] Any new dependency is justified in the PR description, and listed in `SHIPPED`
       (`apps/web/integrations/third-party-licenses.ts`) if its code reaches the browser
+- [ ] The file picker is the shared `Dropzone` (or the tool's one primary action carries
+      `data-primary-action`): `apps/web/e2e/fold.spec.ts` checks it is fully visible on a
+      390 × 844 phone, on every page and variant, in every language
+- [ ] If the tool panel's height changed, `tool-reserve` in
+      `packages/ui/src/component-constants.css` is recalibrated (no layout shift on load)
 - [ ] Heavy assets (WebAssembly, large libraries) load in the tool's `prepare` hook, so no
       request happens after the user picks a file (see `packages/tools/compress-image`)
