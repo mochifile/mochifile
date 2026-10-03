@@ -49,7 +49,10 @@ from it.
   like any other inline style.
 - **Mobile fold rule.** On a 390 × 844 phone, in every language, every tool page's primary
   action (`[data-primary-action]`) is fully visible on first view, without scrolling. An e2e
-  test enforces it on every tool page and variant in the sitemap.
+  test enforces it on every tool page and variant in the sitemap. To meet it, the hero
+  block holds the breadcrumb and the H1 only (the brand book's "one-line purpose" waits for a
+  short per-page line; the longer meta description leads the copy below the tool), and size
+  chips use `space-3` side padding so the six presets fit on two rows.
 - `docs/design-system/` is excluded from Biome: it is maintained as given, not reformatted.
 
 ## Consequences
