@@ -40,12 +40,12 @@ Show a small, dismissible **suggestion**, never a redirect:
   `calc(1rem + env(safe-area-inset-bottom))`. The site does not set `viewport-fit=cover`, so
   today Safari keeps pages inside the safe area and these insets are 0; the offsets keep the
   banner clear of the notch and home indicator if that ever changes.
-- **One bottom panel at a time:** only one panel may show at the bottom of the viewport at a
-  time, and the future cookie-consent banner takes priority: while it is visible, the language
-  suggestion must not show at the bottom. Whoever adds the cookie banner adds that check to the
-  language suggestion script, with a test. (Suggestion, not yet decided: also hold the language
-  suggestion back on phones, where it sits at the top, so a first visit never shows two
-  panels.)
+- **One panel at a time, cookie consent first:** only one panel may show at the bottom of the
+  viewport at a time, and the future cookie-consent banner takes priority. While any
+  cookie-consent banner is visible, the language suggestion waits and does not show, **on every
+  screen size**, including phones, where it would sit at the top, so a first visit never shows
+  two panels. It may appear once the consent banner is gone. Whoever adds the cookie banner adds
+  that check to the language suggestion script, with a test.
 - **Accessible:** an `<aside>` landmark named in the suggested language, real link and button,
   reachable by keyboard; focus is never moved to it.
 - **JavaScript:** one inline module script on every page (about 730 bytes, 400 gzipped),
