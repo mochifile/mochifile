@@ -7,5 +7,8 @@
   "template_tool_download": "Baixar {name}",
   "template_tool_error": "Algo deu errado. Tente outro arquivo.",
   "template_tool_error_unsupported": "Este tipo de arquivo não é compatível.",
-  "template_tool_error_too_large": "Este arquivo é grande demais."
+  "template_tool_error_too_large": "Este arquivo é grande demais.",
+  "template_tool_mode_label": "Mudar as letras para",
+  "template_tool_mode_upper": "MAIÚSCULAS",
+  "template_tool_mode_lower": "minúsculas"
 }

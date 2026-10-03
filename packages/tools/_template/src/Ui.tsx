@@ -1,10 +1,16 @@
 import type { Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import { formatBytes, isToolError, type ToolErrorCode, type ToolResult } from '@mochifile/tool-kit'
+import {
+  formatBytes,
+  isToolError,
+  type ToolErrorCode,
+  type ToolOptions,
+  type ToolResult,
+} from '@mochifile/tool-kit'
 import { createToolClient } from '@mochifile/tool-kit/client'
 import { Button, Dropzone } from '@mochifile/ui'
 import { useEffect, useRef, useState } from 'react'
-import { manifest } from './manifest.ts'
+import { manifest, type TemplateOptions } from './manifest.ts'
 
 /** One client per page; the worker starts on the first run, not on page load. */
 const client = createToolClient(
@@ -18,8 +24,22 @@ type State =
   | { status: 'done'; result: ToolResult; url: string }
   | { status: 'error'; code: ToolErrorCode | 'unknown' }
 
-export default function TemplateToolUi({ locale }: { locale: Locale }) {
+interface Props {
+  locale: Locale
+  /** Options of a variant page (e.g. `{ mode: 'lower' }`), as untyped plain data. */
+  initialOptions?: ToolOptions
+}
+
+/** Narrows untyped page options to this tool's options, falling back to the defaults. */
+function initialMode(options: ToolOptions | undefined): TemplateOptions['mode'] {
+  return options?.mode === 'lower' || options?.mode === 'upper'
+    ? options.mode
+    : manifest.defaults.mode
+}
+
+export default function TemplateToolUi({ locale, initialOptions }: Props) {
   const [state, setState] = useState<State>({ status: 'idle' })
+  const [mode, setMode] = useState(() => initialMode(initialOptions))
   const abortRef = useRef<AbortController | null>(null)
 
   // Release the object URL when the result changes or the component unmounts.
@@ -34,11 +54,15 @@ export default function TemplateToolUi({ locale }: { locale: Locale }) {
     abortRef.current = controller
     setState({ status: 'working', percent: 0 })
     try {
-      const [result] = await client.run(files, manifest.defaults, {
-        signal: controller.signal,
-        onProgress: ({ ratio }) =>
-          setState({ status: 'working', percent: Math.round(ratio * 100) }),
-      })
+      const [result] = await client.run(
+        files,
+        { mode },
+        {
+          signal: controller.signal,
+          onProgress: ({ ratio }) =>
+            setState({ status: 'working', percent: Math.round(ratio * 100) }),
+        },
+      )
       if (!result) throw new Error('No result')
       setState({ status: 'done', result, url: URL.createObjectURL(result.file) })
     } catch (error) {
@@ -55,6 +79,24 @@ export default function TemplateToolUi({ locale }: { locale: Locale }) {
 
   return (
     <div className="flex flex-col gap-4">
+      <fieldset className="flex flex-wrap items-center gap-4">
+        <legend className="mb-2 font-medium">{m.template_tool_mode_label({}, { locale })}</legend>
+        {(['upper', 'lower'] as const).map((value) => (
+          <label key={value} className="flex min-h-11 items-center gap-2">
+            <input
+              type="radio"
+              name="template-tool-mode"
+              value={value}
+              checked={mode === value}
+              onChange={() => setMode(value)}
+              className="size-5 accent-accent"
+            />
+            {value === 'upper'
+              ? m.template_tool_mode_upper({}, { locale })
+              : m.template_tool_mode_lower({}, { locale })}
+          </label>
+        ))}
+      </fieldset>
       <Dropzone
         onFiles={run}
         accept={manifest.accepts.join(',')}

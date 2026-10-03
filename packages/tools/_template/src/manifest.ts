@@ -38,4 +38,24 @@ export const manifest = defineToolManifest<TemplateOptions>({
         'Ferramenta de exemplo que muda as letras de um arquivo de texto. Copie-a para criar outra.',
     },
   },
+  // Optional landing pages that start with preset options. Each needs its own copy in
+  // content/<locale>/<key>.md. TODO(new tool): replace or remove.
+  variants: [
+    {
+      key: 'lowercase',
+      options: { mode: 'lower' },
+      meta: {
+        en: {
+          slug: 'template-tool-lowercase',
+          title: 'Template tool: lower case',
+          description: 'Example variant page that starts in lower-case mode.',
+        },
+        pt: {
+          slug: 'ferramenta-modelo-minusculas',
+          title: 'Ferramenta modelo: minúsculas',
+          description: 'Página de variante de exemplo que já começa no modo minúsculas.',
+        },
+      },
+    },
+  ],
 })
