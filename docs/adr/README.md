@@ -24,3 +24,4 @@ a PR. Accepted ADRs are not edited later except for their status; a new ADR supe
 | [0016](0016-image-engine-jsquash-with-native-decoding.md) | Image engine: jSquash codecs with native decoding | Accepted |
 | [0017](0017-size-targeting-algorithm.md) | Size-targeting algorithm | Accepted |
 | [0018](0018-tool-variants-and-markdown-page-copy.md) | Tool variant pages and Markdown page copy | Accepted |
+| [0019](0019-language-suggestion-banner.md) | Language suggestion banner, never a redirect | Accepted |
