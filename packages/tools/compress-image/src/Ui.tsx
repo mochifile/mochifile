@@ -329,12 +329,17 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
               onChange={setTargetChoice}
               // Image tools use the mango block (design system README › Colour).
               block="mango"
+              phoneColumns
               options={[
                 ...PRESETS.map((p) => ({
                   value: p.key as string,
                   label: formatSize(p.bytes, locale),
                 })),
-                { value: 'custom', label: m.compress_image_target_custom({}, { locale }) },
+                {
+                  value: 'custom',
+                  label: m.compress_image_target_custom({}, { locale }),
+                  wide: true,
+                },
               ]}
             />
             {targetChoice === 'custom' && (

@@ -40,4 +40,22 @@ describe('SizeChips', () => {
       expect((radio as HTMLInputElement).matches(':disabled')).toBe(true)
     }
   })
+
+  it('can keep a fixed four-column grid on phones, with wide options taking two cells', () => {
+    render(
+      <SizeChips
+        legend="Size"
+        options={[...options, { value: 'custom', label: 'Other size', wide: true }]}
+        value="small"
+        onChange={() => {}}
+        phoneColumns
+      />,
+    )
+    const grid = screen.getByRole('radio', { name: '50 KB' }).closest('label')?.parentElement
+    expect(grid?.className).toContain('grid-cols-4')
+    expect(grid?.className).toContain('sm:flex-wrap')
+    expect(screen.getByRole('radio', { name: 'Other size' }).closest('label')?.className).toContain(
+      'col-span-2',
+    )
+  })
 })
