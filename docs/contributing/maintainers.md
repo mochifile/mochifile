@@ -15,7 +15,8 @@
 - [ ] Install the Renovate GitHub app.
 - [ ] Add the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets
   ([deployment.md](deployment.md)).
-- [ ] Attach `mochifile.com` as a custom domain of the `mochifile` Worker (ADR 0013).
+- [ ] Set up the `www.mochifile.com` and `mochifile.app` redirects in the Cloudflare dashboard
+  ([deployment.md → Domains](deployment.md#domains), ADR 0015).
 - [ ] At launch, allow search indexing (ADR 0014).
 - [ ] **Remove the `minimumReleaseAgeExclude` entries from `pnpm-workspace.yaml`** once the
   versions are older than pnpm's release-age threshold (pnpm 12 default: `minimumReleaseAge`

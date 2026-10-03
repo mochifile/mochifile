@@ -20,3 +20,4 @@ a PR. Accepted ADRs are not edited later except for their status; a new ADR supe
 | [0012](0012-content-security-policy.md) | Content Security Policy | Accepted |
 | [0013](0013-deploy-workers-static-assets-from-github-actions.md) | Deploy to Cloudflare Workers static assets from GitHub Actions | Accepted |
 | [0014](0014-block-search-indexing-until-launch.md) | Block search indexing until launch | Accepted |
+| [0015](0015-canonical-host-and-domain-redirects.md) | Canonical host mochifile.com and domain redirects | Accepted |

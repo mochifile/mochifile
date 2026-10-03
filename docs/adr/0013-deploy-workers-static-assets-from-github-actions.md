@@ -57,9 +57,7 @@ do not merge; the last one wins** (see [ADR 0014](0014-block-search-indexing-unt
 
 - Same Node and pnpm as CI, all configuration versioned and reviewed, and a pinned wrangler.
 - Production is reachable at `mochifile.<account subdomain>.workers.dev` until a custom domain
-  is attached in a follow-up (add a `routes` entry with `custom_domain: true` once
-  `mochifile.com` is a zone in the same Cloudflare account; the token then also needs zone
-  permissions).
+  is attached in a follow-up (see the update below).
 - Previews live on `pr-<number>-mochifile.<account subdomain>.workers.dev` and are public, like
   any `workers.dev` URL. Cloudflare Access can be added later if previews must be private.
   Free accounts keep up to 100 Previews; the oldest are deleted automatically.
@@ -69,3 +67,19 @@ do not merge; the last one wins** (see [ADR 0014](0014-block-search-indexing-unt
   do not get. CI and CodeQL remain the merge gates.
 - A long-lived API token is stored in GitHub. It is scoped to one account and Workers edits, and
   is never exposed to the build job.
+
+## Updates
+
+- **2026-10-02: 404 handling differs on Previews.** Production follows
+  `not_found_handling: "404-page"`: on `mochifile.mochifile.workers.dev`, `/nope/` and
+  `/pt/nope/` return 404 with our `404.html` and the full `_headers` security headers. On
+  Previews (both the Preview URL and the unique deployment URL, wrangler 4.143.0), the same
+  paths return Cloudflare's bare 9-byte `Not found` with no `_headers` headers. `html_handling`
+  from the same upload is applied (`/pt` → `/pt/`), and wrangler does send
+  `not_found_handling`, so this looks like a Previews (open beta) platform bug. It affects only
+  Previews; production is fine. Do not use Previews to check 404 pages or their headers. Remove
+  this note once Cloudflare fixes it.
+- **2026-10-02: custom domain.** `mochifile.com` is attached as a Worker Custom Domain, and the
+  other hosts redirect to it ([ADR 0015](0015-canonical-host-and-domain-redirects.md)).
+  Contrary to the consequence above, the existing token needs no extra permission: Workers
+  Custom Domains are managed with the account-level `Workers Scripts Write` permission.
