@@ -145,7 +145,9 @@ Follow [docs/contributing/adding-a-tool.md](docs/contributing/adding-a-tool.md).
 - ❌ Never log file contents (or names, or derived data) — not even in debug code.
 - ❌ Never add a dependency without justification (purpose, size, license, maintenance) in
   the PR; prefer the platform and existing packages. Check the latest version on npm first
-  and pin it exactly — never guess versions.
+  and pin it exactly — never guess versions. If its code reaches visitors' browsers (page,
+  tool UI or worker), add it to `SHIPPED` in `apps/web/integrations/third-party-licenses.ts`
+  so its notice is published at `/third-party-licenses.txt`.
 - ❌ Never work directly on `main` or force-push shared branches.
 - ❌ Never add `'unsafe-eval'` or `'unsafe-inline'` to the CSP, or enable COOP/COEP globally.
 - ❌ Never add analytics that set cookies or track individuals; never add ads, auth or payments
