@@ -1,0 +1,299 @@
+/*
+ * GENERATED from docs/design-system/tokens.json (Mochifile v1) by
+ * `pnpm --filter @mochifile/ui tokens`. Do not edit: a test fails if this file drifts from
+ * tokens.json (ADR 0020).
+ */
+
+/* Light theme by default. */
+:root {
+  color-scheme: light;
+  --surface-page: #fff7ec;
+  --surface-card: #ffffff;
+  --surface-sunken: #fffbf4;
+  --surface-inverse: #1e1b2e;
+  --surface-inverse-raised: #2c2840;
+  --ink: #1e1b2e;
+  --ink-muted: #5c566b;
+  --ink-on-inverse: #fff7ec;
+  --ink-on-inverse-muted: #d9d3e6;
+  --ink-on-block: #1e1b2e;
+  --line: #e7dccb;
+  --border-control: #918474;
+  --border-dashed: #c9bba4;
+  --mango: #ffb627;
+  --strawberry: #ff6f91;
+  --matcha: #8fd16a;
+  --ube: #9b7bea;
+  --mango-tint: #fff0d1;
+  --strawberry-tint: #ffe3ea;
+  --matcha-tint: #e9f7df;
+  --ube-tint: #efe8fc;
+  --mango-ink: #5a3a00;
+  --strawberry-ink: #7a1532;
+  --matcha-ink: #17391f;
+  --ube-ink: #3b2770;
+  --action: #1e1b2e;
+  --action-ink: #fff7ec;
+  --danger: #c63a1e;
+  --danger-tint: #fde4dc;
+  --danger-ink: #8a220f;
+  --warning-tint: var(--mango-tint);
+  --warning-ink: var(--mango-ink);
+  --focus-ring: #1f5eff;
+  --mochi-body: #fff4e0;
+  --mochi-outline: #1e1b2e;
+  --mochi-blush: #ff8fa3;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --target-min: 44px;
+  --target-primary: 56px;
+  --icon-tile: 52px;
+  --content-max: 1240px;
+  --reading-max: 700px;
+  --radius-sm: 14px;
+  --radius-md: 18px;
+  --radius-lg: 26px;
+  --radius-xl: 34px;
+  --radius-2xl: 48px;
+  --radius-pill: 999px;
+  --family-display: Fredoka, "Noto Sans", system-ui, sans-serif;
+  --family-sans: Figtree, "Noto Sans", system-ui, sans-serif;
+  --family-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Dark theme: by system preference unless data-theme="light", or forced by data-theme="dark". */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-page: #17141f;
+    --surface-card: #221e2e;
+    --surface-sunken: #1c1927;
+    --surface-inverse: #2c2840;
+    --surface-inverse-raised: #383250;
+    --ink: #f6efe4;
+    --ink-muted: #b8b0c8;
+    --ink-on-inverse: #f6efe4;
+    --ink-on-inverse-muted: #cfc7de;
+    --ink-on-block: #1e1b2e;
+    --line: #3a3550;
+    --border-control: #7b7392;
+    --border-dashed: #5a5370;
+    --mango: #f2a81c;
+    --strawberry: #f0617f;
+    --matcha: #7dbf59;
+    --ube: #9b7bea;
+    --mango-tint: #3a2e14;
+    --strawberry-tint: #3b1e27;
+    --matcha-tint: #1f3320;
+    --ube-tint: #2b2442;
+    --mango-ink: #ffd58a;
+    --strawberry-ink: #ffb3c4;
+    --matcha-ink: #bfe8a6;
+    --ube-ink: #d3c4fa;
+    --action: #f6efe4;
+    --action-ink: #1e1b2e;
+    --danger: #ff8a6b;
+    --danger-tint: #3a1d16;
+    --danger-ink: #ffb8a3;
+    --warning-tint: var(--mango-tint);
+    --warning-ink: var(--mango-ink);
+    --focus-ring: #8db0ff;
+    --mochi-body: #fff4e0;
+    --mochi-outline: #1e1b2e;
+    --mochi-blush: #ff8fa3;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-page: #17141f;
+  --surface-card: #221e2e;
+  --surface-sunken: #1c1927;
+  --surface-inverse: #2c2840;
+  --surface-inverse-raised: #383250;
+  --ink: #f6efe4;
+  --ink-muted: #b8b0c8;
+  --ink-on-inverse: #f6efe4;
+  --ink-on-inverse-muted: #cfc7de;
+  --ink-on-block: #1e1b2e;
+  --line: #3a3550;
+  --border-control: #7b7392;
+  --border-dashed: #5a5370;
+  --mango: #f2a81c;
+  --strawberry: #f0617f;
+  --matcha: #7dbf59;
+  --ube: #9b7bea;
+  --mango-tint: #3a2e14;
+  --strawberry-tint: #3b1e27;
+  --matcha-tint: #1f3320;
+  --ube-tint: #2b2442;
+  --mango-ink: #ffd58a;
+  --strawberry-ink: #ffb3c4;
+  --matcha-ink: #bfe8a6;
+  --ube-ink: #d3c4fa;
+  --action: #f6efe4;
+  --action-ink: #1e1b2e;
+  --danger: #ff8a6b;
+  --danger-tint: #3a1d16;
+  --danger-ink: #ffb8a3;
+  --warning-tint: var(--mango-tint);
+  --warning-ink: var(--mango-ink);
+  --focus-ring: #8db0ff;
+  --mochi-body: #fff4e0;
+  --mochi-outline: #1e1b2e;
+  --mochi-blush: #ff8fa3;
+}
+
+/* Tailwind theme: only the design system values exist. */
+@theme inline {
+  --color-*: initial;
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-surface-inverse-raised: var(--surface-inverse-raised);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-on-inverse: var(--ink-on-inverse);
+  --color-ink-on-inverse-muted: var(--ink-on-inverse-muted);
+  --color-ink-on-block: var(--ink-on-block);
+  --color-line: var(--line);
+  --color-border-control: var(--border-control);
+  --color-border-dashed: var(--border-dashed);
+  --color-mango: var(--mango);
+  --color-strawberry: var(--strawberry);
+  --color-matcha: var(--matcha);
+  --color-ube: var(--ube);
+  --color-mango-tint: var(--mango-tint);
+  --color-strawberry-tint: var(--strawberry-tint);
+  --color-matcha-tint: var(--matcha-tint);
+  --color-ube-tint: var(--ube-tint);
+  --color-mango-ink: var(--mango-ink);
+  --color-strawberry-ink: var(--strawberry-ink);
+  --color-matcha-ink: var(--matcha-ink);
+  --color-ube-ink: var(--ube-ink);
+  --color-action: var(--action);
+  --color-action-ink: var(--action-ink);
+  --color-danger: var(--danger);
+  --color-danger-tint: var(--danger-tint);
+  --color-danger-ink: var(--danger-ink);
+  --color-warning-tint: var(--warning-tint);
+  --color-warning-ink: var(--warning-ink);
+  --color-focus-ring: var(--focus-ring);
+  --color-mochi-body: var(--mochi-body);
+  --color-mochi-outline: var(--mochi-outline);
+  --color-mochi-blush: var(--mochi-blush);
+
+  --spacing-*: initial;
+  --spacing-0: 0px;
+  --spacing-1: var(--space-1);
+  --spacing-2: var(--space-2);
+  --spacing-3: var(--space-3);
+  --spacing-4: var(--space-4);
+  --spacing-5: var(--space-5);
+  --spacing-6: var(--space-6);
+  --spacing-8: var(--space-8);
+  --spacing-10: var(--space-10);
+  --spacing-14: var(--space-14);
+  --spacing-16: var(--space-16);
+  --spacing-target-min: var(--target-min);
+  --spacing-target-primary: var(--target-primary);
+  --spacing-icon-tile: var(--icon-tile);
+
+  --container-*: initial;
+  --container-content-max: var(--content-max);
+  --container-reading-max: var(--reading-max);
+
+  --radius-*: initial;
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-pill: var(--radius-pill);
+
+  --font-*: initial;
+  --font-display: var(--family-display);
+  --font-sans: var(--family-sans);
+  --font-mono: var(--family-mono);
+
+  --text-*: initial;
+}
+
+/* Type styles: use these instead of separate font size, weight and family utilities. */
+@utility type-display-xl {
+  font-family: var(--family-display);
+  font-size: 64px;
+  line-height: 66px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+@utility type-display-lg {
+  font-family: var(--family-display);
+  font-size: 44px;
+  line-height: 48px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+@utility type-title {
+  font-family: var(--family-display);
+  font-size: 34px;
+  line-height: 40px;
+  font-weight: 600;
+}
+@utility type-title-sm {
+  font-family: var(--family-display);
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 600;
+}
+@utility type-label-lg {
+  font-family: var(--family-display);
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 600;
+}
+@utility type-body-lg {
+  font-family: var(--family-sans);
+  font-size: 19px;
+  line-height: 30px;
+  font-weight: 400;
+}
+@utility type-body {
+  font-family: var(--family-sans);
+  font-size: 17px;
+  line-height: 27px;
+  font-weight: 400;
+}
+@utility type-body-strong {
+  font-family: var(--family-sans);
+  font-size: 17px;
+  line-height: 27px;
+  font-weight: 700;
+}
+@utility type-body-sm {
+  font-family: var(--family-sans);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 500;
+}
+@utility type-caption {
+  font-family: var(--family-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+@utility type-code {
+  font-family: var(--family-mono);
+  font-size: 15px;
+  line-height: 26px;
+  font-weight: 400;
+}

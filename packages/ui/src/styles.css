@@ -3,8 +3,12 @@
  *
  *   @import "tailwindcss";
  *   @import "@mochifile/ui/styles.css";
+ *
+ * Visual rules live in docs/design-system/README.md (ADR 0020). Tokens are generated from
+ * tokens.json; never add raw colours, sizes or radii in components.
  */
-@import "./tokens.css";
+@import "./tokens.generated.css";
+@import "./component-constants.css";
 
 /* Let Tailwind find the utility classes used by the shared components. */
 @source "./components";
