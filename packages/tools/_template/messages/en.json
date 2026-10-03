@@ -7,5 +7,8 @@
   "template_tool_download": "Download {name}",
   "template_tool_error": "Something went wrong. Please try another file.",
   "template_tool_error_unsupported": "This file type is not supported.",
-  "template_tool_error_too_large": "This file is too large."
+  "template_tool_error_too_large": "This file is too large.",
+  "template_tool_mode_label": "Change letters to",
+  "template_tool_mode_upper": "UPPER CASE",
+  "template_tool_mode_lower": "lower case"
 }
