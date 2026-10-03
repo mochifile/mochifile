@@ -27,6 +27,8 @@
   "devDependencies": {
     "@astrojs/check": "0.9.10",
     "@axe-core/playwright": "4.13.0",
+    "@fontsource-variable/figtree": "5.3.0",
+    "@fontsource-variable/fredoka": "5.3.0",
     "@mochifile/engine-image": "workspace:*",
     "@mochifile/tool-template": "workspace:*",
     "@playwright/test": "1.63.0",

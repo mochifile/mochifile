@@ -30,6 +30,16 @@ export const SHIPPED: readonly ShippedPackage[] = [
   { name: 'react', from: { workspace: 'apps/web' }, usedFor: 'tool interface' },
   { name: 'react-dom', from: { workspace: 'apps/web' }, usedFor: 'tool interface' },
   { name: 'scheduler', from: { parent: 'react-dom' }, usedFor: 'tool interface' },
+  {
+    name: '@fontsource-variable/fredoka',
+    from: { workspace: 'apps/web' },
+    usedFor: 'Fredoka font (headings, buttons)',
+  },
+  {
+    name: '@fontsource-variable/figtree',
+    from: { workspace: 'apps/web' },
+    usedFor: 'Figtree font (body text)',
+  },
   { name: 'comlink', from: { workspace: 'packages/tool-kit' }, usedFor: 'worker messaging' },
   {
     name: 'client-zip',
