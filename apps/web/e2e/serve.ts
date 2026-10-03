@@ -3,6 +3,7 @@
  * - applies `_headers` (so the CSP and security headers are exercised in real browsers),
  *   except what only makes sense over HTTPS: `upgrade-insecure-requests` would make
  *   Firefox and WebKit request https://localhost, and HSTS is ignored over HTTP anyway
+ * - like Cloudflare, lets a rule that repeats an earlier rule's path replace it (no merging)
  * - serves `<path>/index.html` and redirects `/path` to `/path/`
  * - serves `404.html` with status 404
  *
@@ -29,7 +30,8 @@ const types: Record<string, string> = {
 type Rule = { pattern: RegExp; headers: Array<[string, string]> }
 
 function parseHeaders(text: string): Rule[] {
-  const rules: Rule[] = []
+  const rules = new Map<string, Rule>()
+  let current: Rule | undefined
   for (const line of text.split('\n')) {
     if (!line.trim() || line.trim().startsWith('#')) continue
     if (!/^\s/.test(line)) {
@@ -37,7 +39,9 @@ function parseHeaders(text: string): Rule[] {
         .trim()
         .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
         .replace(/\*/g, '.*')
-      rules.push({ pattern: new RegExp(`^${source}$`), headers: [] })
+      current = { pattern: new RegExp(`^${source}$`), headers: [] }
+      rules.delete(line.trim())
+      rules.set(line.trim(), current)
       continue
     }
     const separator = line.indexOf(':')
@@ -47,9 +51,9 @@ function parseHeaders(text: string): Rule[] {
     if (/^content-security-policy$/i.test(name)) {
       value = value.replace(/;\s*upgrade-insecure-requests/, '')
     }
-    rules.at(-1)?.headers.push([name, value])
+    current?.headers.push([name, value])
   }
-  return rules
+  return [...rules.values()]
 }
 
 const rules = parseHeaders(readFileSync(join(root, '_headers'), 'utf8'))
