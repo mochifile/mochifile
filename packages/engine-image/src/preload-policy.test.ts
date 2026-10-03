@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { shouldPreloadOnIdle } from './prepare.ts'
+import { shouldPreloadOnIdle } from './preload-policy.ts'
 
 describe('shouldPreloadOnIdle', () => {
   it('preloads when the Network Information API is missing (Safari, Firefox)', () => {
