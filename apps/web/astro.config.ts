@@ -1,8 +1,12 @@
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
 import { defaultLocale, locales } from '@mochifile/i18n'
 import tailwindcss from '@tailwindcss/vite'
-import { defineConfig } from 'astro/config'
+import { defineConfig, fontProviders } from 'astro/config'
+import designTokens from '../../docs/design-system/tokens.json' with { type: 'json' }
 import cspHashes from './integrations/csp-hashes.ts'
 import searchIndexing from './integrations/search-indexing.ts'
 import sitemapAlternates from './integrations/sitemap-alternates.ts'
@@ -16,8 +20,55 @@ const includeTemplateTool = process.env.MOCHIFILE_INCLUDE_TEMPLATE === 'true'
 
 const alternates = sitemapAlternates()
 
+const require = createRequire(import.meta.url)
+/** A woff2 file shipped by a pinned @fontsource-variable package (self-hosted, ADR 0020). */
+const fontFile = (pkg: string, file: string) =>
+  pathToFileURL(join(dirname(require.resolve(`${pkg}/LICENSE`)), 'files', file))
+/** `Fredoka, "Noto Sans", system-ui, sans-serif` → `["Noto Sans", "system-ui", "sans-serif"]`. */
+const fallbacksOf = (family: string) =>
+  family
+    .split(',')
+    .slice(1)
+    .map((name) => name.trim().replace(/^"(.*)"$/, '$1'))
+
 export default defineConfig({
   site: SITE_URL,
+  // Brand fonts, self-hosted from npm (the CSP allows only 'self'; builds stay offline). Only
+  // the Latin subset is shipped: en and pt need nothing else, and it includes the dotless ı of
+  // the wordmark. Fallbacks come from tokens.json; Astro adds metric-matched fallback faces so
+  // text does not shift when the fonts arrive. Noto Sans stays in the stack, not downloaded.
+  fonts: [
+    {
+      provider: fontProviders.local(),
+      name: 'Fredoka',
+      cssVariable: '--font-fredoka',
+      fallbacks: fallbacksOf(designTokens.type.families.display),
+      options: {
+        variants: [
+          {
+            src: [fontFile('@fontsource-variable/fredoka', 'fredoka-latin-wght-normal.woff2')],
+            weight: '300 700',
+            style: 'normal',
+          },
+        ],
+      },
+    },
+    {
+      provider: fontProviders.local(),
+      name: 'Figtree',
+      cssVariable: '--font-figtree',
+      fallbacks: fallbacksOf(designTokens.type.families.sans),
+      options: {
+        variants: [
+          {
+            src: [fontFile('@fontsource-variable/figtree', 'figtree-latin-wght-normal.woff2')],
+            weight: '300 900',
+            style: 'normal',
+          },
+        ],
+      },
+    },
+  ],
   output: 'static',
   trailingSlash: 'always',
   build: {
