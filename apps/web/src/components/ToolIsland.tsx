@@ -42,7 +42,7 @@ export default function ToolIsland({ dir, ...uiProps }: Props) {
   }, [dir])
 
   return (
-    <Suspense fallback={<div className="min-h-48 animate-pulse rounded-card bg-surface-raised" />}>
+    <Suspense fallback={<div className="tool-reserve animate-pulse rounded-lg bg-surface-card" />}>
       <Ui {...uiProps} />
     </Suspense>
   )

@@ -41,14 +41,14 @@ export function Dropzone({ onFiles, accept, multiple, disabled, label, hint }: D
       onDragLeave={() => setDragging(false)}
       onDrop={onDrop}
       className={cn(
-        'flex min-h-48 cursor-pointer flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed border-border bg-surface-raised p-8 text-center transition-colors',
-        'has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus',
-        dragging && 'border-accent bg-accent-soft',
+        'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-strong border-dashed border-border-dashed bg-surface-card px-8 py-10 text-center transition-colors',
+        'has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring',
+        dragging && 'border-ink bg-mango-tint',
         disabled && 'cursor-not-allowed opacity-50',
       )}
     >
-      <span className="text-lg font-semibold text-text">{label}</span>
-      {hint ? <span className="text-sm text-text-muted">{hint}</span> : null}
+      <span className="type-label-lg text-ink">{label}</span>
+      {hint ? <span className="type-body-sm text-ink-muted">{hint}</span> : null}
       <input
         id={id}
         type="file"

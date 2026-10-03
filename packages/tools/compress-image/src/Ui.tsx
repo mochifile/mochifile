@@ -321,7 +321,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
         {targetChoice === 'custom' && (
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">
+              <span className="type-body-sm font-medium">
                 {m.compress_image_custom_label({}, { locale })}
               </span>
               <input
@@ -331,23 +331,24 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                 onChange={(event) => setCustomText(event.currentTarget.value)}
                 aria-invalid={custom?.ok === false && customText !== ''}
                 aria-describedby="compress-image-custom-error"
-                className="min-h-11 w-32 rounded-control border border-border bg-surface-raised px-3 focus-visible:outline-2 focus-visible:outline-focus"
+                size={6}
+                className="min-h-target-min rounded-md border border-border-control bg-surface-card px-3 focus-ring"
               />
             </label>
             <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">
+              <span className="type-body-sm font-medium">
                 {m.compress_image_custom_unit_label({}, { locale })}
               </span>
               <select
                 value={customUnit}
                 onChange={(event) => setCustomUnit(event.currentTarget.value as SizeUnit)}
-                className="min-h-11 rounded-control border border-border bg-surface-raised px-3 focus-visible:outline-2 focus-visible:outline-focus"
+                className="min-h-target-min rounded-md border border-border-control bg-surface-card px-3 focus-ring"
               >
                 <option value="kb">KB</option>
                 <option value="mb">MB</option>
               </select>
             </label>
-            <p id="compress-image-custom-error" className="basis-full text-sm text-accent">
+            <p id="compress-image-custom-error" className="basis-full type-body-sm text-danger">
               {custom?.ok === false && customText !== ''
                 ? custom.reason === 'invalid'
                   ? m.compress_image_custom_error_invalid({}, { locale })
@@ -404,9 +405,11 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
             { locale },
           )}
         />
-        <p className="text-sm text-text-muted">{m.compress_image_privacy_note({}, { locale })}</p>
+        <p className="type-body-sm text-ink-muted">
+          {m.compress_image_privacy_note({}, { locale })}
+        </p>
         {tooMany && (
-          <p role="alert" className="text-sm font-medium text-accent">
+          <p role="alert" className="type-body-sm font-medium text-danger">
             {m.compress_image_too_many({ maxFiles: String(manifest.limits.maxFiles) }, { locale })}
           </p>
         )}
@@ -457,12 +460,12 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
             {items.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-col gap-2 rounded-card border border-border bg-surface-raised p-4"
+                className="flex flex-col gap-2 rounded-lg border border-line bg-surface-card p-4"
                 data-status={item.status}
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <span className="min-w-0 break-all font-medium">{item.file.name}</span>
-                  <span className="text-sm text-text-muted">
+                  <span className="type-body-sm text-ink-muted">
                     {item.result
                       ? m.compress_image_sizes(
                           {
@@ -476,13 +479,13 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                 </div>
                 <div aria-live="polite" className="flex flex-col gap-2">
                   {item.status === 'queued' && (
-                    <span className="text-sm text-text-muted">
+                    <span className="type-body-sm text-ink-muted">
                       {m.compress_image_status_waiting({}, { locale })}
                     </span>
                   )}
                   {item.status === 'working' && (
                     <>
-                      <span className="text-sm">{stageMessage(item.stage)}</span>
+                      <span className="type-body-sm">{stageMessage(item.stage)}</span>
                       <ProgressBar
                         value={item.progress}
                         label={m.compress_image_progress_label(
@@ -493,12 +496,12 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                     </>
                   )}
                   {item.status === 'cancelled' && (
-                    <span className="text-sm text-text-muted">
+                    <span className="type-body-sm text-ink-muted">
                       {m.compress_image_cancelled({}, { locale })}
                     </span>
                   )}
                   {item.status === 'error' && (
-                    <p role="alert" className="text-sm font-medium text-accent">
+                    <p role="alert" className="type-body-sm font-medium text-danger">
                       {errorMessage(item)}
                     </p>
                   )}
@@ -515,7 +518,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                         { name: item.result.name },
                         { locale },
                       )}
-                      className="inline-flex min-h-11 items-center rounded-control bg-accent px-5 font-medium text-on-accent hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      className="inline-flex min-h-target-min items-center rounded-pill bg-action px-5 font-medium text-action-ink focus-ring"
                     >
                       {m.compress_image_download({}, { locale })}
                     </a>

@@ -19,28 +19,28 @@ const { locale } = Astro.props
   paths={samePathInAllLocales('/')}
 >
   <section class="flex flex-col gap-4 py-8 text-center">
-    <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">{m.home_heading({}, { locale })}</h1>
-    <p class="mx-auto max-w-2xl text-lg text-text-muted">{m.home_lead({}, { locale })}</p>
+    <h1 class="type-display-lg sm:type-display-xl">{m.home_heading({}, { locale })}</h1>
+    <p class="mx-auto max-w-reading-max type-body-lg text-ink-muted">{m.home_lead({}, { locale })}</p>
   </section>
   {
     tools.length > 0 ? (
       <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {tools.map(({ manifest }) => (
-          <li class="flex h-full flex-col gap-3 rounded-card border border-border bg-surface-raised p-5 has-[a.tool-link:hover]:border-accent">
+          <li class="flex h-full flex-col gap-3 rounded-lg border border-line bg-surface-card p-5 has-[a.tool-link:hover]:border-ink">
             <a href={toolPaths(manifest)[locale]} class="tool-link">
               <span class="font-semibold">{manifest.meta[locale].title}</span>
-              <span class="mt-1 block text-sm text-text-muted">
+              <span class="mt-1 block type-body-sm text-ink-muted">
                 {manifest.meta[locale].description}
               </span>
             </a>
             {/* Variant pages (e.g. a target size) as shortcuts, also giving crawlers a path. */}
             {manifest.variants && manifest.variants.length > 0 && (
-              <ul class="mt-auto flex flex-wrap gap-2 text-sm" aria-label={manifest.meta[locale].title}>
+              <ul class="mt-auto flex flex-wrap gap-2 type-body-sm" aria-label={manifest.meta[locale].title}>
                 {manifest.variants.map((variant) => (
                   <li>
                     <a
                       href={localePath(locale, variant.meta[locale].slug)}
-                      class="inline-flex min-h-11 items-center rounded-control border border-border px-3 hover:border-accent hover:text-accent"
+                      class="inline-flex min-h-target-min items-center rounded-pill border border-border-control px-3 hover:border-ink hover:underline"
                     >
                       {variant.meta[locale].title}
                     </a>
@@ -52,7 +52,7 @@ const { locale } = Astro.props
         ))}
       </ul>
     ) : (
-      <p class="text-center text-text-muted">{m.home_coming_soon({}, { locale })}</p>
+      <p class="text-center text-ink-muted">{m.home_coming_soon({}, { locale })}</p>
     )
   }
 </BaseLayout>
