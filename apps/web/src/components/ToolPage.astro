@@ -17,6 +17,12 @@ const meta = page.meta[locale]
 const maxSize = formatBytes(manifest.limits.maxFileSizeBytes, locale)
 const site = Astro.site ?? Astro.url
 const absolute = (path: string) => new URL(path, site).href
+// Each category has its identity block (design system README › Colour).
+const categoryBlock = {
+  image: 'bg-mango',
+  media: 'bg-ube',
+  pdf: 'bg-strawberry',
+} as const satisfies Record<typeof manifest.category, string>
 
 // Presence is guaranteed by assertContentComplete() in getStaticPaths.
 const entry = await getEntry('toolContent', contentId(page, locale))
@@ -46,7 +52,9 @@ const jsonLd = serializeJsonLd(
 
 <BaseLayout locale={locale} title={`${meta.title} — Mochifile`} description={meta.description} paths={paths}>
   <script is:inline type="application/ld+json" set:html={jsonLd} />
-  <nav aria-label={m.breadcrumb_label({}, { locale })} class="mb-6 type-body-sm text-ink-muted">
+  {/* Category hero block; the tool panel below overlaps its bottom edge. */}
+  <div class:list={['rounded-2xl-squish-a px-5 pt-4 pb-16 text-ink-on-block sm:px-10 sm:pt-8 sm:pb-20', categoryBlock[manifest.category]]}>
+  <nav aria-label={m.breadcrumb_label({}, { locale })} class="mb-2 type-caption">
     <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
       {
         breadcrumbs.map((item, index) => {
@@ -55,9 +63,9 @@ const jsonLd = serializeJsonLd(
             <li class="flex items-center gap-2">
               {index > 0 && <span aria-hidden="true">›</span>}
               {current ? (
-                <span aria-current="page" class="text-ink">{item.name}</span>
+                <span aria-current="page">{item.name}</span>
               ) : (
-                <a href={item.path} class="underline hover:underline">{item.name}</a>
+                <a href={item.path} class="rounded-sm underline focus-ring">{item.name}</a>
               )}
             </li>
           )
@@ -66,37 +74,36 @@ const jsonLd = serializeJsonLd(
     </ol>
   </nav>
   {/* Everything except the interactive widget is static HTML, for SEO and no-JS visitors. */}
-  <h1 class="mb-2 type-display-lg">{meta.title}</h1>
-  <p class="mb-8 text-ink-muted">{meta.description}</p>
+  <h1 class="type-display-lg sm:type-display-xl">{meta.title}</h1>
+  </div>
   {/*
     client:only: the tool UI is useless without JavaScript, and server-rendering it would show a
     file input that silently ignores files picked before hydration finishes.
   */}
   {/*
-    Reserves the usual height of a tool's controls (options and file picker, measured at
-    390–532 px), so the text below does not jump when the client-only widget replaces its
-    placeholder (layout shift, a Core Web Vital). Content added later, such as results, may
+    The tool panel reserves the usual height of a tool's controls (tool-reserve, measured per
+    screen width), so the text below does not jump when the client-only widget appears
+    (layout shift, a Core Web Vital). Content added later, such as results, may
     still grow the page: that follows a user action and does not count as a shift.
   */}
-  <div class="tool-reserve">
+  <div class="tool-reserve relative mx-auto -mt-10 rounded-xl-squish-a bg-surface-card p-5 sm:-mt-14 sm:p-8">
     <ToolIsland
       client:only="react"
       dir={tool.dir}
       locale={locale}
       {...variant ? { initialOptions: variant.options } : {}}
     >
-      <div slot="fallback" class="tool-reserve animate-pulse rounded-lg bg-surface-card"></div>
     </ToolIsland>
+    <noscript>
+      <p class="text-center">{m.tool_requires_js({}, { locale })}</p>
+    </noscript>
   </div>
-  <noscript>
-    <p class="rounded-lg border border-line bg-surface-card p-6 text-center">
-      {m.tool_requires_js({}, { locale })}
-    </p>
-  </noscript>
   <article class="page-copy mt-16">
+    {/* The page's description leads the long-form copy, keeping the hero short on phones. */}
+    <p class="type-body-lg">{meta.description}</p>
     <Content />
   </article>
-  <section class="mt-16 flex flex-col gap-2 rounded-lg border border-line bg-surface-card p-6" aria-labelledby="tool-facts">
+  <section class="mt-16 flex max-w-reading-max flex-col gap-2 rounded-lg-squish-b bg-ube-tint p-6 text-ube-ink" aria-labelledby="tool-facts">
     <h2 id="tool-facts" class="type-title-sm">{m.tool_facts_heading({}, { locale })}</h2>
     {manifest.runtime === 'browser' && <p>{m.tool_privacy_browser({}, { locale })}</p>}
     <p>{m.tool_max_file_size({ maxSize }, { locale })}</p>
@@ -112,7 +119,7 @@ const jsonLd = serializeJsonLd(
             <li>
               <a
                 href={other.paths[locale]}
-                class="inline-flex min-h-target-min items-center rounded-pill border border-border-control px-4 hover:border-ink hover:underline"
+                class="press inline-flex min-h-target-min items-center rounded-pill border-chip border-border-control bg-surface-card px-4 type-body-sm font-semibold hover:border-ink focus-ring"
               >
                 {other.meta[locale].title}
               </a>

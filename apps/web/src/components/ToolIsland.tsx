@@ -41,8 +41,9 @@ export default function ToolIsland({ dir, ...uiProps }: Props) {
     return lazy(load)
   }, [dir])
 
+  // The tool panel around the island already reserves the space while the UI loads.
   return (
-    <Suspense fallback={<div className="tool-reserve animate-pulse rounded-lg bg-surface-card" />}>
+    <Suspense fallback={null}>
       <Ui {...uiProps} />
     </Suspense>
   )

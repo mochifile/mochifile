@@ -75,6 +75,36 @@ test('language switcher links between locales', async ({ page }) => {
   await expect(page).toHaveURL('/')
 })
 
+for (const path of ['/', '/pt/comprimir-imagem-para-50kb/']) {
+  test(`the logo is named "Mochifile"; the wordmark's dotless ı stays visual (${path})`, async ({
+    page,
+  }) => {
+    await page.goto(path)
+    const logo = page.getByRole('banner').getByRole('link').first()
+    await expect(logo).toHaveAccessibleName('Mochifile', { ignoreCase: false })
+    // Everything inside the link is decorative.
+    expect(
+      await logo.evaluate((link) =>
+        [...link.children].every((child) => child.getAttribute('aria-hidden') === 'true'),
+      ),
+    ).toBe(true)
+    // Titles, meta tags and structured data use the plain name.
+    const head = await page.evaluate(() =>
+      [
+        document.title,
+        ...[...document.querySelectorAll('meta[content]')].map(
+          (meta) => meta.getAttribute('content') ?? '',
+        ),
+        ...[...document.querySelectorAll('script[type="application/ld+json"]')].map(
+          (script) => script.textContent ?? '',
+        ),
+      ].join('\n'),
+    )
+    expect(head).toContain('Mochifile')
+    expect(head).not.toContain('ı')
+  })
+}
+
 test('sends security headers', async ({ request }) => {
   const response = await request.get('/')
   const headers = response.headers()
