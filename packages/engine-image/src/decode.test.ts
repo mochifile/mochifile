@@ -97,3 +97,29 @@ describe('decodeImage (WebAssembly path)', () => {
     ).rejects.toMatchObject({ code: 'invalid-file' })
   })
 })
+
+describe('decodeImage (WebAssembly path) cache', () => {
+  it('decodes a file once for a preview and a working size, and hands over full size safely', async () => {
+    const bytes = (await readPhoto('flowers')) as Uint8Array<ArrayBuffer>
+    const info = sniffImage(bytes)
+    let decodes = 0
+    const counting: Codecs = {
+      ...codecs,
+      decode: (format, input) => {
+        decodes += 1
+        return codecs.decode(format, input)
+      },
+    }
+    const decode = (width: number, height: number) =>
+      decodeImage({ path: 'wasm', bytes, info, target: { width, height }, codecs: counting })
+    await decode(300, 225)
+    await decode(600, 450)
+    expect(decodes).toBe(1)
+    // A full-size result leaves the cache, so changing it cannot affect a later decode.
+    const full = await decode(1200, 900)
+    full.data.fill(0)
+    const again = await decode(1200, 900)
+    expect(again.data.some((v) => v !== 0)).toBe(true)
+    expect(decodes).toBe(2)
+  })
+})
