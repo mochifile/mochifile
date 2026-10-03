@@ -7,6 +7,9 @@
     },
     "test": {
       "dependsOn": ["$TURBO_EXTENDS$", "build"]
+    },
+    "build": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/tools/*/messages/*.json"]
     }
   }
 }
