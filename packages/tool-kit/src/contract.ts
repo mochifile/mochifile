@@ -50,6 +50,21 @@ export interface ToolLocaleMeta {
  */
 export type ToolOptions = Record<string, unknown>
 
+/**
+ * An extra landing page for a tool that starts with preset options, e.g. "Compress image to
+ * 50 KB". It gets its own URL, title and description in every locale, and its own page copy.
+ */
+export interface ToolVariant<O extends ToolOptions = ToolOptions> {
+  /**
+   * Stable identifier within the tool, lowercase kebab-case (e.g. `50kb`). It names the
+   * variant's content file. `index` is reserved for the tool's main page.
+   */
+  key: string
+  /** Options the page starts with, applied over `defaults`. Keys must exist in `defaults`. */
+  options: Partial<O>
+  meta: Record<Locale, ToolLocaleMeta>
+}
+
 export interface ToolManifest<O extends ToolOptions = ToolOptions> {
   /** Stable identifier, lowercase kebab-case. Never change it once released. */
   id: string
@@ -61,6 +76,8 @@ export interface ToolManifest<O extends ToolOptions = ToolOptions> {
   /** Default options; the UI starts from these and `process()` receives them merged. */
   defaults: O
   meta: Record<Locale, ToolLocaleMeta>
+  /** Extra landing pages with preset options. Slugs share the namespace of tool slugs. */
+  variants?: readonly ToolVariant<O>[]
 }
 
 export interface ToolProgress {

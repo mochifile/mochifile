@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { assertUniqueTools, defineToolManifest, validateManifest } from './manifest.ts'
 import { validManifest } from './test-fixtures.ts'
 
+const variant = (key: string, enSlug: string, ptSlug: string, options = { quality: 50 }) => ({
+  key,
+  options,
+  meta: {
+    en: { slug: enSlug, title: 'Example at 50', description: 'Starts at quality 50.' },
+    pt: { slug: ptSlug, title: 'Exemplo a 50', description: 'Começa com qualidade 50.' },
+  },
+})
+
 describe('defineToolManifest', () => {
   it('returns a frozen copy of a valid manifest', () => {
     const manifest = defineToolManifest(validManifest)
@@ -51,6 +60,44 @@ describe('validateManifest', () => {
   })
 })
 
+describe('variants', () => {
+  it('accepts valid variants', () => {
+    const manifest = {
+      ...validManifest,
+      variants: [variant('q50', 'example-tool-50', 'ferramenta-exemplo-50')],
+    }
+    expect(validateManifest(manifest)).toEqual([])
+    expect(Object.isFrozen(defineToolManifest(manifest).variants?.[0]?.options)).toBe(true)
+  })
+
+  it('rejects bad keys, the reserved key, duplicate keys and unknown options', () => {
+    const problems = validateManifest({
+      ...validManifest,
+      variants: [
+        variant('Bad Key', 'a-en', 'a-pt'),
+        variant('index', 'b-en', 'b-pt'),
+        variant('q50', 'c-en', 'c-pt'),
+        variant('q50', 'd-en', 'd-pt', { quality: 50, speed: 2 } as { quality: number }),
+      ],
+    })
+    expect(problems).toEqual([
+      'variants[0].key must be lowercase kebab-case',
+      'variants[1].key "index" is reserved',
+      'variants[3].key "q50" is used twice',
+      'variants[3].options.speed is not in defaults',
+    ])
+  })
+
+  it('validates variant metadata like the main page', () => {
+    const bad = variant('q50', 'Not_Kebab', 'ok-pt')
+    bad.meta.en.title = 'x'.repeat(71)
+    expect(validateManifest({ ...validManifest, variants: [bad] })).toEqual([
+      'variants[0].meta.en.slug must be lowercase kebab-case',
+      'variants[0].meta.en.title exceeds 70 chars',
+    ])
+  })
+})
+
 describe('assertUniqueTools', () => {
   it('passes for distinct tools', () => {
     const other = {
@@ -71,5 +118,30 @@ describe('assertUniqueTools', () => {
   it('throws on duplicate slugs within a locale', () => {
     const other = { ...validManifest, id: 'other-tool' }
     expect(() => assertUniqueTools([validManifest, other])).toThrow(/Slug "en:example-tool"/)
+  })
+})
+
+describe('assertUniqueTools with variants', () => {
+  it('throws when a variant reuses its own tool slug', () => {
+    const manifest = {
+      ...validManifest,
+      variants: [variant('q50', 'example-tool', 'ferramenta-exemplo-50')],
+    }
+    expect(() => assertUniqueTools([manifest])).toThrow(
+      /Slug "en:example-tool" used by both "example-tool" and "example-tool\/q50"/,
+    )
+  })
+
+  it("throws when a variant reuses another tool's slug in the same locale", () => {
+    const other = {
+      ...validManifest,
+      id: 'other-tool',
+      meta: {
+        en: { ...validManifest.meta.en, slug: 'other-tool' },
+        pt: { ...validManifest.meta.pt, slug: 'outra-ferramenta' },
+      },
+      variants: [variant('q50', 'other-50', 'ferramenta-exemplo')],
+    }
+    expect(() => assertUniqueTools([validManifest, other])).toThrow(/Slug "pt:ferramenta-exemplo"/)
   })
 })

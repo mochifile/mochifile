@@ -1,10 +1,18 @@
 import { locales } from '@mochifile/i18n'
-import { type ToolManifest, type ToolOptions, toolCategories, toolRuntimes } from './contract.ts'
+import {
+  type ToolLocaleMeta,
+  type ToolManifest,
+  type ToolOptions,
+  toolCategories,
+  toolRuntimes,
+} from './contract.ts'
 
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const MIME = /^[a-z]+\/(?:\*|[a-z0-9][a-z0-9.+-]*)$/
 export const TITLE_MAX = 70
 export const DESCRIPTION_MAX = 160
+/** Content key of a tool's main page; variants may not use it. */
+export const MAIN_PAGE_KEY = 'index'
 
 /**
  * Declares a tool manifest. Validates it eagerly so mistakes fail at build and test time,
@@ -35,41 +43,79 @@ export function validateManifest(manifest: ToolManifest): string[] {
   if (maxTotalSizeBytes !== undefined && !(maxTotalSizeBytes >= maxFileSizeBytes)) {
     problems.push('limits.maxTotalSizeBytes must be >= maxFileSizeBytes')
   }
-  for (const locale of locales) {
-    const meta = manifest.meta[locale]
-    if (!meta) {
-      problems.push(`missing meta for locale "${locale}"`)
-      continue
-    }
-    if (!KEBAB.test(meta.slug)) problems.push(`meta.${locale}.slug must be lowercase kebab-case`)
-    if (!meta.title.trim()) problems.push(`meta.${locale}.title is empty`)
-    if (meta.title.length > TITLE_MAX)
-      problems.push(`meta.${locale}.title exceeds ${TITLE_MAX} chars`)
-    if (!meta.description.trim()) problems.push(`meta.${locale}.description is empty`)
-    if (meta.description.length > DESCRIPTION_MAX) {
-      problems.push(`meta.${locale}.description exceeds ${DESCRIPTION_MAX} chars`)
-    }
-  }
+  problems.push(...validateMeta(manifest.meta, 'meta'))
   try {
     structuredClone(manifest.defaults)
   } catch {
     problems.push('defaults must be structured-cloneable plain data')
   }
+  const keys = new Set<string>()
+  for (const [index, variant] of (manifest.variants ?? []).entries()) {
+    const at = `variants[${index}]`
+    if (!KEBAB.test(variant.key)) problems.push(`${at}.key must be lowercase kebab-case`)
+    if (variant.key === MAIN_PAGE_KEY) problems.push(`${at}.key "${MAIN_PAGE_KEY}" is reserved`)
+    if (keys.has(variant.key)) problems.push(`${at}.key "${variant.key}" is used twice`)
+    keys.add(variant.key)
+    for (const option of Object.keys(variant.options)) {
+      if (!Object.hasOwn(manifest.defaults, option)) {
+        problems.push(`${at}.options.${option} is not in defaults`)
+      }
+    }
+    try {
+      structuredClone(variant.options)
+    } catch {
+      problems.push(`${at}.options must be structured-cloneable plain data`)
+    }
+    problems.push(...validateMeta(variant.meta, `${at}.meta`))
+  }
   return problems
 }
 
-/** Throws if two manifests share an id, or a slug within the same locale. */
+function validateMeta(meta: Partial<Record<string, ToolLocaleMeta>>, at: string): string[] {
+  const problems: string[] = []
+  for (const locale of locales) {
+    const entry = meta[locale]
+    if (!entry) {
+      problems.push(`missing ${at} for locale "${locale}"`)
+      continue
+    }
+    if (!KEBAB.test(entry.slug)) problems.push(`${at}.${locale}.slug must be lowercase kebab-case`)
+    if (!entry.title.trim()) problems.push(`${at}.${locale}.title is empty`)
+    if (entry.title.length > TITLE_MAX) {
+      problems.push(`${at}.${locale}.title exceeds ${TITLE_MAX} chars`)
+    }
+    if (!entry.description.trim()) problems.push(`${at}.${locale}.description is empty`)
+    if (entry.description.length > DESCRIPTION_MAX) {
+      problems.push(`${at}.${locale}.description exceeds ${DESCRIPTION_MAX} chars`)
+    }
+  }
+  return problems
+}
+
+/**
+ * Throws if two manifests share an id, or if any two pages (main pages and variants, across
+ * all tools) share a slug within the same locale.
+ */
 export function assertUniqueTools(manifests: readonly ToolManifest[]): void {
   const ids = new Set<string>()
   const slugs = new Map<string, string>()
   for (const manifest of manifests) {
     if (ids.has(manifest.id)) throw new Error(`Duplicate tool id "${manifest.id}"`)
     ids.add(manifest.id)
-    for (const locale of locales) {
-      const key = `${locale}:${manifest.meta[locale].slug}`
-      const owner = slugs.get(key)
-      if (owner) throw new Error(`Slug "${key}" used by both "${owner}" and "${manifest.id}"`)
-      slugs.set(key, manifest.id)
+    const pages = [
+      { name: manifest.id, meta: manifest.meta },
+      ...(manifest.variants ?? []).map((variant) => ({
+        name: `${manifest.id}/${variant.key}`,
+        meta: variant.meta,
+      })),
+    ]
+    for (const page of pages) {
+      for (const locale of locales) {
+        const key = `${locale}:${page.meta[locale].slug}`
+        const owner = slugs.get(key)
+        if (owner) throw new Error(`Slug "${key}" used by both "${owner}" and "${page.name}"`)
+        slugs.set(key, page.name)
+      }
     }
   }
 }
