@@ -1,6 +1,12 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { addHashesToHeaders, collectInlineHashes, type InlineHashes } from './csp-hashes.ts'
+import {
+  addHashesToHeaders,
+  assertHeaderLineLengths,
+  collectInlineHashes,
+  type InlineHashes,
+  MAX_HEADER_LINE_LENGTH,
+} from './csp-hashes.ts'
 
 const empty = (): InlineHashes => ({ scripts: new Set(), styles: new Set() })
 const hash = (s: string) => `'sha256-${createHash('sha256').update(s).digest('base64')}'`
@@ -100,5 +106,18 @@ describe('addHashesToHeaders', () => {
   it('leaves the policy unchanged when there is nothing inline', () => {
     const headers = "  Content-Security-Policy: script-src 'self'"
     expect(addHashesToHeaders(headers, empty())).toBe(headers)
+  })
+})
+
+describe('assertHeaderLineLengths', () => {
+  it('accepts lines up to the Cloudflare limit', () => {
+    const line = `  Content-Security-Policy: ${'a'.repeat(MAX_HEADER_LINE_LENGTH - 27)}`
+    expect(line).toHaveLength(MAX_HEADER_LINE_LENGTH)
+    expect(() => assertHeaderLineLengths(`/*\n${line}\n`)).not.toThrow()
+  })
+
+  it('rejects a line Cloudflare would ignore', () => {
+    const line = `  Content-Security-Policy: ${'a'.repeat(MAX_HEADER_LINE_LENGTH)}`
+    expect(() => assertHeaderLineLengths(`/*\n${line}\n`)).toThrow(/Content-Security-Policy/)
   })
 })

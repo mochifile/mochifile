@@ -5,7 +5,8 @@
  * Astro islands add a few small inline `<script>` and `<style>` elements. After the build this
  * integration hashes every inline script and style found in the HTML output and appends the
  * hashes to `script-src` / `style-src` in `dist/_headers`. It fails the build on inline event
- * handlers or `style="…"` attributes, which a hash-based policy cannot allow. See ADR 0012.
+ * handlers or `style="…"` attributes, which a hash-based policy cannot allow, and on header
+ * lines too long for Cloudflare to apply. See ADR 0012.
  *
  * Runs only at build time, in Node. `parse5` is a devDependency and never reaches the client.
  */
@@ -87,6 +88,24 @@ export function addHashesToHeaders(headers: string, hashes: InlineHashes): strin
   )
 }
 
+/**
+ * Cloudflare ignores `_headers` lines longer than this, which would silently drop the CSP.
+ * https://developers.cloudflare.com/workers/static-assets/headers/
+ */
+export const MAX_HEADER_LINE_LENGTH = 2000
+
+/** Throws if any `_headers` line is too long for Cloudflare to apply. */
+export function assertHeaderLineLengths(headers: string): void {
+  for (const line of headers.split('\n')) {
+    if (line.length > MAX_HEADER_LINE_LENGTH) {
+      const name = line.trim().split(':')[0]
+      throw new Error(
+        `_headers: the ${name} line is ${line.length} characters; Cloudflare ignores lines over ${MAX_HEADER_LINE_LENGTH}`,
+      )
+    }
+  }
+}
+
 async function htmlFiles(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true, recursive: true })
   return entries
@@ -106,7 +125,9 @@ export default function cspHashes(): AstroIntegration {
         }
         const headersPath = join(root, '_headers')
         const headers = await readFile(headersPath, 'utf8')
-        await writeFile(headersPath, addHashesToHeaders(headers, hashes))
+        const result = addHashesToHeaders(headers, hashes)
+        assertHeaderLineLengths(result)
+        await writeFile(headersPath, result)
         logger.info(
           `added ${hashes.scripts.size} script and ${hashes.styles.size} style hashes to _headers`,
         )
