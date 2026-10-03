@@ -6,20 +6,38 @@ export const toolErrorCodes = [
   'no-files',
   'aborted',
   'processing-failed',
+  /** The file claims a supported type but cannot be read (corrupt or truncated). */
+  'invalid-file',
+  /** The file's pixel dimensions exceed what the tool can process. */
+  'dimensions-too-large',
+  /** The requested result cannot be reached, e.g. a size target that is too small. */
+  'target-unreachable',
 ] as const
 export type ToolErrorCode = (typeof toolErrorCodes)[number]
 
 /**
- * An expected, user-facing failure. The UI maps `code` to a translated message, so
- * `message` is for developers only. Never put file contents in either field.
+ * Extra facts the UI can show with an error, e.g. `{ smallestBytes: 7200 }`. Plain numbers
+ * and strings only, and never file contents, file names or anything derived from pixels.
+ */
+export type ToolErrorDetails = Readonly<Record<string, number | string>>
+
+export interface ToolErrorOptions extends ErrorOptions {
+  details?: ToolErrorDetails
+}
+
+/**
+ * An expected, user-facing failure. The UI maps `code` (and `details`) to a translated
+ * message, so `message` is for developers only. Never put file contents in any field.
  */
 export class ToolError extends Error {
   override readonly name = 'ToolError'
   readonly code: ToolErrorCode
+  readonly details: ToolErrorDetails | undefined
 
-  constructor(code: ToolErrorCode, message: string = code, options?: ErrorOptions) {
+  constructor(code: ToolErrorCode, message: string = code, options?: ToolErrorOptions) {
     super(message, options)
     this.code = code
+    this.details = options?.details
   }
 }
 
@@ -31,10 +49,15 @@ export function isToolError(error: unknown): error is ToolError {
 export interface SerializedToolError {
   code: ToolErrorCode
   message: string
+  details?: ToolErrorDetails
 }
 
 export function serializeError(error: unknown): SerializedToolError {
-  if (isToolError(error)) return { code: error.code, message: error.message }
+  if (isToolError(error)) {
+    return error.details === undefined
+      ? { code: error.code, message: error.message }
+      : { code: error.code, message: error.message, details: { ...error.details } }
+  }
   if (error instanceof DOMException && error.name === 'AbortError') {
     return { code: 'aborted', message: 'Aborted' }
   }
@@ -43,7 +66,9 @@ export function serializeError(error: unknown): SerializedToolError {
 }
 
 export function deserializeError(error: SerializedToolError): ToolError {
-  return new ToolError(error.code, error.message)
+  return error.details === undefined
+    ? new ToolError(error.code, error.message)
+    : new ToolError(error.code, error.message, { details: error.details })
 }
 
 /** Throws `ToolError('aborted')` if the signal was aborted. Call it inside long loops. */

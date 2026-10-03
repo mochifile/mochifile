@@ -9,6 +9,24 @@ describe('error serialization', () => {
     expect(error.message).toBe('too big')
   })
 
+  it('round-trips details', () => {
+    const error = deserializeError(
+      serializeError(
+        new ToolError('target-unreachable', 'too small', { details: { smallestBytes: 7200 } }),
+      ),
+    )
+    expect(error.code).toBe('target-unreachable')
+    expect(error.details).toEqual({ smallestBytes: 7200 })
+  })
+
+  it('omits details when there are none', () => {
+    expect(serializeError(new ToolError('invalid-file'))).toEqual({
+      code: 'invalid-file',
+      message: 'invalid-file',
+    })
+    expect(deserializeError({ code: 'invalid-file', message: 'x' }).details).toBeUndefined()
+  })
+
   it('maps AbortError to the aborted code', () => {
     expect(serializeError(new DOMException('x', 'AbortError')).code).toBe('aborted')
   })
