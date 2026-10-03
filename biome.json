@@ -13,7 +13,8 @@
       "!**/project.inlang",
       "!**/.astro",
       "!**/dist",
-      "!**/dist-e2e"
+      "!**/dist-e2e",
+      "!docs/design-system"
     ]
   },
   "formatter": {

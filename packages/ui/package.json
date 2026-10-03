@@ -11,7 +11,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "tokens": "node scripts/tokens.ts"
   },
   "peerDependencies": {
     "react": "^19.0.0"
