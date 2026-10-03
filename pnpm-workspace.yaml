@@ -22,3 +22,6 @@ catalog:
 # Dependencies allowed to run install scripts. Review before adding anything here.
 allowBuilds:
   esbuild: true
+  # wrangler's runtime; its postinstall only checks the platform binary that pnpm already
+  # installs as an optional dependency.
+  workerd: false
