@@ -5,7 +5,9 @@
  * linking to this page's alternate in it (the same paths as the hreflang links). A tiny script
  * shows at most one: the visitor's highest-ranked supported language, when it differs from the
  * page's. It never shows again in a browser once the visitor dismisses it or uses the
- * language switcher. Fixed overlay: it moves nothing on the page.
+ * language switcher. Fixed overlay: it moves nothing on the page. On phones it sits at the top,
+ * over the header and title, so it never covers a tool's file picker on first view; on wider
+ * screens at the bottom. Both edges keep clear of the iOS safe areas.
  */
 import { type Locale, locales, localeTags } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
@@ -27,7 +29,7 @@ const others = locales.filter((target) => target !== locale)
       data-language-suggestion={localeTags[target]}
       lang={localeTags[target]}
       aria-label={m.language_suggestion_label({}, { locale: target })}
-      class="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md flex-wrap items-center gap-3 rounded-card border-2 border-accent bg-surface-raised p-4 text-text mb-[env(safe-area-inset-bottom)]"
+      class="fixed inset-x-4 top-[calc(1rem+env(safe-area-inset-top))] z-50 mx-auto flex max-w-md flex-wrap items-center gap-3 rounded-card border-2 border-accent bg-surface-raised p-4 text-text sm:top-auto sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
     >
       <p class="w-full font-medium">{m.language_suggestion_text({}, { locale: target })}</p>
       <a

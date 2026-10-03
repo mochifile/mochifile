@@ -95,7 +95,7 @@ test('dismissal is remembered across reloads and pages', async ({ testBrowser })
   const { context, page, errors } = await visitorPage(testBrowser, 'pt-BR')
   try {
     await page.goto('/')
-    await banner(page).getByRole('button', { name: 'Não, obrigado' }).click()
+    await banner(page).getByRole('button', { name: 'Agora não' }).click()
     await expect(banner(page)).toHaveCount(0)
     await page.reload()
     await expect(page.locator('aside[data-language-suggestion]')).toBeHidden()
@@ -137,7 +137,7 @@ test('still works, without errors, when storage is blocked', async ({ testBrowse
     })
     await page.goto('/')
     await expect(banner(page)).toBeVisible()
-    await banner(page).getByRole('button', { name: 'Não, obrigado' }).click()
+    await banner(page).getByRole('button', { name: 'Agora não' }).click()
     await expect(banner(page)).toHaveCount(0)
     expect(errors).toEqual([])
   } finally {
@@ -176,12 +176,79 @@ test('is keyboard accessible, axe-clean and shifts nothing', async ({
     const { default: AxeBuilder } = await import('@axe-core/playwright')
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
 
-    // Reachable with the keyboard, and Enter on "No, thanks" closes it.
-    const dismiss = banner(page).getByRole('button', { name: 'Não, obrigado' })
+    // Reachable with the keyboard, and Enter on "Not now" closes it.
+    const dismiss = banner(page).getByRole('button', { name: 'Agora não' })
     await dismiss.focus()
     await expect(dismiss).toBeFocused()
     await page.keyboard.press('Enter')
     await expect(banner(page)).toHaveCount(0)
+  } finally {
+    await context.close()
+  }
+})
+
+/** Phone size (iPhone 13/14: 390 × 844 CSS pixels). */
+const PHONE = { width: 390, height: 844 }
+
+for (const [locale, path] of [
+  ['pt-BR', '/compress-image/'],
+  ['pt-BR', '/compress-image-to-50kb/'],
+  ['en-US', '/pt/comprimir-imagem-para-50kb/'],
+] as const) {
+  test(`on a phone, never covers the file picker on first view (${locale} on ${path})`, async ({
+    testBrowser,
+  }) => {
+    const { context, page } = await visitorPage(testBrowser, locale, { viewport: PHONE })
+    try {
+      await page.goto(path)
+      const dropzone = page.locator('label').filter({ has: page.locator('input[type="file"]') })
+      await expect(dropzone).toBeVisible()
+      await expect(banner(page)).toBeVisible()
+
+      const zone = await dropzone.boundingBox()
+      const panel = await banner(page).boundingBox()
+      if (!zone || !panel) throw new Error('missing boxes')
+      const overlaps =
+        panel.x < zone.x + zone.width &&
+        zone.x < panel.x + panel.width &&
+        panel.y < zone.y + zone.height &&
+        zone.y < panel.y + panel.height
+      expect(overlaps).toBe(false)
+
+      // A tap on the visible part of the file picker reaches it, not the banner.
+      const x = zone.x + zone.width / 2
+      const y = (zone.y + Math.min(zone.y + zone.height, PHONE.height)) / 2
+      expect(
+        await page.evaluate(
+          (point) =>
+            Boolean(
+              document
+                .elementFromPoint(point.x, point.y)
+                ?.closest('label')
+                ?.querySelector('input[type="file"]'),
+            ),
+          { x, y },
+        ),
+      ).toBe(true)
+
+      // Clear of the iOS safe areas at whichever edge it uses.
+      const classes = (await banner(page).getAttribute('class')) ?? ''
+      expect(classes).toContain('env(safe-area-inset-top)')
+      expect(classes).toContain('env(safe-area-inset-bottom)')
+    } finally {
+      await context.close()
+    }
+  })
+}
+
+test('on wider screens, sits at the bottom', async ({ testBrowser }) => {
+  const { context, page } = await visitorPage(testBrowser, 'pt-BR', {
+    viewport: { width: 1280, height: 800 },
+  })
+  try {
+    await page.goto('/')
+    const panel = await banner(page).boundingBox()
+    expect(panel && panel.y + panel.height).toBeGreaterThan(700)
   } finally {
     await context.close()
   }
