@@ -8,15 +8,15 @@ export interface NoticeProps {
 }
 
 const tones = {
-  info: 'border-border bg-surface-raised',
-  success: 'border-accent bg-accent-soft',
-  warning: 'border-accent bg-surface-raised font-medium',
+  info: 'border-line bg-surface-card',
+  success: 'border-ink bg-mango-tint',
+  warning: 'border-ink bg-surface-card font-medium',
 } as const
 
 /** A short message about a result or a choice. Announce changes with an `aria-live` parent. */
 export function Notice({ tone = 'info', children, className }: NoticeProps) {
   return (
-    <p className={cn('rounded-control border px-3 py-2 text-sm text-text', tones[tone], className)}>
+    <p className={cn('rounded-md border px-3 py-2 type-body-sm text-ink', tones[tone], className)}>
       {children}
     </p>
   )

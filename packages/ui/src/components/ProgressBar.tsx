@@ -20,9 +20,9 @@ export function ProgressBar({ value, label, className }: ProgressBarProps) {
       value={percent}
       aria-label={label}
       className={cn(
-        'h-2 w-full appearance-none overflow-hidden rounded-full bg-border',
-        '[&::-webkit-progress-bar]:bg-border [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-accent',
-        '[&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-accent',
+        'h-2 w-full appearance-none overflow-hidden rounded-pill bg-line',
+        '[&::-webkit-progress-bar]:bg-line [&::-webkit-progress-value]:rounded-pill [&::-webkit-progress-value]:bg-action',
+        '[&::-moz-progress-bar]:rounded-pill [&::-moz-progress-bar]:bg-action',
         className,
       )}
     >

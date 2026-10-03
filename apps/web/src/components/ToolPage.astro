@@ -46,7 +46,7 @@ const jsonLd = serializeJsonLd(
 
 <BaseLayout locale={locale} title={`${meta.title} — Mochifile`} description={meta.description} paths={paths}>
   <script is:inline type="application/ld+json" set:html={jsonLd} />
-  <nav aria-label={m.breadcrumb_label({}, { locale })} class="mb-6 text-sm text-text-muted">
+  <nav aria-label={m.breadcrumb_label({}, { locale })} class="mb-6 type-body-sm text-ink-muted">
     <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
       {
         breadcrumbs.map((item, index) => {
@@ -55,9 +55,9 @@ const jsonLd = serializeJsonLd(
             <li class="flex items-center gap-2">
               {index > 0 && <span aria-hidden="true">›</span>}
               {current ? (
-                <span aria-current="page" class="text-text">{item.name}</span>
+                <span aria-current="page" class="text-ink">{item.name}</span>
               ) : (
-                <a href={item.path} class="underline hover:text-accent">{item.name}</a>
+                <a href={item.path} class="underline hover:underline">{item.name}</a>
               )}
             </li>
           )
@@ -66,8 +66,8 @@ const jsonLd = serializeJsonLd(
     </ol>
   </nav>
   {/* Everything except the interactive widget is static HTML, for SEO and no-JS visitors. */}
-  <h1 class="mb-2 text-3xl font-bold tracking-tight">{meta.title}</h1>
-  <p class="mb-8 text-text-muted">{meta.description}</p>
+  <h1 class="mb-2 type-display-lg">{meta.title}</h1>
+  <p class="mb-8 text-ink-muted">{meta.description}</p>
   {/*
     client:only: the tool UI is useless without JavaScript, and server-rendering it would show a
     file input that silently ignores files picked before hydration finishes.
@@ -78,33 +78,33 @@ const jsonLd = serializeJsonLd(
     placeholder (layout shift, a Core Web Vital). Content added later, such as results, may
     still grow the page: that follows a user action and does not count as a shift.
   */}
-  <div class="min-h-[30rem] sm:min-h-[34rem] lg:min-h-[30rem]">
+  <div class="tool-reserve">
     <ToolIsland
       client:only="react"
       dir={tool.dir}
       locale={locale}
       {...variant ? { initialOptions: variant.options } : {}}
     >
-      <div slot="fallback" class="min-h-48 animate-pulse rounded-card bg-surface-raised"></div>
+      <div slot="fallback" class="tool-reserve animate-pulse rounded-lg bg-surface-card"></div>
     </ToolIsland>
   </div>
   <noscript>
-    <p class="rounded-card border border-border bg-surface-raised p-6 text-center">
+    <p class="rounded-lg border border-line bg-surface-card p-6 text-center">
       {m.tool_requires_js({}, { locale })}
     </p>
   </noscript>
-  <article class="page-copy mt-12">
+  <article class="page-copy mt-16">
     <Content />
   </article>
-  <section class="mt-12 flex flex-col gap-2 rounded-card border border-border bg-surface-raised p-6" aria-labelledby="tool-facts">
-    <h2 id="tool-facts" class="text-xl font-semibold">{m.tool_facts_heading({}, { locale })}</h2>
+  <section class="mt-16 flex flex-col gap-2 rounded-lg border border-line bg-surface-card p-6" aria-labelledby="tool-facts">
+    <h2 id="tool-facts" class="type-title-sm">{m.tool_facts_heading({}, { locale })}</h2>
     {manifest.runtime === 'browser' && <p>{m.tool_privacy_browser({}, { locale })}</p>}
     <p>{m.tool_max_file_size({ maxSize }, { locale })}</p>
   </section>
   {
     siblings.length > 0 && (
-      <nav class="mt-12" aria-labelledby="tool-more-pages">
-        <h2 id="tool-more-pages" class="mb-3 text-xl font-semibold">
+      <nav class="mt-16" aria-labelledby="tool-more-pages">
+        <h2 id="tool-more-pages" class="mb-3 type-title-sm">
           {manifest.relatedPagesLabel?.[locale] ?? m.tool_more_pages_heading({}, { locale })}
         </h2>
         <ul class="flex flex-wrap gap-2">
@@ -112,7 +112,7 @@ const jsonLd = serializeJsonLd(
             <li>
               <a
                 href={other.paths[locale]}
-                class="inline-flex min-h-11 items-center rounded-control border border-border px-4 hover:border-accent hover:text-accent"
+                class="inline-flex min-h-target-min items-center rounded-pill border border-border-control px-4 hover:border-ink hover:underline"
               >
                 {other.meta[locale].title}
               </a>

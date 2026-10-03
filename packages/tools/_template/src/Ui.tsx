@@ -82,14 +82,14 @@ export default function TemplateToolUi({ locale, initialOptions }: Props) {
       <fieldset className="flex flex-wrap items-center gap-4">
         <legend className="mb-2 font-medium">{m.template_tool_mode_label({}, { locale })}</legend>
         {(['upper', 'lower'] as const).map((value) => (
-          <label key={value} className="flex min-h-11 items-center gap-2">
+          <label key={value} className="flex min-h-target-min items-center gap-2">
             <input
               type="radio"
               name="template-tool-mode"
               value={value}
               checked={mode === value}
               onChange={() => setMode(value)}
-              className="size-5 accent-accent"
+              className="size-5 accent-action"
             />
             {value === 'upper'
               ? m.template_tool_mode_upper({}, { locale })
@@ -120,13 +120,13 @@ export default function TemplateToolUi({ locale, initialOptions }: Props) {
           <a
             href={state.url}
             download={state.result.name}
-            className="inline-flex min-h-11 items-center rounded-control bg-accent px-5 font-medium text-on-accent hover:bg-accent-hover"
+            className="inline-flex min-h-target-min items-center rounded-pill bg-action px-5 font-medium text-action-ink"
           >
             {m.template_tool_download({ name: state.result.name }, { locale })}
           </a>
         )}
         {state.status === 'error' && (
-          <p role="alert" className="text-accent">
+          <p role="alert" className="text-danger">
             {errorMessage(state.code)}
           </p>
         )}

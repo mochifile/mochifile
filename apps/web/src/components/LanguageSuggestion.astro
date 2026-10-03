@@ -29,21 +29,21 @@ const others = locales.filter((target) => target !== locale)
       data-language-suggestion={localeTags[target]}
       lang={localeTags[target]}
       aria-label={m.language_suggestion_label({}, { locale: target })}
-      class="fixed inset-x-4 top-[calc(1rem+env(safe-area-inset-top))] z-50 mx-auto flex max-w-md flex-wrap items-center gap-3 rounded-card border-2 border-accent bg-surface-raised p-4 text-text sm:top-auto sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]"
+      class="fixed inset-x-4 top-[calc(var(--space-4)+env(safe-area-inset-top))] z-50 mx-auto flex max-w-reading-max flex-wrap items-center gap-3 rounded-lg border-chip border-ink bg-surface-card p-4 text-ink sm:top-auto sm:bottom-[calc(var(--space-4)+env(safe-area-inset-bottom))]"
     >
       <p class="w-full font-medium">{m.language_suggestion_text({}, { locale: target })}</p>
       <a
         href={paths[target]}
         hreflang={localeTags[target]}
         data-language-choice
-        class="inline-flex min-h-11 items-center rounded-control bg-accent px-4 font-medium text-on-accent hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        class="inline-flex min-h-target-min items-center rounded-pill bg-action px-4 font-medium text-action-ink focus-ring"
       >
         {m.language_suggestion_action({}, { locale: target })}
       </a>
       <button
         type="button"
         data-language-dismiss
-        class="inline-flex min-h-11 items-center rounded-control border border-border px-4 hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        class="inline-flex min-h-target-min items-center rounded-pill border border-border-control px-4 hover:bg-mango-tint focus-ring"
       >
         {m.language_suggestion_dismiss({}, { locale: target })}
       </button>
