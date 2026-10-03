@@ -6,19 +6,21 @@
  * integration hashes every inline script and style found in the HTML output and appends the
  * hashes to `script-src` / `style-src` in `dist/_headers`. It fails the build on inline event
  * handlers or `style="…"` attributes, which a hash-based policy cannot allow. See ADR 0012.
+ *
+ * Runs only at build time, in Node. `parse5` is a devDependency and never reaches the client.
  */
 import { createHash } from 'node:crypto'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { AstroIntegration } from 'astro'
+import { type DefaultTreeAdapterTypes, parse } from 'parse5'
 
-const SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
-const STYLE = /<style\b[^>]*>([\s\S]*?)<\/style>/gi
-const INLINE_HANDLER = /<[^>]+\son[a-z]+\s*=/i
-const STYLE_ATTRIBUTE = /<[^>]+\sstyle\s*=/i
-/** Script types the browser does not execute, so CSP does not apply to them. */
-const DATA_SCRIPT = /\btype\s*=\s*["']?(application\/(ld\+)?json|importmap)/i
+type Node = DefaultTreeAdapterTypes.Node
+type Element = DefaultTreeAdapterTypes.Element
+
+/** Script types the browser treats as data blocks: never executed, so CSP does not apply. */
+const DATA_SCRIPT_TYPES = new Set(['application/json', 'application/ld+json'])
 
 export interface InlineHashes {
   scripts: Set<string>
@@ -28,15 +30,43 @@ export interface InlineHashes {
 const sha256 = (content: string) =>
   `'sha256-${createHash('sha256').update(content).digest('base64')}'`
 
-/** Collects CSP hashes of the inline scripts and styles in one HTML document. */
-export function collectInlineHashes(html: string, into: InlineHashes, file = 'page'): InlineHashes {
-  if (INLINE_HANDLER.test(html)) throw new Error(`${file}: inline event handlers are not allowed`)
-  if (STYLE_ATTRIBUTE.test(html)) throw new Error(`${file}: style attributes are not allowed`)
-  for (const [, attributes = '', content = ''] of html.matchAll(SCRIPT)) {
-    if (/\bsrc\s*=/.test(attributes) || DATA_SCRIPT.test(attributes)) continue
-    into.scripts.add(sha256(content))
+const isElement = (node: Node): node is Element => 'tagName' in node
+
+/** The element's raw text, exactly as the browser hashes it for CSP. */
+const textOf = (element: Element) =>
+  element.childNodes
+    .map((child) => ('value' in child && child.nodeName === '#text' ? child.value : ''))
+    .join('')
+
+/** Walks every element, including `<template>` contents. Comments are skipped by construction. */
+function* elements(node: Node): Generator<Element> {
+  if (isElement(node)) {
+    yield node
+    if ('content' in node) yield* elements(node.content)
   }
-  for (const [, content = ''] of html.matchAll(STYLE)) into.styles.add(sha256(content))
+  if ('childNodes' in node) for (const child of node.childNodes) yield* elements(child)
+}
+
+/**
+ * Collects CSP hashes of the inline scripts and styles in one HTML document. The document is
+ * parsed with parse5, a spec-compliant HTML parser, so the result matches what browsers see
+ * (e.g. `</script >` end tags, markup inside comments).
+ */
+export function collectInlineHashes(html: string, into: InlineHashes, file = 'page'): InlineHashes {
+  for (const element of elements(parse(html))) {
+    for (const { name } of element.attrs) {
+      if (name.startsWith('on')) throw new Error(`${file}: inline event handlers are not allowed`)
+      if (name === 'style') throw new Error(`${file}: style attributes are not allowed`)
+    }
+    const attribute = (name: string) => element.attrs.find((attr) => attr.name === name)?.value
+    if (element.tagName === 'script') {
+      const type = attribute('type')?.trim().toLowerCase()
+      if (attribute('src') !== undefined || (type && DATA_SCRIPT_TYPES.has(type))) continue
+      into.scripts.add(sha256(textOf(element)))
+    } else if (element.tagName === 'style') {
+      into.styles.add(sha256(textOf(element)))
+    }
+  }
   return into
 }
 
