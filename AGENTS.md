@@ -85,7 +85,9 @@ published to npm (for example for the private cloud repo), it will first need a 
    `manifest.ts`. Never import processing code or heavy libraries from a manifest.
 5. **Zero JavaScript by default.** Astro components render static HTML; only the tool island
    ships JS, and each tool page loads only its own tool.
-6. **i18n:** every user-facing string goes through Paraglide messages in every locale. English
+6. **i18n:** every UI string (labels, buttons, errors, notices) goes through Paraglide messages
+   in every locale. Long-form page copy (intro, how it works, tips, FAQ) is Markdown in
+   `packages/tools/<dir>/content/<locale>/<key>.md`, also in every locale (ADR 0018). English
    lives at `/`, other locales at `/<locale>/`. Never redirect by browser language. Every page
    emits canonical + `hreflang` alternates (including `x-default`). Build paths with
    `localePath()`; they always end with `/`.
@@ -107,12 +109,14 @@ published to npm (for example for the private cloud repo), it will first need a 
 Follow [docs/contributing/adding-a-tool.md](docs/contributing/adding-a-tool.md). In short:
 
 1. Copy `packages/tools/_template` to `packages/tools/<tool-id>` and rename the package.
-2. Edit `src/manifest.ts` (id, category, accepts, limits, defaults, per-locale slug/title/description).
+2. Edit `src/manifest.ts` (id, category, accepts, limits, defaults, per-locale slug/title/description,
+   and optional `variants`: extra pages with preset options).
 3. Implement `src/process.ts` and its tests; keep it pure.
 4. Build the UI in `src/Ui.tsx` with `@mochifile/ui` components.
 5. Add messages in `messages/{en,pt}.json` (keys prefixed with the tool id in snake_case) and add
    the path to `pathPattern` in `packages/i18n/project.inlang/settings.json`.
-6. Run everything. Pages appear automatically at `/<slug>/` and `/pt/<slug>/`.
+6. Write the page copy in `content/{en,pt}/index.md` and one file per variant key.
+7. Run everything. Pages appear automatically at `/<slug>/` and `/pt/<slug>/`.
 
 ## Testing requirements
 
