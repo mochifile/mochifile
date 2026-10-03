@@ -1,5 +1,11 @@
 import { type Locale, localePath, locales } from '@mochifile/i18n'
-import { assertUniqueTools, type ToolManifest } from '@mochifile/tool-kit'
+import {
+  assertUniqueTools,
+  MAIN_PAGE_KEY,
+  type ToolLocaleMeta,
+  type ToolManifest,
+  type ToolVariant,
+} from '@mochifile/tool-kit'
 
 export interface RegisteredTool {
   /** Folder name under `packages/tools/`, used to lazy-load the tool's UI. */
@@ -43,23 +49,81 @@ export const tools = loadTools(modules, {
   includeTemplate: import.meta.env.DEV || import.meta.env.MOCHIFILE_INCLUDE_TEMPLATE,
 })
 
-export interface ToolPageProps {
+/** One page of a tool: its main page or one of its variants. */
+export interface ToolPage {
   tool: RegisteredTool
-  locale: Locale
-  /** Path of this tool's page in every locale, for hreflang and the language switcher. */
+  /** `index` for the main page, otherwise the variant key. Also names the content file. */
+  key: string
+  /** The variant shown on this page, or `null` on the main page. */
+  variant: ToolVariant | null
+  meta: Record<Locale, ToolLocaleMeta>
+  /** Path of this page in every locale, for hreflang and the language switcher. */
   paths: Record<Locale, string>
 }
 
-export function toolPaths(manifest: ToolManifest): Record<Locale, string> {
+export interface ToolPageProps {
+  page: ToolPage
+  locale: Locale
+}
+
+function pathsOf(meta: Record<Locale, ToolLocaleMeta>): Record<Locale, string> {
   return Object.fromEntries(
-    locales.map((locale) => [locale, localePath(locale, manifest.meta[locale].slug)]),
+    locales.map((locale) => [locale, localePath(locale, meta[locale].slug)]),
   ) as Record<Locale, string>
+}
+
+export function toolPaths(manifest: ToolManifest): Record<Locale, string> {
+  return pathsOf(manifest.meta)
+}
+
+/** The main page of every tool, each followed by its variants, in a stable order. */
+export function toolPages(registered: readonly RegisteredTool[]): ToolPage[] {
+  return registered.flatMap((tool) => [
+    {
+      tool,
+      key: MAIN_PAGE_KEY,
+      variant: null,
+      meta: tool.manifest.meta,
+      paths: pathsOf(tool.manifest.meta),
+    },
+    ...(tool.manifest.variants ?? []).map((variant) => ({
+      tool,
+      key: variant.key,
+      variant,
+      meta: variant.meta,
+      paths: pathsOf(variant.meta),
+    })),
+  ])
 }
 
 /** `getStaticPaths()` entries for one locale's `[tool].astro` route. */
 export function buildToolRoutes(registered: readonly RegisteredTool[], locale: Locale) {
-  return registered.map((tool) => ({
-    params: { tool: tool.manifest.meta[locale].slug },
-    props: { tool, locale, paths: toolPaths(tool.manifest) } satisfies ToolPageProps,
+  return toolPages(registered).map((page) => ({
+    params: { tool: page.meta[locale].slug },
+    props: { page, locale } satisfies ToolPageProps,
   }))
+}
+
+/** Id of a page's long-form copy in the `toolContent` collection: `<dir>/<locale>/<key>`. */
+export function contentId(page: Pick<ToolPage, 'tool' | 'key'>, locale: Locale): string {
+  return `${page.tool.dir}/${locale}/${page.key}`
+}
+
+/**
+ * Throws, listing every gap, unless each page has its copy in every locale. Called while
+ * building the routes, so a missing translation fails the build instead of shipping a page
+ * without content.
+ */
+export function assertContentComplete(
+  pages: readonly ToolPage[],
+  available: ReadonlySet<string>,
+): void {
+  const missing = pages.flatMap((page) =>
+    locales.map((locale) => contentId(page, locale)).filter((id) => !available.has(id)),
+  )
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing tool page content (packages/tools/<dir>/content/<locale>/<key>.md):\n- ${missing.join('\n- ')}`,
+    )
+  }
 }

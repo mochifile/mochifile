@@ -1,8 +1,17 @@
 ---
+import { getCollection } from 'astro:content'
 import ToolPage from '../../components/ToolPage.astro'
-import { buildToolRoutes, type ToolPageProps, tools } from '../../lib/tools'
+import {
+  assertContentComplete,
+  buildToolRoutes,
+  type ToolPageProps,
+  toolPages,
+  tools,
+} from '../../lib/tools'
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
+  const content = await getCollection('toolContent')
+  assertContentComplete(toolPages(tools), new Set(content.map((entry) => entry.id)))
   return buildToolRoutes(tools, 'pt')
 }
 
