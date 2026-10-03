@@ -74,3 +74,20 @@ per photo, 65 in total for 11 compressions (one was already under its target); r
   per-encode progress and cancellation between encodes.
 - The constants (quality range, 0.75 exponent, margins, 97%) live in `fit-to-size.ts` and can
   be tuned with the same tests if real usage shows a better trade-off.
+
+## Updates
+
+- **2026-10-03: start near the final size.** Measured in normal browser windows (ADR 0016
+  update), most of the time for a 12 MP photo → 50 KB went to two encodes at 8 MP (the
+  maximum and minimum quality at the start size) and the shrink from 8 MP, although the
+  result was about 1.8 MP. Now, when the image would be processed above 1.5 MP:
+  - a ~0.3 MP **preview** is decoded and encoded at quality 40 and 90;
+  - the start size is the largest one where quality 40 is predicted to land at 92% of the
+    target, predicting with size ∝ pixels^0.70 (the low end of the measured 0.70–0.83, so the
+    prediction errs towards starting too large and shrinking, never towards shrinking too
+    much); it is never above the previous start size nor below the 64 px floor;
+  - the maximum-quality encode is skipped when the preview predicts it far above the target;
+    the minimum quality is always measured at the start size.
+  Predictions only decide which encodes to skip; results are still only ever measured
+  encodings, so the at-or-under guarantee is unchanged. On an M2 in Chromium this took
+  12–16 MP photos to 50 KB in 0.45–0.5 s instead of 4.2–4.7 s.
