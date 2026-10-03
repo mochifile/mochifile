@@ -87,4 +87,20 @@ describe('localePath', () => {
     expect(localePath('pt', 'comprimir-imagem')).toBe('/pt/comprimir-imagem/')
     expect(localePath('pt', '/comprimir-imagem/')).toBe('/pt/comprimir-imagem/')
   })
+
+  it('trims any number of leading and trailing slashes but keeps inner ones', () => {
+    expect(localePath('en', '///a//b///')).toBe('/a//b/')
+    expect(localePath('pt', '////')).toBe('/pt/')
+    expect(localePath('en', '')).toBe('/')
+  })
+
+  // Regression for CodeQL js/polynomial-redos: a regex trim took quadratic time on long runs
+  // of slashes that are not at the end of the string.
+  it('runs in linear time on long runs of slashes', () => {
+    const slashes = '/'.repeat(200_000)
+    const start = performance.now()
+    expect(localePath('pt', `${slashes}a${slashes}b`)).toBe(`/pt/a${slashes}b/`)
+    expect(localePath('en', `x${slashes}`)).toBe('/x/')
+    expect(performance.now() - start).toBeLessThan(500)
+  })
 })
