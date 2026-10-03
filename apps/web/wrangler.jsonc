@@ -1,0 +1,20 @@
+// Cloudflare Workers static assets: the site is served straight from `dist/` with no Worker
+// script. Deployed by .github/workflows/deploy.yml (ADR 0013).
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mochifile",
+  // Release date of the pinned wrangler; only matters if a Worker script is added later.
+  "compatibility_date": "2026-09-28",
+  "assets": {
+    "directory": "./dist",
+    // `/pt` redirects to `/pt/` and serves `pt/index.html`, matching `trailingSlash: 'always'`.
+    "html_handling": "auto-trailing-slash",
+    // Unknown paths get `404.html` with a 404 status.
+    "not_found_handling": "404-page"
+  },
+  // Production is reachable at mochifile.<account>.workers.dev until a custom domain is added.
+  "workers_dev": true,
+  // Pull request previews (`wrangler preview`). Empty: an assets-only site has no
+  // preview-specific variables or bindings.
+  "previews": {}
+}

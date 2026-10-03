@@ -33,6 +33,7 @@
     "@types/react-dom": "catalog:",
     "parse5": "8.0.1",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "wrangler": "4.143.0"
   }
 }

@@ -4,5 +4,5 @@
     "types": ["node"]
   },
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "dist-e2e", "playwright-report", "test-results"]
+  "exclude": ["dist", "dist-e2e", "playwright-report", "test-results", ".wrangler"]
 }
