@@ -16,5 +16,6 @@
   "tool_requires_js": "This tool needs JavaScript. Please enable it in your browser to continue.",
   "tool_more_pages_heading": "Popular options",
   "breadcrumb_label": "Breadcrumb",
-  "breadcrumb_home": "Home"
+  "breadcrumb_home": "Home",
+  "footer_licenses": "Open-source licenses"
 }

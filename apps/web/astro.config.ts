@@ -6,6 +6,7 @@ import { defineConfig } from 'astro/config'
 import cspHashes from './integrations/csp-hashes.ts'
 import searchIndexing from './integrations/search-indexing.ts'
 import sitemapAlternates from './integrations/sitemap-alternates.ts'
+import thirdPartyLicenses from './integrations/third-party-licenses.ts'
 import { ALLOW_SEARCH_INDEXING } from './search-indexing.ts'
 
 export const SITE_URL = 'https://mochifile.com'
@@ -42,12 +43,24 @@ export default defineConfig({
     sitemap({ serialize: alternates.serialize }),
     // Pre-launch noindex switch: see search-indexing.ts and ADR 0014.
     searchIndexing({ allowIndexing: ALLOW_SEARCH_INDEXING }),
+    // /third-party-licenses.txt: notices of the code shipped to browsers (ADR 0016).
+    thirdPartyLicenses(),
     // Must run after every other integration has written its HTML.
     cspHashes(),
   ],
   vite: {
     plugins: [tailwindcss()],
     worker: { format: 'es' },
+    // jSquash loads its .wasm files relative to its own modules; pre-bundling breaks that in dev.
+    optimizeDeps: {
+      exclude: [
+        '@jsquash/jpeg',
+        '@jsquash/webp',
+        '@jsquash/png',
+        '@jsquash/oxipng',
+        '@jsquash/resize',
+      ],
+    },
     define: {
       // Statically replaced, so production builds drop the template tool's code entirely.
       'import.meta.env.MOCHIFILE_INCLUDE_TEMPLATE': JSON.stringify(includeTemplateTool),
