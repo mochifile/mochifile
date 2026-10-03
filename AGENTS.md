@@ -84,11 +84,13 @@ published to npm (for example for the private cloud repo), it will first need a 
 4. **Manifests are data.** Pages, routes, sitemap and SEO tags are generated from
    `manifest.ts`. Never import processing code or heavy libraries from a manifest.
 5. **Zero JavaScript by default.** Astro components render static HTML; only the tool island
-   ships JS, and each tool page loads only its own tool.
+   ships JS, and each tool page loads only its own tool. The one exception is the inline
+   language-suggestion script on every page (ADR 0019), kept under 1 KB gzipped by an e2e
+   test; do not add other site-wide scripts.
 6. **i18n:** every UI string (labels, buttons, errors, notices) goes through Paraglide messages
    in every locale. Long-form page copy (intro, how it works, tips, FAQ) is Markdown in
    `packages/tools/<dir>/content/<locale>/<key>.md`, also in every locale (ADR 0018). English
-   lives at `/`, other locales at `/<locale>/`. Never redirect by browser language. Every page
+   lives at `/`, other locales at `/<locale>/`. Never redirect by browser language (a dismissible suggestion banner is fine, ADR 0019). Every page
    emits canonical + `hreflang` alternates (including `x-default`). Build paths with
    `localePath()`; they always end with `/`.
 7. **Cross-origin isolation** (COOP/COEP) only on the routes that need it, never globally — it
