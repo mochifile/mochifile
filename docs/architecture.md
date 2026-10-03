@@ -42,6 +42,7 @@ in the [architecture decision records](adr/).
 | `@mochifile/i18n` | Locale list, `localePath()`, compiled Paraglide messages | — |
 | `@mochifile/tool-kit` | The Tool contract, manifest validation, worker/client wrappers, file helpers, errors | i18n, comlink |
 | `@mochifile/ui` | Accessible React components, design tokens | react (peer) |
+| `@mochifile/engine-image` | Image engine for tool workers: WebAssembly codecs (jSquash), native decoding with probes, metadata stripping, size targeting ([ADR 0016](adr/0016-image-engine-jsquash-with-native-decoding.md), [ADR 0017](adr/0017-size-targeting-algorithm.md)) | tool-kit, @jsquash/* |
 | `@mochifile/tool-*` | One tool: manifest, process, worker, UI, messages, tests | tool-kit, ui, i18n |
 | `@mochifile/web` | The Astro site: layouts, pages, registry, SEO, CSP, e2e tests | everything above |
 
