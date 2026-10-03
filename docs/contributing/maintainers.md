@@ -13,6 +13,10 @@
   `CODE_OF_CONDUCT.md` and `SECURITY.md`.
 - [ ] Enable branch protection on `main` (require PRs, passing CI and CodeQL, linear history).
 - [ ] Install the Renovate GitHub app.
+- [ ] Add the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets
+  ([deployment.md](deployment.md)).
+- [ ] Attach `mochifile.com` as a custom domain of the `mochifile` Worker (ADR 0013).
+- [ ] At launch, allow search indexing (ADR 0014).
 - [ ] **Remove the `minimumReleaseAgeExclude` entries from `pnpm-workspace.yaml`** once the
   versions are older than pnpm's release-age threshold (pnpm 12 default: `minimumReleaseAge`
   1440 minutes = 1 day). pnpm added them automatically because these versions were brand new
