@@ -1,3 +1,4 @@
+import { gzipSync } from 'node:zlib'
 import { ALLOW_SEARCH_INDEXING } from '../search-indexing.ts'
 import { expect, projectContextOptions, test } from './fixtures.ts'
 
@@ -34,9 +35,15 @@ for (const { path, lang, heading, canonical } of pages) {
       ])
     })
 
-    test('ships no JavaScript', async ({ page }) => {
+    // The only script is the language suggestion (ADR 0019), inline and tiny.
+    test('ships only the language-suggestion script, under 1 KB compressed', async ({ page }) => {
       await page.goto(path)
-      await expect(page.locator('script')).toHaveCount(0)
+      const scripts = page.locator('script:not([type="application/ld+json"])')
+      await expect(scripts).toHaveCount(1)
+      await expect(scripts).not.toHaveAttribute('src', /.+/)
+      const source = (await scripts.textContent()) ?? ''
+      expect(source).toContain('mochifile:language-suggestion')
+      expect(gzipSync(source).length).toBeLessThanOrEqual(1024)
     })
   })
 }
