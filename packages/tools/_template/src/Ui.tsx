@@ -8,7 +8,7 @@ import {
   type ToolResult,
 } from '@mochifile/tool-kit'
 import { createToolClient } from '@mochifile/tool-kit/client'
-import { Button, Dropzone } from '@mochifile/ui'
+import { Button, buttonClasses, Dropzone, Notice, SizeChips } from '@mochifile/ui'
 import { useEffect, useRef, useState } from 'react'
 import { manifest, type TemplateOptions } from './manifest.ts'
 
@@ -79,24 +79,17 @@ export default function TemplateToolUi({ locale, initialOptions }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <fieldset className="flex flex-wrap items-center gap-4">
-        <legend className="mb-2 font-medium">{m.template_tool_mode_label({}, { locale })}</legend>
-        {(['upper', 'lower'] as const).map((value) => (
-          <label key={value} className="flex min-h-target-min items-center gap-2">
-            <input
-              type="radio"
-              name="template-tool-mode"
-              value={value}
-              checked={mode === value}
-              onChange={() => setMode(value)}
-              className="size-5 accent-action"
-            />
-            {value === 'upper'
-              ? m.template_tool_mode_upper({}, { locale })
-              : m.template_tool_mode_lower({}, { locale })}
-          </label>
-        ))}
-      </fieldset>
+      <SizeChips
+        legend={m.template_tool_mode_label({}, { locale })}
+        value={mode}
+        onChange={setMode}
+        // The block colour of the tool's category (pdf → strawberry), as on its page.
+        block="strawberry"
+        options={[
+          { value: 'upper', label: m.template_tool_mode_upper({}, { locale }) },
+          { value: 'lower', label: m.template_tool_mode_lower({}, { locale }) },
+        ]}
+      />
       <Dropzone
         onFiles={run}
         accept={manifest.accepts.join(',')}
@@ -117,18 +110,14 @@ export default function TemplateToolUi({ locale, initialOptions }: Props) {
           </>
         )}
         {state.status === 'done' && (
-          <a
-            href={state.url}
-            download={state.result.name}
-            className="inline-flex min-h-target-min items-center rounded-pill bg-action px-5 font-medium text-action-ink"
-          >
+          <a href={state.url} download={state.result.name} className={buttonClasses()}>
             {m.template_tool_download({ name: state.result.name }, { locale })}
           </a>
         )}
         {state.status === 'error' && (
-          <p role="alert" className="text-danger">
-            {errorMessage(state.code)}
-          </p>
+          <div role="alert" className="w-full">
+            <Notice tone="danger">{errorMessage(state.code)}</Notice>
+          </div>
         )}
       </div>
     </div>
