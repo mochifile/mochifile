@@ -17,5 +17,9 @@
   "tool_more_pages_heading": "Popular options",
   "breadcrumb_label": "Breadcrumb",
   "breadcrumb_home": "Home",
-  "footer_licenses": "Open-source licenses"
+  "footer_licenses": "Open-source licenses",
+  "language_suggestion_label": "Language suggestion",
+  "language_suggestion_text": "View this page in English?",
+  "language_suggestion_action": "View in English",
+  "language_suggestion_dismiss": "No, thanks"
 }

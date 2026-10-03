@@ -1,0 +1,92 @@
+---
+/**
+ * Suggests the page in the visitor's preferred language, without ever redirecting (ADR 0007,
+ * ADR 0019). One hidden banner per other locale is rendered at build time, in that locale and
+ * linking to this page's alternate in it (the same paths as the hreflang links). A tiny script
+ * shows at most one: the visitor's highest-ranked supported language, when it differs from the
+ * page's. It never shows again in a browser once the visitor dismisses it or uses the
+ * language switcher. Fixed overlay: it moves nothing on the page.
+ */
+import { type Locale, locales, localeTags } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+
+interface Props {
+  locale: Locale
+  /** Path of this page in every locale. */
+  paths: Record<Locale, string>
+}
+
+const { locale, paths } = Astro.props
+const others = locales.filter((target) => target !== locale)
+---
+
+{
+  others.map((target) => (
+    <aside
+      hidden
+      data-language-suggestion={localeTags[target]}
+      lang={localeTags[target]}
+      aria-label={m.language_suggestion_label({}, { locale: target })}
+      class="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md flex-wrap items-center gap-3 rounded-card border-2 border-accent bg-surface-raised p-4 text-text mb-[env(safe-area-inset-bottom)]"
+    >
+      <p class="w-full font-medium">{m.language_suggestion_text({}, { locale: target })}</p>
+      <a
+        href={paths[target]}
+        hreflang={localeTags[target]}
+        data-language-choice
+        class="inline-flex min-h-11 items-center rounded-control bg-accent px-4 font-medium text-on-accent hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        {m.language_suggestion_action({}, { locale: target })}
+      </a>
+      <button
+        type="button"
+        data-language-dismiss
+        class="inline-flex min-h-11 items-center rounded-control border border-border px-4 hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        {m.language_suggestion_dismiss({}, { locale: target })}
+      </button>
+    </aside>
+  ))
+}
+
+<script>
+  // Set once the visitor dismisses the banner or picks a language: never suggest again.
+  const KEY = 'mochifile:language-suggestion'
+  const remembered = () => {
+    try {
+      return localStorage.getItem(KEY) === 'off'
+    } catch {
+      return false // Storage blocked (e.g. some private modes): ask again next time.
+    }
+  }
+  const remember = () => {
+    try {
+      localStorage.setItem(KEY, 'off')
+    } catch {
+      // Storage blocked: the banner still closes for this page.
+    }
+  }
+
+  // The language switcher and the banner's own link count as an explicit choice.
+  for (const link of document.querySelectorAll('[data-language-switch], [data-language-choice]')) {
+    link.addEventListener('click', remember)
+  }
+
+  const primary = (tag: string) => tag.toLowerCase().split('-')[0] ?? ''
+  const banners = new Map<string, HTMLElement>()
+  for (const banner of document.querySelectorAll<HTMLElement>('[data-language-suggestion]')) {
+    banners.set(primary(banner.dataset.languageSuggestion ?? ''), banner)
+  }
+  const current = primary(document.documentElement.lang)
+  const preferred = navigator.languages?.length ? navigator.languages : [navigator.language]
+  // The visitor's highest-ranked language among those this page exists in.
+  const top = preferred.map(primary).find((tag) => tag === current || banners.has(tag))
+  const banner = top && top !== current && !remembered() ? banners.get(top) : undefined
+  if (banner) {
+    banner.hidden = false
+    banner.querySelector('[data-language-dismiss]')?.addEventListener('click', () => {
+      banner.hidden = true
+      remember()
+    })
+  }
+</script>

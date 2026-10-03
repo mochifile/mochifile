@@ -17,5 +17,9 @@
   "tool_more_pages_heading": "Opções populares",
   "breadcrumb_label": "Trilha de navegação",
   "breadcrumb_home": "Início",
-  "footer_licenses": "Licenças de código aberto"
+  "footer_licenses": "Licenças de código aberto",
+  "language_suggestion_label": "Sugestão de idioma",
+  "language_suggestion_text": "Ver esta página em português?",
+  "language_suggestion_action": "Ver em português",
+  "language_suggestion_dismiss": "Não, obrigado"
 }
