@@ -88,17 +88,18 @@ jobs:
       - name: Create or update the Preview
         id: preview
         working-directory: apps/web
+        # Stdout is for humans (it mixes progress text with any JSON). The URL comes from the
+        # newline-delimited JSON that wrangler appends to WRANGLER_OUTPUT_FILE_PATH.
         run: |
-          set -o pipefail
-          output="$(pnpm exec wrangler preview --name "pr-$PR_NUMBER" --json)"
-          printf '%s\n' "$output"
-          url="$(printf '%s' "$output" | jq -er '.preview.urls[0]')"
+          pnpm exec wrangler preview --name "pr-$PR_NUMBER"
+          url="$(jq -ser '[.[] | select(.type == "preview")] | last | .preview_urls[0]' "$WRANGLER_OUTPUT_FILE_PATH")"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
 
   production:
     name: Production
