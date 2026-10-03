@@ -78,6 +78,11 @@ export interface ToolManifest<O extends ToolOptions = ToolOptions> {
   meta: Record<Locale, ToolLocaleMeta>
   /** Extra landing pages with preset options. Slugs share the namespace of tool slugs. */
   variants?: readonly ToolVariant<O>[]
+  /**
+   * Heading above the links between this tool's pages, e.g. "Other target sizes". Defaults to
+   * a generic "Popular options". At most 40 characters.
+   */
+  relatedPagesLabel?: Record<Locale, string>
 }
 
 export interface ToolProgress {

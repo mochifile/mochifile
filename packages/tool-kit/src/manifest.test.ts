@@ -98,6 +98,24 @@ describe('variants', () => {
   })
 })
 
+describe('relatedPagesLabel', () => {
+  it('accepts a label in every locale', () => {
+    const manifest = {
+      ...validManifest,
+      relatedPagesLabel: { en: 'Other sizes', pt: 'Outros tamanhos' },
+    }
+    expect(validateManifest(manifest)).toEqual([])
+  })
+
+  it('rejects empty and long labels', () => {
+    const manifest = { ...validManifest, relatedPagesLabel: { en: ' ', pt: 'x'.repeat(41) } }
+    expect(validateManifest(manifest)).toEqual([
+      'relatedPagesLabel.en is empty',
+      'relatedPagesLabel.pt exceeds 40 chars',
+    ])
+  })
+})
+
 describe('assertUniqueTools', () => {
   it('passes for distinct tools', () => {
     const other = {

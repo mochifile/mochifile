@@ -11,6 +11,7 @@ const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const MIME = /^[a-z]+\/(?:\*|[a-z0-9][a-z0-9.+-]*)$/
 export const TITLE_MAX = 70
 export const DESCRIPTION_MAX = 160
+export const RELATED_PAGES_LABEL_MAX = 40
 /** Content key of a tool's main page; variants may not use it. */
 export const MAIN_PAGE_KEY = 'index'
 
@@ -48,6 +49,15 @@ export function validateManifest(manifest: ToolManifest): string[] {
     structuredClone(manifest.defaults)
   } catch {
     problems.push('defaults must be structured-cloneable plain data')
+  }
+  if (manifest.relatedPagesLabel) {
+    for (const locale of locales) {
+      const label = manifest.relatedPagesLabel[locale]
+      if (!label?.trim()) problems.push(`relatedPagesLabel.${locale} is empty`)
+      else if (label.length > RELATED_PAGES_LABEL_MAX) {
+        problems.push(`relatedPagesLabel.${locale} exceeds ${RELATED_PAGES_LABEL_MAX} chars`)
+      }
+    }
   }
   const keys = new Set<string>()
   for (const [index, variant] of (manifest.variants ?? []).entries()) {

@@ -14,7 +14,7 @@
   "tool_privacy_browser": "Seus arquivos são processados aqui mesmo, no seu navegador. Eles nunca são enviados para os nossos servidores.",
   "tool_max_file_size": "Tamanho máximo do arquivo: {maxSize}.",
   "tool_requires_js": "Esta ferramenta precisa de JavaScript. Ative-o no seu navegador para continuar.",
-  "tool_more_pages_heading": "Atalhos populares",
+  "tool_more_pages_heading": "Opções populares",
   "breadcrumb_label": "Trilha de navegação",
   "breadcrumb_home": "Início"
 }
