@@ -33,7 +33,16 @@ export function isLocale(value: unknown): value is Locale {
  * @example localePath('en') // => '/'
  */
 export function localePath(locale: Locale, path = '/'): string {
-  const trimmed = path.replace(/^\/+|\/+$/g, '')
+  const trimmed = trimSlashes(path)
   const prefix = locale === defaultLocale ? '' : `/${locale}`
   return trimmed ? `${prefix}/${trimmed}/` : `${prefix}/`
+}
+
+/** Removes leading and trailing `/` in linear time (a regex trim can be quadratic). */
+function trimSlashes(path: string): string {
+  let start = 0
+  let end = path.length
+  while (start < end && path[start] === '/') start += 1
+  while (end > start && path[end - 1] === '/') end -= 1
+  return path.slice(start, end)
 }
