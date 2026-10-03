@@ -1,19 +1,70 @@
 ---
+import { getEntry, render } from 'astro:content'
+import { localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import { formatBytes } from '@mochifile/tool-kit'
 import BaseLayout from '../layouts/BaseLayout.astro'
-import type { ToolPageProps } from '../lib/tools'
+import { serializeJsonLd, toolJsonLd } from '../lib/seo'
+import { contentId, type ToolPageProps, toolPages, tools } from '../lib/tools'
 import ToolIsland from './ToolIsland'
 
 type Props = ToolPageProps
 
-const { tool, locale, paths } = Astro.props
+const { page, locale } = Astro.props
+const { tool, variant, paths } = page
 const { manifest } = tool
-const meta = manifest.meta[locale]
+const meta = page.meta[locale]
 const maxSize = formatBytes(manifest.limits.maxFileSizeBytes, locale)
+const site = Astro.site ?? Astro.url
+const absolute = (path: string) => new URL(path, site).href
+
+// Presence is guaranteed by assertContentComplete() in getStaticPaths.
+const entry = await getEntry('toolContent', contentId(page, locale))
+if (!entry) throw new Error(`Missing content ${contentId(page, locale)}`)
+const { Content } = await render(entry)
+
+const breadcrumbs = [
+  { name: m.breadcrumb_home({}, { locale }), path: localePath(locale) },
+  { name: manifest.meta[locale].title, path: localePath(locale, manifest.meta[locale].slug) },
+  ...(variant ? [{ name: meta.title, path: paths[locale] }] : []),
+]
+// The tool's other pages (its main page and variants), for people and crawlers alike.
+const siblings = toolPages(tools).filter(
+  (other) => other.tool.dir === tool.dir && other.key !== page.key,
+)
+const jsonLd = serializeJsonLd(
+  toolJsonLd({
+    name: meta.title,
+    description: meta.description,
+    url: absolute(paths[locale]),
+    locale,
+    category: manifest.category,
+    breadcrumbs: breadcrumbs.map((item) => ({ name: item.name, url: absolute(item.path) })),
+  }),
+)
 ---
 
 <BaseLayout locale={locale} title={`${meta.title} — Mochifile`} description={meta.description} paths={paths}>
+  <script is:inline type="application/ld+json" set:html={jsonLd} />
+  <nav aria-label={m.breadcrumb_label({}, { locale })} class="mb-6 text-sm text-text-muted">
+    <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
+      {
+        breadcrumbs.map((item, index) => {
+          const current = index === breadcrumbs.length - 1
+          return (
+            <li class="flex items-center gap-2">
+              {index > 0 && <span aria-hidden="true">›</span>}
+              {current ? (
+                <span aria-current="page" class="text-text">{item.name}</span>
+              ) : (
+                <a href={item.path} class="underline hover:text-accent">{item.name}</a>
+              )}
+            </li>
+          )
+        })
+      }
+    </ol>
+  </nav>
   {/* Everything except the interactive widget is static HTML, for SEO and no-JS visitors. */}
   <h1 class="mb-2 text-3xl font-bold tracking-tight">{meta.title}</h1>
   <p class="mb-8 text-text-muted">{meta.description}</p>
@@ -21,7 +72,12 @@ const maxSize = formatBytes(manifest.limits.maxFileSizeBytes, locale)
     client:only: the tool UI is useless without JavaScript, and server-rendering it would show a
     file input that silently ignores files picked before hydration finishes.
   */}
-  <ToolIsland client:only="react" dir={tool.dir} locale={locale}>
+  <ToolIsland
+    client:only="react"
+    dir={tool.dir}
+    locale={locale}
+    {...variant ? { initialOptions: variant.options } : {}}
+  >
     <div slot="fallback" class="min-h-48 animate-pulse rounded-card bg-surface-raised"></div>
   </ToolIsland>
   <noscript>
@@ -29,9 +85,33 @@ const maxSize = formatBytes(manifest.limits.maxFileSizeBytes, locale)
       {m.tool_requires_js({}, { locale })}
     </p>
   </noscript>
-  <section class="mt-12 flex flex-col gap-2" aria-labelledby="tool-about">
-    <h2 id="tool-about" class="text-xl font-semibold">{m.tool_about_heading({}, { locale })}</h2>
+  <article class="page-copy mt-12">
+    <Content />
+  </article>
+  <section class="mt-12 flex flex-col gap-2 rounded-card border border-border bg-surface-raised p-6" aria-labelledby="tool-facts">
+    <h2 id="tool-facts" class="text-xl font-semibold">{m.tool_facts_heading({}, { locale })}</h2>
     {manifest.runtime === 'browser' && <p>{m.tool_privacy_browser({}, { locale })}</p>}
     <p>{m.tool_max_file_size({ maxSize }, { locale })}</p>
   </section>
+  {
+    siblings.length > 0 && (
+      <nav class="mt-12" aria-labelledby="tool-more-pages">
+        <h2 id="tool-more-pages" class="mb-3 text-xl font-semibold">
+          {m.tool_more_pages_heading({}, { locale })}
+        </h2>
+        <ul class="flex flex-wrap gap-2">
+          {siblings.map((other) => (
+            <li>
+              <a
+                href={other.paths[locale]}
+                class="inline-flex min-h-11 items-center rounded-control border border-border px-4 hover:border-accent hover:text-accent"
+              >
+                {other.meta[locale].title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )
+  }
 </BaseLayout>

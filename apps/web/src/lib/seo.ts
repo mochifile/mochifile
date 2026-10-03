@@ -29,3 +29,71 @@ export function samePathInAllLocales(path = '/'): Record<Locale, string> {
     string
   >
 }
+
+export interface BreadcrumbItem {
+  name: string
+  /** Absolute URL. */
+  url: string
+}
+
+export interface ToolJsonLdInput {
+  /** Page title, without the site name. */
+  name: string
+  description: string
+  /** Absolute canonical URL of the page. */
+  url: string
+  locale: Locale
+  category: 'image' | 'media' | 'pdf'
+  /** From the home page down to this page. */
+  breadcrumbs: readonly BreadcrumbItem[]
+}
+
+const applicationCategories = {
+  image: 'MultimediaApplication',
+  media: 'MultimediaApplication',
+  pdf: 'UtilitiesApplication',
+} as const
+
+/**
+ * Structured data for a tool page: a free `WebApplication` that runs in the browser, and its
+ * `BreadcrumbList`. See https://schema.org/WebApplication.
+ */
+export function toolJsonLd(input: ToolJsonLdInput): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: input.name,
+        description: input.description,
+        url: input.url,
+        inLanguage: localeTags[input.locale],
+        applicationCategory: applicationCategories[input.category],
+        operatingSystem: 'Any',
+        browserRequirements: 'Requires JavaScript and a modern web browser.',
+        isAccessibleForFree: true,
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: input.breadcrumbs.map((item, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: item.name,
+          item: item.url,
+        })),
+      },
+    ],
+  }
+}
+
+/**
+ * Serializes JSON-LD for a `<script type="application/ld+json">` element. `<`, `>` and `&`
+ * are escaped so text such as `</script>` in a title can never close the element early.
+ */
+export function serializeJsonLd(data: unknown): string {
+  return JSON.stringify(data)
+    .replaceAll('<', '\\u003c')
+    .replaceAll('>', '\\u003e')
+    .replaceAll('&', '\\u0026')
+}

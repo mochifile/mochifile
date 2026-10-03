@@ -1,5 +1,5 @@
 ---
-import type { Locale } from '@mochifile/i18n'
+import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { samePathInAllLocales } from '../lib/seo'
@@ -26,16 +26,28 @@ const { locale } = Astro.props
     tools.length > 0 ? (
       <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {tools.map(({ manifest }) => (
-          <li>
-            <a
-              href={toolPaths(manifest)[locale]}
-              class="block h-full rounded-card border border-border bg-surface-raised p-5 hover:border-accent"
-            >
+          <li class="flex h-full flex-col gap-3 rounded-card border border-border bg-surface-raised p-5 has-[a.tool-link:hover]:border-accent">
+            <a href={toolPaths(manifest)[locale]} class="tool-link">
               <span class="font-semibold">{manifest.meta[locale].title}</span>
               <span class="mt-1 block text-sm text-text-muted">
                 {manifest.meta[locale].description}
               </span>
             </a>
+            {/* Variant pages (e.g. a target size) as shortcuts, also giving crawlers a path. */}
+            {manifest.variants && manifest.variants.length > 0 && (
+              <ul class="mt-auto flex flex-wrap gap-2 text-sm" aria-label={manifest.meta[locale].title}>
+                {manifest.variants.map((variant) => (
+                  <li>
+                    <a
+                      href={localePath(locale, variant.meta[locale].slug)}
+                      class="inline-flex min-h-11 items-center rounded-control border border-border px-3 hover:border-accent hover:text-accent"
+                    >
+                      {variant.meta[locale].title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>
