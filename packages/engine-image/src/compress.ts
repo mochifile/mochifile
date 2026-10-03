@@ -5,7 +5,13 @@
 import { ToolError, throwIfAborted } from '@mochifile/tool-kit'
 import type { Codecs } from './codecs.ts'
 import type { Size } from './decode.ts'
-import { estimateStartScale, fitToSize, scaledSize } from './fit-to-size.ts'
+import {
+  DEFAULT_QUALITY,
+  estimateStartScale,
+  fitToSize,
+  MIN_LONG_SIDE,
+  scaledSize,
+} from './fit-to-size.ts'
 import { flattenOnWhite, hasTransparency } from './pixels.ts'
 import { displaySize, type ImageFormat, type ImageInfo, sniffImage } from './sniff.ts'
 import { stripMetadata } from './strip-metadata.ts'
@@ -22,6 +28,23 @@ export interface CompressOptions {
 export const MAX_INPUT_PIXELS = 100_000_000
 /** Images are processed at most at this size, to keep memory use safe on phones (ADR 0016). */
 export const MAX_WORKING_PIXELS = 16_000_000
+
+/**
+ * Preview (ADR 0017): when the image would otherwise be processed above
+ * `PREVIEW_MIN_PIXELS`, a ~0.3 MP preview is encoded first to predict where the minimum
+ * quality fits, so the search starts near the final size instead of encoding a large image
+ * that is certain to be too big.
+ */
+export const PREVIEW_PIXELS = 300_000
+export const PREVIEW_MIN_PIXELS = 1_500_000
+/**
+ * Size grows with pixel count to this power when predicting from the preview. The low end of
+ * what was measured (0.70–0.83): it predicts smaller files, so the search starts at the
+ * largest plausible size and only ever shrinks from there.
+ */
+export const PREVIEW_EXPONENT = 0.7
+/** The preview aims the minimum quality at this share of the target. */
+const PREVIEW_AIM = 0.92
 
 /** What the browser (or a test) provides: codecs and a way to decode at a given size. */
 export interface ImageEngine {
@@ -119,13 +142,40 @@ export async function compressToTarget(
   // A lossless PNG attempt wants the full working size; a lossy one can skip sizes that are
   // certain to be too big.
   const tryPngFirst = requested === 'png'
+  const output: 'jpeg' | 'webp' = requested === 'webp' ? 'webp' : 'jpeg'
+  const encode = output === 'jpeg' ? engine.codecs.encodeJpeg : engine.codecs.encodeWebp
   const memoryScale = estimateStartScale({
     pixels,
     targetBytes: Number.POSITIVE_INFINITY,
     maxPixels: MAX_WORKING_PIXELS,
   })
   const lossyScale = estimateStartScale({ pixels, targetBytes, maxPixels: MAX_WORKING_PIXELS })
-  const decodeScale = tryPngFirst ? memoryScale : lossyScale
+  let decodeScale = tryPngFirst ? memoryScale : lossyScale
+  let predicted: { high: number } | undefined
+
+  if (!tryPngFirst && pixels * lossyScale ** 2 > PREVIEW_MIN_PIXELS) {
+    const preview = await engine.decode(
+      bytes,
+      info,
+      scaledSize(display.width, display.height, Math.sqrt(PREVIEW_PIXELS / pixels)),
+    )
+    throwIfAborted(signal)
+    if (output === 'jpeg' && info.mayHaveAlpha && hasTransparency(preview)) flattenOnWhite(preview)
+    const low = (await encode(preview, DEFAULT_QUALITY.min)).length
+    const high = (await encode(preview, DEFAULT_QUALITY.max)).length
+    throwIfAborted(signal)
+    const previewPixels = preview.width * preview.height
+    const growth = (scale: number) => ((pixels * scale ** 2) / previewPixels) ** PREVIEW_EXPONENT
+    // Largest scale where the minimum quality is predicted to land a little under the target,
+    // never below the smallest allowed result.
+    const fitScale = Math.sqrt(
+      (previewPixels / pixels) * ((PREVIEW_AIM * targetBytes) / low) ** (1 / PREVIEW_EXPONENT),
+    )
+    const floorScale = Math.min(1, MIN_LONG_SIDE / Math.max(display.width, display.height))
+    decodeScale = Math.max(floorScale, Math.min(lossyScale, fitScale))
+    predicted = { high: high * growth(decodeScale) }
+  }
+
   const image = await engine.decode(
     bytes,
     info,
@@ -162,10 +212,8 @@ export async function compressToTarget(
     }
   }
 
-  const output: 'jpeg' | 'webp' = requested === 'webp' ? 'webp' : 'jpeg'
   const flattened = output === 'jpeg' && info.mayHaveAlpha && hasTransparency(image)
   if (flattened) flattenOnWhite(image)
-  const encode = output === 'jpeg' ? engine.codecs.encodeJpeg : engine.codecs.encodeWebp
 
   // Keep only the most recent downscaled copy, to bound memory.
   let cached: { scale: number; image: ImageData } | undefined
@@ -183,6 +231,7 @@ export async function compressToTarget(
     width: image.width,
     height: image.height,
     startScale: Math.min(1, lossyScale / decodeScale),
+    ...(predicted ? { predicted } : {}),
     encode: async (quality, scale) => encode(await imageAt(scale), quality),
     signal,
     onAttempt: (attempts) => onProgress?.(Math.min(0.95, 0.25 + attempts * 0.1), 'encoding'),

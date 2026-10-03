@@ -284,3 +284,97 @@ describe('failures', () => {
     expect(stages).toContain('encoding')
   }, 60_000)
 })
+
+describe('large photos: preview start', () => {
+  /** Wraps the engine to record every encode's pixel count (preview included). */
+  function spyEngine() {
+    const encodes: number[] = []
+    const spied: ImageEngine = {
+      ...engine,
+      codecs: {
+        ...engine.codecs,
+        encodeJpeg: (image, quality) => {
+          encodes.push(image.width * image.height)
+          return engine.codecs.encodeJpeg(image, quality)
+        },
+        encodeWebp: (image, quality) => {
+          encodes.push(image.width * image.height)
+          return engine.codecs.encodeWebp(image, quality)
+        },
+      },
+    }
+    return { spied, encodes }
+  }
+
+  const large = new Map<string, Promise<Uint8Array>>()
+  /** A 12 MP synthetic image (compresses very well) and the landscape photo enlarged to 12 MP. */
+  function largeInput(kind: 'synthetic' | 'photo'): Promise<Uint8Array> {
+    let input = large.get(kind)
+    if (!input) {
+      input = (async () => {
+        if (kind === 'synthetic') return engine.codecs.encodeJpeg(syntheticImage(4000, 3000), 90)
+        const photo = await engine.codecs.decode('jpeg', await readPhoto('landscape'))
+        return engine.codecs.encodeJpeg(await engine.codecs.resize(photo, 4000, 2660), 90)
+      })()
+      large.set(kind, input)
+    }
+    return input
+  }
+
+  it.each(['synthetic', 'photo'] as const)(
+    'a 12 MP %s image starts the search near its final size (50 KB target)',
+    async (kind) => {
+      const { spied, encodes } = spyEngine()
+      const result = await compressToTarget(
+        blob(await largeInput(kind)),
+        { targetBytes: 50_000, format: 'original' },
+        { engine: spied, signal },
+      )
+      expect(result.bytes.length).toBeLessThanOrEqual(50_000)
+      expect(result.meta.resized).toBe(true)
+      // Before the preview, the first encodes ran at 8 MP whatever the final size. Now: a
+      // 0.3 MP preview, then nothing much larger than the result.
+      const final = result.meta.width * result.meta.height
+      expect(Math.max(...encodes)).toBeLessThanOrEqual(final * 1.6)
+      expect(encodes.length).toBeLessThanOrEqual(9)
+    },
+    120_000,
+  )
+
+  const targets = [20_000, 100_000, 1_000_000]
+  it.each(
+    (['synthetic', 'photo'] as const).flatMap((kind) =>
+      targets.flatMap((target) =>
+        (['jpeg', 'webp'] as const).map((format) => ({ kind, target, format })),
+      ),
+    ),
+  )(
+    '$kind 12 MP → $format at $target bytes stays at or under the target',
+    async ({ kind, target, format }) => {
+      const result = await compressToTarget(
+        blob(await largeInput(kind)),
+        { targetBytes: target, format },
+        { engine, signal },
+      )
+      await expectValidResult(result, target, format)
+      // Close to the target, not just under it.
+      expect(result.bytes.length).toBeGreaterThan(target * 0.75)
+    },
+    120_000,
+  )
+
+  it('a large transparent PNG predicts from a flattened preview and keeps the guarantee', async () => {
+    // As JPG, so it skips the lossless PNG attempt and goes through the preview.
+    const png = await engine.codecs.encodePng(syntheticImage(2400, 1800, { alpha: true }))
+    const { spied, encodes } = spyEngine()
+    const result = await compressToTarget(
+      blob(png),
+      { targetBytes: 30_000, format: 'jpeg' },
+      { engine: spied, signal },
+    )
+    // The first encode is the 0.3 MP preview.
+    expect(encodes[0]).toBeLessThanOrEqual(310_000)
+    expect(result.meta).toMatchObject({ format: 'jpeg', flattenedTransparency: true })
+    expect(result.bytes.length).toBeLessThanOrEqual(30_000)
+  }, 120_000)
+})
