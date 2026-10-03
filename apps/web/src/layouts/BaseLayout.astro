@@ -1,6 +1,7 @@
 ---
 import { type Locale, localeNames, localePath, locales, localeTags } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
+import LanguageSuggestion from '../components/LanguageSuggestion.astro'
 import { buildAlternates } from '../lib/seo'
 import '../styles/global.css'
 
@@ -55,6 +56,7 @@ const alternates = buildAlternates(paths, site)
                     href={paths[target]}
                     hreflang={localeTags[target]}
                     lang={localeTags[target]}
+                    data-language-switch
                     aria-current={target === locale ? 'true' : undefined}
                     class:list={[
                       'rounded-control px-2 py-1 hover:bg-accent-soft',
@@ -70,6 +72,8 @@ const alternates = buildAlternates(paths, site)
         </nav>
       </div>
     </header>
+    {/* Pages without alternates (e.g. 404) have nothing to suggest. */}
+    {!noindex && <LanguageSuggestion locale={locale} paths={paths} />}
     <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-12">
       <slot />
     </main>
