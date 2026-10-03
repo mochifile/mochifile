@@ -22,6 +22,12 @@ export interface RunOptions {
 
 export interface ToolClient<O extends ToolOptions> {
   run(files: File[], options?: Partial<O>, runOptions?: RunOptions): Promise<ToolResult[]>
+  /**
+   * Starts the worker and runs the tool's `prepare` hook (e.g. loads WebAssembly). Call it on
+   * the first sign of intent so no request happens after the user picks a file. Safe to call
+   * repeatedly; a failed preparation can be retried.
+   */
+  prepare(): Promise<void>
   /** Terminates the worker. A later `run()` starts a fresh one. */
   dispose(): void
 }
@@ -36,6 +42,7 @@ export function createToolClient<O extends ToolOptions>(
 ): ToolClient<O> {
   let worker: WorkerLike | undefined
   let remote: Remote<ToolWorkerApi> | undefined
+  let preparing: Promise<void> | undefined
 
   const connect = () => {
     if (!remote) {
@@ -46,6 +53,18 @@ export function createToolClient<O extends ToolOptions>(
   }
 
   return {
+    prepare() {
+      preparing ??= connect()
+        .prepare()
+        .then((outcome) => {
+          if (!outcome.ok) throw deserializeError(outcome.error)
+        })
+        .catch((error: unknown) => {
+          preparing = undefined
+          throw error
+        })
+      return preparing
+    },
     async run(files, options = {}, { signal, onProgress } = {}) {
       // Validate before posting anything, for instant feedback. The worker validates again.
       validateFiles(files, manifest)
@@ -76,6 +95,7 @@ export function createToolClient<O extends ToolOptions>(
       worker?.terminate?.()
       remote = undefined
       worker = undefined
+      preparing = undefined
     },
   }
 }
