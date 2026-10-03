@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures.ts'
+import { expect, projectContextOptions, test } from './fixtures.ts'
 
 /**
  * Tool pages must be useful to search engines and readable without JavaScript: the title,
@@ -54,8 +54,11 @@ for (const c of cases) {
       expect(html).not.toContain('type="file"')
     })
 
-    test('stays readable with JavaScript disabled', async ({ browser }) => {
-      const context = await browser.newContext({ javaScriptEnabled: false })
+    test('stays readable with JavaScript disabled', async ({ testBrowser }) => {
+      const context = await testBrowser.newContext({
+        ...projectContextOptions(),
+        javaScriptEnabled: false,
+      })
       const page = await context.newPage()
       await page.goto(c.path)
 

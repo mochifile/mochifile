@@ -277,41 +277,25 @@ test.describe('loading', () => {
 /**
  * Large photos must not crash the page in any engine. The memory cap is the engine's own
  * (16 MP working size, ADR 0016); no per-browser cap was needed.
- *
- * Each runs in a browser of its own, closed at the end, so the hundreds of MB these photos
- * take cannot slow down the tests that follow (issue #10).
  */
 test.describe('large photos', () => {
   for (const [width, height] of [
     [6000, 4000],
     [8000, 6000],
   ] as const) {
-    test(`${(width * height) / 1e6} MP compresses to 100 KB without crashing`, async ({
-      browserName,
-      playwright,
-    }) => {
+    test(`${(width * height) / 1e6} MP compresses to 100 KB without crashing`, async ({ page }) => {
       test.setTimeout(240_000)
+      const crashed: string[] = []
+      page.on('crash', () => crashed.push('page crashed'))
       const large = await largePhoto(width, height)
-      const browser = await playwright[browserName].launch()
-      try {
-        const { baseURL } = test.info().project.use
-        if (!baseURL) throw new Error('playwright.config.ts must set use.baseURL')
-        const context = await browser.newContext({ baseURL })
-        const page = await context.newPage()
-        const problems: string[] = []
-        page.on('crash', () => problems.push('page crashed'))
-        page.on('pageerror', (error) => problems.push(`pageerror: ${error.message}`))
-        await page.goto('/compress-image-to-100kb/')
-        await waitForEngine(page)
-        await add(page, large)
-        const row = rows(page).first()
-        await expect(row).toHaveAttribute('data-status', 'done', { timeout: 200_000 })
-        const result = await downloadResult(page)
-        expect(result.bytes.length).toBeLessThanOrEqual(100_000)
-        expect(problems).toEqual([])
-      } finally {
-        await browser.close()
-      }
+      await page.goto('/compress-image-to-100kb/')
+      await waitForEngine(page)
+      await add(page, large)
+      const row = rows(page).first()
+      await expect(row).toHaveAttribute('data-status', 'done', { timeout: 200_000 })
+      const result = await downloadResult(page)
+      expect(result.bytes.length).toBeLessThanOrEqual(100_000)
+      expect(crashed).toEqual([])
     })
   }
 })
