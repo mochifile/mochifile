@@ -10,7 +10,18 @@ import {
   validateFiles,
 } from '@mochifile/tool-kit'
 import { createToolClient } from '@mochifile/tool-kit/client'
-import { Button, Dropzone, Notice, ProgressBar, RadioCards } from '@mochifile/ui'
+import {
+  Button,
+  buttonClasses,
+  cn,
+  Dropzone,
+  Mascot,
+  Notice,
+  ProgressBar,
+  Segmented,
+  SizeChips,
+  Tag,
+} from '@mochifile/ui'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { type CompressImageOptions, manifest } from './manifest.ts'
 import { formatSize, MAX_TARGET, MIN_TARGET, PRESETS, parseTarget, type SizeUnit } from './sizes.ts'
@@ -307,120 +318,143 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
   const hasWebp = items.some((item) => item.file.type === 'image/webp')
 
   return (
-    <div ref={rootRef} className="flex flex-col gap-6" data-engine={engine}>
-      <div className="flex flex-col gap-3">
-        <RadioCards
-          legend={m.compress_image_target_legend({}, { locale })}
-          value={targetChoice}
-          onChange={setTargetChoice}
-          options={[
-            ...PRESETS.map((p) => ({ value: p.key as string, label: formatSize(p.bytes, locale) })),
-            { value: 'custom', label: m.compress_image_target_custom({}, { locale }) },
-          ]}
-        />
-        {targetChoice === 'custom' && (
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1">
-              <span className="type-body-sm font-medium">
-                {m.compress_image_custom_label({}, { locale })}
-              </span>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={customText}
-                onChange={(event) => setCustomText(event.currentTarget.value)}
-                aria-invalid={custom?.ok === false && customText !== ''}
-                aria-describedby="compress-image-custom-error"
-                size={6}
-                className="min-h-target-min rounded-md border border-border-control bg-surface-card px-3 focus-ring"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="type-body-sm font-medium">
-                {m.compress_image_custom_unit_label({}, { locale })}
-              </span>
-              <select
-                value={customUnit}
-                onChange={(event) => setCustomUnit(event.currentTarget.value as SizeUnit)}
-                className="min-h-target-min rounded-md border border-border-control bg-surface-card px-3 focus-ring"
-              >
-                <option value="kb">KB</option>
-                <option value="mb">MB</option>
-              </select>
-            </label>
-            <p id="compress-image-custom-error" className="basis-full type-body-sm text-danger">
-              {custom?.ok === false && customText !== ''
-                ? custom.reason === 'invalid'
-                  ? m.compress_image_custom_error_invalid({}, { locale })
-                  : m.compress_image_custom_error_range(
-                      { min: formatSize(MIN_TARGET, locale), max: formatSize(MAX_TARGET, locale) },
-                      { locale },
-                    )
-                : ''}
-            </p>
+    <div ref={rootRef} className="flex flex-col gap-8" data-engine={engine}>
+      {/* Phones: one column. Desktop: options on the left, the dropzone in the wider column. */}
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-5 lg:items-start lg:gap-8">
+        <div className="flex flex-col gap-5 lg:col-span-2">
+          <div className="flex flex-col gap-3">
+            <SizeChips
+              legend={m.compress_image_target_legend({}, { locale })}
+              value={targetChoice}
+              onChange={setTargetChoice}
+              // Image tools use the mango block (design system README › Colour).
+              block="mango"
+              options={[
+                ...PRESETS.map((p) => ({
+                  value: p.key as string,
+                  label: formatSize(p.bytes, locale),
+                })),
+                { value: 'custom', label: m.compress_image_target_custom({}, { locale }) },
+              ]}
+            />
+            {targetChoice === 'custom' && (
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="flex flex-col gap-1">
+                  <span className="type-body-sm font-semibold">
+                    {m.compress_image_custom_label({}, { locale })}
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={customText}
+                    onChange={(event) => setCustomText(event.currentTarget.value)}
+                    aria-invalid={custom?.ok === false && customText !== ''}
+                    aria-describedby="compress-image-custom-error"
+                    size={6}
+                    className="min-h-target-min rounded-md border-chip border-border-control bg-surface-page px-3 focus-ring"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="type-body-sm font-semibold">
+                    {m.compress_image_custom_unit_label({}, { locale })}
+                  </span>
+                  <select
+                    value={customUnit}
+                    onChange={(event) => setCustomUnit(event.currentTarget.value as SizeUnit)}
+                    className="min-h-target-min rounded-md border-chip border-border-control bg-surface-page px-3 focus-ring"
+                  >
+                    <option value="kb">KB</option>
+                    <option value="mb">MB</option>
+                  </select>
+                </label>
+                <p
+                  id="compress-image-custom-error"
+                  className="basis-full type-body-sm font-semibold text-danger"
+                >
+                  {custom?.ok === false && customText !== ''
+                    ? custom.reason === 'invalid'
+                      ? m.compress_image_custom_error_invalid({}, { locale })
+                      : m.compress_image_custom_error_range(
+                          {
+                            min: formatSize(MIN_TARGET, locale),
+                            max: formatSize(MAX_TARGET, locale),
+                          },
+                          { locale },
+                        )
+                    : ''}
+                </p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <div className="flex flex-col gap-3">
-        <RadioCards
-          legend={m.compress_image_format_legend({}, { locale })}
-          value={format}
-          onChange={setFormat}
-          options={[
-            {
-              value: 'original',
-              label: m.compress_image_format_original({}, { locale }),
-              description: m.compress_image_format_original_hint({}, { locale }),
-            },
-            {
-              value: 'jpeg',
-              label: m.compress_image_format_jpeg({}, { locale }),
-              description: m.compress_image_format_jpeg_hint({}, { locale }),
-            },
-            {
-              value: 'webp',
-              label: m.compress_image_format_webp({}, { locale }),
-              description: m.compress_image_format_webp_hint({}, { locale }),
-            },
-          ]}
-        />
-        {hasWebp && format !== 'jpeg' && (
-          <Notice tone="warning">{m.compress_image_webp_hint({}, { locale })}</Notice>
-        )}
-      </div>
+          <div className="flex flex-col gap-3">
+            <Segmented
+              legend={m.compress_image_format_legend({}, { locale })}
+              value={format}
+              onChange={setFormat}
+              options={[
+                {
+                  value: 'original',
+                  label: m.compress_image_format_original({}, { locale }),
+                  hint: m.compress_image_format_original_hint({}, { locale }),
+                },
+                {
+                  value: 'jpeg',
+                  label: m.compress_image_format_jpeg({}, { locale }),
+                  hint: m.compress_image_format_jpeg_hint({}, { locale }),
+                },
+                {
+                  value: 'webp',
+                  label: m.compress_image_format_webp({}, { locale }),
+                  hint: m.compress_image_format_webp_hint({}, { locale }),
+                },
+              ]}
+            />
+            {hasWebp && format !== 'jpeg' && (
+              <Notice tone="warning">{m.compress_image_webp_hint({}, { locale })}</Notice>
+            )}
+          </div>
+        </div>
 
-      <div className="flex flex-col gap-2">
-        <Dropzone
-          onFiles={addFiles}
-          multiple
-          accept={manifest.accepts.join(',')}
-          disabled={targetBytes === undefined}
-          label={m.compress_image_drop_label({}, { locale })}
-          hint={m.compress_image_drop_hint(
-            {
-              maxFiles: String(manifest.limits.maxFiles),
-              maxSize: formatSize(manifest.limits.maxFileSizeBytes, locale),
-            },
-            { locale },
-          )}
-        />
-        <p className="type-body-sm text-ink-muted">
-          {m.compress_image_privacy_note({}, { locale })}
-        </p>
-        {tooMany && (
-          <p role="alert" className="type-body-sm font-medium text-danger">
-            {m.compress_image_too_many({ maxFiles: String(manifest.limits.maxFiles) }, { locale })}
+        <div className="flex flex-col gap-3 lg:col-span-3">
+          <Dropzone
+            onFiles={addFiles}
+            multiple
+            accept={manifest.accepts.join(',')}
+            disabled={targetBytes === undefined}
+            stepLabel={m.compress_image_drop_step({}, { locale })}
+            label={m.compress_image_drop_label({}, { locale })}
+            hint={m.compress_image_drop_hint(
+              {
+                maxFiles: String(manifest.limits.maxFiles),
+                maxSize: formatSize(manifest.limits.maxFileSizeBytes, locale),
+              },
+              { locale },
+            )}
+            pasteHint={m.compress_image_paste_hint({}, { locale })}
+          />
+          <p className="type-body-sm text-ink-muted">
+            {m.compress_image_privacy_note({}, { locale })}
           </p>
-        )}
+          {tooMany && (
+            <div role="alert">
+              <Notice tone="warning">
+                {m.compress_image_too_many(
+                  { maxFiles: String(manifest.limits.maxFiles) },
+                  { locale },
+                )}
+              </Notice>
+            </div>
+          )}
+        </div>
       </div>
 
       {items.length > 0 && (
         <section
           aria-label={m.compress_image_list_label({}, { locale })}
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-4"
         >
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {busy && (
               <Button variant="secondary" onClick={cancel}>
                 {m.compress_image_cancel({}, { locale })}
@@ -456,16 +490,25 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
             </Button>
           </div>
 
-          <ul className="flex flex-col gap-3">
-            {items.map((item) => (
+          <ul className="flex flex-col gap-4">
+            {items.map((item, index) => (
               <li
                 key={item.id}
-                className="flex flex-col gap-2 rounded-lg border border-line bg-surface-card p-4"
+                className={cn(
+                  'flex flex-col gap-3 bg-surface-page p-4 sm:p-5',
+                  RESULT_SQUISH[index % RESULT_SQUISH.length],
+                  item.status === 'done' && 'motion-safe:animate-ready',
+                )}
                 data-status={item.status}
               >
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="min-w-0 break-all font-medium">{item.file.name}</span>
-                  <span className="type-body-sm text-ink-muted">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <span className="min-w-0 break-all type-body-strong">{item.file.name}</span>
+                  {/* Result numbers use the display face (type-title-sm). */}
+                  <span
+                    className={
+                      item.result ? 'type-title-sm text-ink' : 'type-body-sm text-ink-muted'
+                    }
+                  >
                     {item.result
                       ? m.compress_image_sizes(
                           {
@@ -477,23 +520,26 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                       : formatSize(item.file.size, locale)}
                   </span>
                 </div>
-                <div aria-live="polite" className="flex flex-col gap-2">
+                <div aria-live="polite" className="flex flex-col gap-3">
                   {item.status === 'queued' && (
                     <span className="type-body-sm text-ink-muted">
                       {m.compress_image_status_waiting({}, { locale })}
                     </span>
                   )}
                   {item.status === 'working' && (
-                    <>
-                      <span className="type-body-sm">{stageMessage(item.stage)}</span>
-                      <ProgressBar
-                        value={item.progress}
-                        label={m.compress_image_progress_label(
-                          { name: item.file.name },
-                          { locale },
-                        )}
-                      />
-                    </>
+                    <div className="flex items-center gap-3">
+                      <Mascot state="squish" className="w-14" />
+                      <div className="flex min-w-0 flex-1 flex-col gap-2">
+                        <span className="type-body-sm">{stageMessage(item.stage)}</span>
+                        <ProgressBar
+                          value={item.progress}
+                          label={m.compress_image_progress_label(
+                            { name: item.file.name },
+                            { locale },
+                          )}
+                        />
+                      </div>
+                    </div>
                   )}
                   {item.status === 'cancelled' && (
                     <span className="type-body-sm text-ink-muted">
@@ -501,16 +547,16 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                     </span>
                   )}
                   {item.status === 'error' && (
-                    <p role="alert" className="type-body-sm font-medium text-danger">
-                      {errorMessage(item)}
-                    </p>
+                    <div role="alert">
+                      <Notice tone="danger">{errorMessage(item)}</Notice>
+                    </div>
                   )}
                   {item.status === 'done' && item.result && (
                     <ResultDetails item={item} result={item.result} locale={locale} />
                   )}
                 </div>
                 {item.status === 'done' && item.result && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-3">
                     <a
                       href={item.result.url}
                       download={item.result.name}
@@ -518,13 +564,15 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                         { name: item.result.name },
                         { locale },
                       )}
-                      className="inline-flex min-h-target-min items-center rounded-pill bg-action px-5 font-medium text-action-ink focus-ring"
+                      className={buttonClasses('primary', 'w-full sm:w-auto')}
                     >
+                      <DownloadIcon />
                       {m.compress_image_download({}, { locale })}
                     </a>
                     {item.result.meta.flattenedTransparency && (
                       <Button
                         variant="secondary"
+                        className="w-full sm:w-auto"
                         disabled={busy}
                         onClick={() => requeue(new Set([item.id]), { format: 'webp' })}
                       >
@@ -539,6 +587,24 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
         </section>
       )}
     </div>
+  )
+}
+
+/** Result cards vary their squished corners so a list does not look stamped. */
+const RESULT_SQUISH = ['rounded-lg-squish-a', 'rounded-lg-squish-b', 'rounded-lg-squish-c'] as const
+
+/** Download arrow (README › Iconography: 24 px grid, 2 px stroke, round caps). */
+function DownloadIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="size-button-icon fill-none stroke-current stroke-2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" />
+    </svg>
   )
 }
 
@@ -565,30 +631,36 @@ function ResultDetails({
       ) : (
         <Notice tone="success">
           {m.compress_image_result_under(
-            {
-              size: formatSize(result.blob.size, locale),
-              target: formatSize(item.targetBytes, locale),
-            },
+            { target: formatSize(item.targetBytes, locale) },
             { locale },
           )}
         </Notice>
       )}
-      {meta.resized && (
-        <Notice>
-          {m.compress_image_resized(
-            {
-              from: size(meta.originalWidth, meta.originalHeight),
-              to: size(meta.width, meta.height),
-            },
-            { locale },
-          )}
-        </Notice>
-      )}
-      {meta.converted && item.format === 'original' && (
-        <Notice>
-          {m.compress_image_converted({ format: FORMAT_LABEL[meta.format] }, { locale })}
-        </Notice>
-      )}
+      <ul className="flex flex-wrap gap-2">
+        <li>
+          <Tag tone="success">{m.compress_image_tag_metadata({}, { locale })}</Tag>
+        </li>
+        {meta.converted && item.format === 'original' && (
+          <li>
+            <Tag>
+              {m.compress_image_converted({ format: FORMAT_LABEL[meta.format] }, { locale })}
+            </Tag>
+          </li>
+        )}
+        {meta.resized && (
+          <li>
+            <Tag tone="warning">
+              {m.compress_image_resized(
+                {
+                  from: size(meta.originalWidth, meta.originalHeight),
+                  to: size(meta.width, meta.height),
+                },
+                { locale },
+              )}
+            </Tag>
+          </li>
+        )}
+      </ul>
       {meta.flattenedTransparency && (
         <Notice tone="warning">{m.compress_image_flattened({}, { locale })}</Notice>
       )}

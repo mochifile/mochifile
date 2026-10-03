@@ -14,7 +14,7 @@ const cases = [
     privacy: 'Your files are processed right here in your browser.',
     maxSize: 'Maximum file size: 5 MB.',
     noscript: 'This tool needs JavaScript.',
-    widget: 'Choose a text file or drop it here',
+    widget: 'Choose a text file',
   },
   {
     path: '/pt/ferramenta-modelo/',
@@ -25,7 +25,7 @@ const cases = [
     privacy: 'Seus arquivos são processados aqui mesmo, no seu navegador.',
     maxSize: 'Tamanho máximo do arquivo: 5 MB.',
     noscript: 'Esta ferramenta precisa de JavaScript.',
-    widget: 'Escolha um arquivo de texto ou solte-o aqui',
+    widget: 'Escolher arquivo de texto',
   },
 ]
 

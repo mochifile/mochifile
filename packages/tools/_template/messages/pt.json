@@ -1,6 +1,6 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "template_tool_drop_label": "Escolha um arquivo de texto ou solte-o aqui",
+  "template_tool_drop_label": "Escolher arquivo de texto",
   "template_tool_drop_hint": "Texto simples (.txt), até {maxSize}",
   "template_tool_processing": "Processando… {percent}%",
   "template_tool_cancel": "Cancelar",

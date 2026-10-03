@@ -67,7 +67,7 @@ test.describe('compress image to 50 KB', () => {
     expect(result.bytes.length).toBeLessThanOrEqual(50_000)
     expect(isJpeg(result.bytes)).toBe(true)
     expect(bytesContain(result.bytes, SECRET)).toBe(false)
-    await expect(rows(page).first()).toContainText('within your 50 KB limit')
+    await expect(rows(page).first()).toContainText('It fits your 50 KB limit')
     expect(requests).toEqual([])
   })
 
@@ -79,7 +79,7 @@ test.describe('compress image to 50 KB', () => {
     await add(page, await photo('flowers'))
     const result = await downloadResult(page)
     expect(result.bytes.length).toBeLessThanOrEqual(50_000)
-    await expect(rows(page).first()).toContainText('dentro do limite de 50 KB')
+    await expect(rows(page).first()).toContainText('Cabe no seu limite de 50 KB')
   })
 })
 
@@ -127,7 +127,7 @@ test('a transparent PNG becomes JPG on white, with a one-click WebP alternative'
   const row = rows(page).first()
   await expect(row).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
   await expect(row).toContainText("JPG can't keep transparent areas")
-  await expect(row).toContainText('Saved as JPG to reach this size')
+  await expect(row).toContainText('Saved as JPG')
 
   await row.getByRole('button', { name: 'Keep transparency (WebP)' }).click()
   const result = await downloadResult(page)
@@ -158,7 +158,7 @@ test('a sideways photo is turned upright, and shrinking is explained', async ({ 
   const row = rows(page).first()
   await expect(row).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
   // Displayed size of the original is 798 × 1200: portrait, not landscape.
-  await expect(row).toContainText(/resized from 798 × 1200 to \d+ × \d+ pixels/)
+  await expect(row).toContainText(/Resized from 798 × 1200 to \d+ × \d+ pixels/)
   const [, width, height] = /to (\d+) × (\d+) pixels/.exec((await row.textContent()) ?? '') ?? []
   expect(Number(height)).toBeGreaterThan(Number(width))
 })
@@ -225,14 +225,41 @@ test('can be used with the keyboard alone', async ({ page, browserName }) => {
 })
 
 test.describe('accessibility', () => {
-  test('has no axe violations before and after compressing', async ({ page }) => {
-    await page.goto('/compress-image-to-50kb/')
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
-    await waitForEngine(page)
-    await add(page, await photo('flowers'), await transparentPng())
-    await expect(rows(page).nth(1)).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
-  })
+  for (const colorScheme of ['light', 'dark'] as const) {
+    test(`has no axe violations before and after compressing (${colorScheme} theme)`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme })
+      await page.goto('/compress-image-to-50kb/')
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+      await waitForEngine(page)
+      await add(page, await photo('flowers'), await transparentPng())
+      await expect(rows(page).nth(1)).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
+      // The success card's bounce has finished, so colours are measured at rest.
+      await page.waitForTimeout(400)
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+    })
+  }
+})
+
+test('takes a photo pasted with Ctrl+V', async ({ page }) => {
+  await page.goto('/compress-image-to-50kb/')
+  await waitForEngine(page)
+  const file = await photo('flowers')
+  // What a browser dispatches on Ctrl+V / Cmd+V with an image on the clipboard.
+  await page.evaluate(
+    ({ bytes, name, type }) => {
+      const data = new DataTransfer()
+      data.items.add(new File([new Uint8Array(bytes)], name, { type }))
+      const event = new Event('paste', { bubbles: true, cancelable: true })
+      Object.defineProperty(event, 'clipboardData', { value: data })
+      document.body.dispatchEvent(event)
+    },
+    { bytes: [...file.buffer], name: file.name, type: file.mimeType },
+  )
+  await expect(rows(page)).toHaveCount(1)
+  await expect(rows(page).first()).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
+  await expect(rows(page).first()).toContainText('It fits your 50 KB limit')
 })
 
 test.describe('loading', () => {
