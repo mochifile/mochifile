@@ -46,4 +46,7 @@ Defined in [`packages/tool-kit/src/contract.ts`](../../packages/tool-kit/src/con
 - [ ] `pnpm lint && pnpm typecheck && pnpm test && pnpm build` pass
 - [ ] Tried it with `pnpm dev` in every locale, on a phone-sized screen
 - [ ] An e2e smoke test in `apps/web/e2e/` if the tool has a notable flow
-- [ ] Any new dependency is justified in the PR description
+- [ ] Any new dependency is justified in the PR description, and listed in `SHIPPED`
+      (`apps/web/integrations/third-party-licenses.ts`) if its code reaches the browser
+- [ ] Heavy assets (WebAssembly, large libraries) load in the tool's `prepare` hook, so no
+      request happens after the user picks a file (see `packages/tools/compress-image`)
