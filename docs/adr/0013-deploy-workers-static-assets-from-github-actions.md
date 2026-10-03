@@ -77,8 +77,9 @@ do not merge; the last one wins** (see [ADR 0014](0014-block-search-indexing-unt
   paths return Cloudflare's bare 9-byte `Not found` with no `_headers` headers. `html_handling`
   from the same upload is applied (`/pt` → `/pt/`), and wrangler does send
   `not_found_handling`, so this looks like a Previews (open beta) platform bug. It affects only
-  Previews; production is fine. Do not use Previews to check 404 pages or their headers. Remove
-  this note once Cloudflare fixes it.
+  Previews; production is fine. Do not use Previews to check 404 pages or their headers.
+  Reported as [cloudflare/workers-sdk#16047](https://github.com/cloudflare/workers-sdk/issues/16047);
+  this note can be removed once that issue is resolved.
 - **2026-10-02: custom domain.** `mochifile.com` is attached as a Worker Custom Domain, and the
   other hosts redirect to it ([ADR 0015](0015-canonical-host-and-domain-redirects.md)).
   Contrary to the consequence above, the existing token needs no extra permission: Workers
