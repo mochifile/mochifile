@@ -17,8 +17,7 @@ for WhatsApp, audio transcription, PDF compression…).
   the private `mochifile/cloud` repository. Never add them here.
 - **Brand:** always write "Mochifile". Never "Mochi" alone — in code, copy, docs or commits.
 
-Current phase: **Phase 0 (foundation)**. No real tools, WebAssembly engines, ads, auth,
-payments or analytics yet.
+Current phase: **Phase 1 (first tools)**. No ads, auth, payments or analytics yet.
 
 ## Commands
 
@@ -44,6 +43,7 @@ and `pnpm test:e2e` if you touched pages, routing, headers or a tool's UI.
 | --- | --- | --- |
 | `apps/web` | `@mochifile/web` | Astro static site; React islands only where needed |
 | `packages/tool-kit` | `@mochifile/tool-kit` | Tool contract, `defineToolManifest`, worker/client wrappers, file helpers |
+| `packages/engine-image` | `@mochifile/engine-image` | Image engine: WebAssembly codecs, decoding, size targeting (ADR 0016, 0017) |
 | `packages/ui` | `@mochifile/ui` | Shared React components and design tokens (`styles.css`) |
 | `packages/i18n` | `@mochifile/i18n` | Locale list, `localePath`, Paraglide messages (`/messages`) |
 | `packages/tools/<id>` | `@mochifile/tool-<id>` | One tool each; `_template` is the starting point |
