@@ -11,10 +11,10 @@
   organization has the team, replace the owner with `@mochifile/maintainers`.
 - [ ] Create the `conduct@mochifile.com` and `security@mochifile.com` mailboxes referenced by
   `CODE_OF_CONDUCT.md` and `SECURITY.md`.
-- [ ] Enable branch protection on `main` (require PRs, passing CI and CodeQL, linear history).
-- [ ] Install the Renovate GitHub app.
-- [ ] Add the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets
+- [x] Enable branch protection on `main` (require PRs, passing CI and CodeQL, linear history).
+- [x] Install the Renovate GitHub app.
+- [x] Add the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets
   ([deployment.md](deployment.md)).
-- [ ] Set up the `www.mochifile.com` and `mochifile.app` redirects in the Cloudflare dashboard
+- [x] Set up the `www.mochifile.com` and `mochifile.app` redirects in the Cloudflare dashboard
   ([deployment.md → Domains](deployment.md#domains), ADR 0015).
 - [ ] At launch, allow search indexing (ADR 0014).
