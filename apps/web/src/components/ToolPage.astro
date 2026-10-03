@@ -72,14 +72,22 @@ const jsonLd = serializeJsonLd(
     client:only: the tool UI is useless without JavaScript, and server-rendering it would show a
     file input that silently ignores files picked before hydration finishes.
   */}
-  <ToolIsland
-    client:only="react"
-    dir={tool.dir}
-    locale={locale}
-    {...variant ? { initialOptions: variant.options } : {}}
-  >
-    <div slot="fallback" class="min-h-48 animate-pulse rounded-card bg-surface-raised"></div>
-  </ToolIsland>
+  {/*
+    Reserves the usual height of a tool's controls (options and file picker, measured at
+    390–532 px), so the text below does not jump when the client-only widget replaces its
+    placeholder (layout shift, a Core Web Vital). Content added later, such as results, may
+    still grow the page: that follows a user action and does not count as a shift.
+  */}
+  <div class="min-h-[30rem] sm:min-h-[34rem] lg:min-h-[30rem]">
+    <ToolIsland
+      client:only="react"
+      dir={tool.dir}
+      locale={locale}
+      {...variant ? { initialOptions: variant.options } : {}}
+    >
+      <div slot="fallback" class="min-h-48 animate-pulse rounded-card bg-surface-raised"></div>
+    </ToolIsland>
+  </div>
   <noscript>
     <p class="rounded-card border border-border bg-surface-raised p-6 text-center">
       {m.tool_requires_js({}, { locale })}
