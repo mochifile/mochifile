@@ -74,16 +74,53 @@
 }
 
 /*
- * Space reserved for a client-only tool so the page below does not shift when it renders
- * (layout shift fix, see apps/web ToolPage). A measured layout height, not a design token;
- * recalibrated whenever the tool panel changes.
+ * Height reserved for the tool panel (padding included) before its client-only tool renders,
+ * so the page below does not shift (layout shift fix, see apps/web ToolPage). A measured
+ * layout height, not a design token: the tallest compress-image panel in English and
+ * Portuguese at 390–599 px (624 px), 600–1023 px (606 px) and from 1024 px (441 px).
+ * Recalibrate whenever the tool panel changes.
  */
 @utility tool-reserve {
-  min-height: 30rem;
+  min-height: 39rem;
   @media (width >= 600px) {
-    min-height: 34rem;
+    min-height: 38rem;
   }
   @media (width >= 64rem) {
-    min-height: 30rem;
+    min-height: 28rem;
+  }
+}
+
+/*
+ * Motion (README › Motion). Press: scale 0.97 for 120ms. Squish: 104% width / 96% height and
+ * back over 280ms. Ready: translateY −6px → 0 over 320ms. Both on the brand's spring curve.
+ * Under reduced motion they do not play (`motion-safe:` in components, `press` below).
+ */
+@theme {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-squish: squish 280ms var(--ease-spring);
+  --animate-ready: ready 320ms var(--ease-spring);
+
+  @keyframes squish {
+    40% {
+      transform: scale(1.04, 0.96);
+    }
+  }
+  @keyframes ready {
+    from {
+      transform: translateY(-6px);
+    }
+  }
+}
+
+@utility press {
+  transition: transform 120ms;
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &:active:not(:disabled) {
+      transform: none;
+    }
   }
 }
