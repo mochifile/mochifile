@@ -94,8 +94,16 @@ export type ProcessFn<O extends ToolOptions = ToolOptions> = (
   context: ProcessContext,
 ) => Promise<ToolResult[]>
 
+/**
+ * Loads what `process()` needs (e.g. WebAssembly codecs) ahead of time. The UI calls it on the
+ * first sign of intent, so nothing is fetched after the user picks a file. Must be idempotent
+ * and follow the same purity rules as `process()`.
+ */
+export type PrepareFn = () => Promise<void>
+
 /** A manifest bundled with its process function. Only ever built inside a worker entry. */
 export interface ToolDefinition<O extends ToolOptions = ToolOptions> {
   manifest: ToolManifest<O>
   process: ProcessFn<O>
+  prepare?: PrepareFn
 }

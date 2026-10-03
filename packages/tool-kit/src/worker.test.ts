@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { createToolClient } from './client.ts'
-import type { ProcessFn, ToolProgress } from './contract.ts'
+import type { PrepareFn, ProcessFn, ToolProgress } from './contract.ts'
 import { defineTool } from './define-tool.ts'
 import { ToolError, throwIfAborted } from './errors.ts'
 import { validManifest } from './test-fixtures.ts'
@@ -9,9 +9,9 @@ import { exposeTool } from './worker.ts'
 type Options = { quality: number }
 
 /** Connects a client to a tool through a real MessageChannel, like a Web Worker would. */
-function connect(process: ProcessFn<Options>) {
+function connect(process: ProcessFn<Options>, hooks: { prepare?: PrepareFn } = {}) {
   const channel = new MessageChannel()
-  exposeTool(defineTool(validManifest, process), channel.port1)
+  exposeTool(defineTool(validManifest, process, hooks), channel.port1)
   const client = createToolClient(validManifest, () =>
     Object.assign(channel.port2, { terminate: () => channel.port1.close() }),
   )
@@ -97,5 +97,65 @@ describe('tool worker round trip', () => {
     const run = client.run([png()], {}, { signal: controller.signal })
     setTimeout(() => controller.abort(), 20)
     await expect(run).rejects.toMatchObject({ code: 'aborted' })
+  })
+})
+
+describe('prepare', () => {
+  const noop: ProcessFn<Options> = async (files) => [{ file: files[0] as File, name: 'x' }]
+
+  it('resolves for tools without a prepare hook', async () => {
+    await expect(connect(noop).prepare()).resolves.toBeUndefined()
+  })
+
+  it('runs the hook once however often it is called', async () => {
+    let calls = 0
+    const client = connect(noop, {
+      prepare: async () => {
+        calls += 1
+      },
+    })
+    await Promise.all([client.prepare(), client.prepare()])
+    await client.prepare()
+    expect(calls).toBe(1)
+  })
+
+  it('reports a failed preparation and lets it be retried', async () => {
+    let attempts = 0
+    const client = connect(noop, {
+      prepare: async () => {
+        attempts += 1
+        if (attempts === 1) throw new ToolError('processing-failed', 'codec missing')
+      },
+    })
+    await expect(client.prepare()).rejects.toMatchObject({ code: 'processing-failed' })
+    await expect(client.prepare()).resolves.toBeUndefined()
+    expect(attempts).toBe(2)
+  })
+
+  it('makes a run wait for a preparation in flight', async () => {
+    const order: string[] = []
+    let finish = () => {}
+    const client = connect(
+      async (files) => {
+        order.push('process')
+        return [{ file: files[0] as File, name: 'x' }]
+      },
+      {
+        prepare: () =>
+          new Promise<void>((resolve) => {
+            finish = () => {
+              order.push('prepared')
+              resolve()
+            }
+          }),
+      },
+    )
+    const prepared = client.prepare()
+    const run = client.run([png()])
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(order).toEqual([])
+    finish()
+    await Promise.all([prepared, run])
+    expect(order).toEqual(['prepared', 'process'])
   })
 })
