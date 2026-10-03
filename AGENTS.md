@@ -159,6 +159,9 @@ Follow [docs/contributing/adding-a-tool.md](docs/contributing/adding-a-tool.md).
 
 ## Known constraints
 
+- **New releases wait a day.** pnpm's `minimumReleaseAge` (1 day) and Renovate's (3 days)
+  apply. Do not add `minimumReleaseAgeExclude` entries to `pnpm-workspace.yaml` without a
+  reason in the PR.
 - **TypeScript is pinned to 6.x**: `@astrojs/check` does not support TypeScript 7 yet.
 - **Builds are offline and reproducible.** Inlang plugins are pinned npm devDependencies of
   `@mochifile/i18n`, referenced by local path in `packages/i18n/project.inlang/settings.json`.
