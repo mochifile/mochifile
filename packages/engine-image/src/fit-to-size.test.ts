@@ -189,3 +189,33 @@ describe('estimateStartScale', () => {
     ).toBeCloseTo(Math.sqrt(16 / 48))
   })
 })
+
+describe('fitToSize with predictions', () => {
+  it('skips the maximum-quality encode when it is predicted to be far too big', async () => {
+    const { encode, calls } = fakeEncoder(2000, 1500)
+    const result = await fitToSize({
+      targetBytes: 300_000,
+      width: 2000,
+      height: 1500,
+      encode,
+      signal,
+      predicted: { high: 1_370_000 },
+    })
+    expect(calls.some((call) => call.quality === 90)).toBe(false)
+    expect(result.bytes.length).toBeLessThanOrEqual(300_000)
+  })
+
+  it('stays correct when the prediction is wrong', async () => {
+    const { encode } = fakeEncoder(2000, 1500)
+    // Says the maximum fits easily; it does not.
+    const result = await fitToSize({
+      targetBytes: 300_000,
+      width: 2000,
+      height: 1500,
+      encode,
+      signal,
+      predicted: { low: 10_000, high: 20_000 },
+    })
+    expect(result.bytes.length).toBeLessThanOrEqual(300_000)
+  })
+})

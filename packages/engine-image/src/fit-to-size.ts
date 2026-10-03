@@ -42,6 +42,12 @@ export interface FitToSizeOptions {
   encode: (quality: number, scale: number) => Promise<Uint8Array>
   /** Scale to start from (≤ 1). See `estimateStartScale()`. */
   startScale?: number
+  /**
+   * Predicted sizes at the start scale, at the minimum and maximum quality (e.g. from a
+   * small preview). They only let the search skip encodes that are predicted to fail or
+   * fit; results are always measured.
+   */
+  predicted?: { low?: number; high?: number }
   quality?: QualityRange
   minLongSide?: number
   signal: AbortSignal
@@ -126,7 +132,7 @@ export async function fitToSize(options: FitToSizeOptions): Promise<FitToSizeRes
     return size.width * size.height
   }
   // Sizes at qMin and qMax carried over from the previous scale.
-  let predicted: { low: number; high: number } | undefined
+  let predicted: { low?: number; high?: number } | undefined = options.predicted
   /** Shrinks after the minimum quality was measured too big; false at the floor. */
   const shrink = (lowSize: number, highSize: number) => {
     if (scale <= minScale) return false
@@ -155,11 +161,11 @@ export async function fitToSize(options: FitToSizeOptions): Promise<FitToSizeRes
       return bytes
     }
 
-    // After a shrink, the ends of the quality range are predicted rather than re-encoded:
-    // the maximum is almost surely still too big, and the new scale was chosen so that the
-    // minimum fits. Only measured encodings are ever returned.
+    // With predictions (from a preview, or from the previous scale after a shrink), the ends
+    // of the quality range are not re-encoded when the outcome is clear: the maximum is far
+    // too big, or the minimum comfortably fits. Only measured encodings are ever returned.
     let hi: { q: number; size: number }
-    if (predicted && predicted.high > targetBytes * 1.1) {
+    if (predicted?.high !== undefined && predicted.high > targetBytes * 1.1) {
       hi = { q: qMax, size: predicted.high }
     } else {
       const high = await measure(qMax)
@@ -170,7 +176,7 @@ export async function fitToSize(options: FitToSizeOptions): Promise<FitToSizeRes
     const maxQualitySize = hi.size
     let lo: { q: number; size: number }
     let lowMeasured = false
-    if (predicted && predicted.low < targetBytes * 0.95) {
+    if (predicted?.low !== undefined && predicted.low < targetBytes * 0.95) {
       lo = { q: qMin, size: predicted.low }
     } else {
       const low = await measure(qMin)
