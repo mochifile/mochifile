@@ -51,8 +51,10 @@ from it.
   action (`[data-primary-action]`) is fully visible on first view, without scrolling. An e2e
   test enforces it on every tool page and variant in the sitemap. To meet it, the hero
   block holds the breadcrumb and the H1 only (the brand book's "one-line purpose" waits for a
-  short per-page line; the longer meta description leads the copy below the tool), and size
-  chips use `space-3` side padding so the six presets fit on two rows.
+  short per-page line; the longer meta description leads the copy below the tool), and under
+  600 px the size chips sit in a four-column grid ("Other size" takes two cells), so they
+  always take two rows whatever the system's text rendering. From 600 px they wrap freely, as
+  the SizeChip README says.
 - `docs/design-system/` is excluded from Biome: it is maintained as given, not reformatted.
 
 ## Consequences
