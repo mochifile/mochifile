@@ -115,3 +115,15 @@ reproducing the notices, which the site will publish with the first tool that sh
   - Headless automated measurements overstated times by about 30%; speed figures in this
     project come from normal browser windows in the foreground (Safari slows background
     windows heavily).
+- **2026-10-03: real devices after the faster size search** (PR #12; ADR 0017 update).
+  Production, camera photos, 50 KB target, measured by the maintainer:
+
+  | Device | Before PR #12 | After PR #12 |
+  | --- | --- | --- |
+  | iPhone 13, Safari | about 1 s | under 1 s |
+  | Motorola Moto G, Chrome | not measured | about 2 s |
+
+  The Android result is from a different phone than the earlier Poco X3 test (about 4.5 s
+  for a 20 MP photo before the change), so the two are not a direct before/after comparison.
+  The photo size used on the Moto G was not recorded. A same-device Android before/after
+  would need the Poco X3 again or a build from before PR #12.
