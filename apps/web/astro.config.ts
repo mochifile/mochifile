@@ -4,6 +4,8 @@ import { defaultLocale, locales } from '@mochifile/i18n'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'astro/config'
 import cspHashes from './integrations/csp-hashes.ts'
+import searchIndexing from './integrations/search-indexing.ts'
+import { ALLOW_SEARCH_INDEXING } from './search-indexing.ts'
 
 export const SITE_URL = 'https://mochifile.com'
 
@@ -37,6 +39,8 @@ export default defineConfig({
         locales: Object.fromEntries(locales.map((locale) => [locale, locale])),
       },
     }),
+    // Pre-launch noindex switch: see search-indexing.ts and ADR 0014.
+    searchIndexing({ allowIndexing: ALLOW_SEARCH_INDEXING }),
     // Must run after every other integration has written its HTML.
     cspHashes(),
   ],
