@@ -92,3 +92,26 @@ reproducing the notices, which the site will publish with the first tool that sh
   bundler, patch it with `pnpm patch` rather than loosen the CSP.
 - Firefox's behaviour (orientation, canary, `ImageDecoder` scaling) is not assumed: the probes
   decide at run time, and end-to-end tests run in Firefox in CI.
+
+## Updates
+
+- **2026-10-03: real devices and decode speed.**
+  - **Phones, production, camera photos, 50 KB target** (measured by the maintainer):
+
+    | Device | Input | Result | Total time |
+    | --- | --- | --- | --- |
+    | iPhone 13, Safari | 3.5 MB, 3024 × 4032 (12 MP) | 48 KB, 981 × 1308 | about 1 s |
+    | Xiaomi Poco X3, Chrome | 5.2 MB, 3880 × 5184 (20 MP) | 49 KB, 734 × 980 | about 4.5 s |
+
+    iOS hands the full-size photo from the picker to the page (converted to JPEG); it does
+    not shrink it. Downloads are instant on both.
+  - **Desktop, per step** (Apple M2, Chromium 153 as a normal headed app, 12–42 MP photos):
+    `ImageDecoder` took 1.8–1.9 s to decode at the working size, against 0.2–0.4 s for
+    `createImageBitmap`, because of the extra exact resize and the frame readback.
+    `ImageDecoder` is now used only above 24 MP (`IMAGE_DECODER_MIN_PIXELS`), where its lower
+    memory use matters; smaller photos take the `bitmap` path. The WebAssembly path keeps its
+    full-size decode for the next request on the same file, so a preview and the working
+    image cost one decode.
+  - Headless automated measurements overstated times by about 30%; speed figures in this
+    project come from normal browser windows in the foreground (Safari slows background
+    windows heavily).
