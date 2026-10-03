@@ -25,3 +25,4 @@ a PR. Accepted ADRs are not edited later except for their status; a new ADR supe
 | [0017](0017-size-targeting-algorithm.md) | Size-targeting algorithm | Accepted |
 | [0018](0018-tool-variants-and-markdown-page-copy.md) | Tool variant pages and Markdown page copy | Accepted |
 | [0019](0019-language-suggestion-banner.md) | Language suggestion banner, never a redirect | Accepted |
+| [0020](0020-adopt-the-mochifile-design-system.md) | Adopt the Mochifile design system | Accepted |

@@ -15,7 +15,8 @@ tool needs a rich interactive UI.
 - Use **React** only inside islands, where interactivity is required. Tool pages have a single
   island (`ToolIsland`, rendered `client:only`) that lazy-loads the tool's `Ui.tsx`.
 - Style with **Tailwind CSS v4**, with design tokens defined as CSS variables in
-  `packages/ui/src/tokens.css`.
+  `packages/ui/src/tokens.css` (since replaced by `tokens.generated.css`, generated from the
+  design system: [ADR 0020](0020-adopt-the-mochifile-design-system.md)).
 - Generate tool routes from manifests (`getStaticPaths`), never by hand.
 
 ## Consequences
