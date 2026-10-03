@@ -1,3 +1,4 @@
+import { ALLOW_SEARCH_INDEXING } from '../search-indexing.ts'
 import { expect, test } from './fixtures.ts'
 
 const SITE = 'https://mochifile.com'
@@ -82,4 +83,23 @@ test('unknown pages return 404 and are not indexable', async ({ page, pageErrors
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex')
   // The browser logs the 404 response itself as a console error.
   pageErrors.length = 0
+})
+
+// The pre-launch switch (ADR 0014) must cover pages, files and 404s alike, without displacing
+// the security headers (Cloudflare does not merge two `_headers` rules with the same path).
+test('follows the search indexing switch', async ({ request }) => {
+  for (const path of ['/', '/pt/', '/sitemap-index.xml', '/does-not-exist/']) {
+    const response = await request.get(path)
+    expect(response.headers()['content-security-policy'], path).toContain("default-src 'self'")
+    const robotsHeader = response.headers()['x-robots-tag']
+    if (ALLOW_SEARCH_INDEXING) expect(robotsHeader, path).toBeUndefined()
+    else expect(robotsHeader, path).toBe('noindex')
+  }
+  const robots = await (await request.get('/robots.txt')).text()
+  if (ALLOW_SEARCH_INDEXING) {
+    expect(robots).toContain('Allow: /')
+    expect(robots).toContain(`Sitemap: ${SITE}/sitemap-index.xml`)
+  } else {
+    expect(robots).toBe('User-agent: *\nDisallow: /\n')
+  }
 })
