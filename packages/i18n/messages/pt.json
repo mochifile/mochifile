@@ -16,5 +16,6 @@
   "tool_requires_js": "Esta ferramenta precisa de JavaScript. Ative-o no seu navegador para continuar.",
   "tool_more_pages_heading": "Opções populares",
   "breadcrumb_label": "Trilha de navegação",
-  "breadcrumb_home": "Início"
+  "breadcrumb_home": "Início",
+  "footer_licenses": "Licenças de código aberto"
 }
