@@ -11,7 +11,8 @@
   "plugin.inlang.messageFormat": {
     "pathPattern": [
       "./messages/{locale}.json",
-      "../tools/_template/messages/{locale}.json"
+      "../tools/_template/messages/{locale}.json",
+      "../tools/compress-image/messages/{locale}.json"
     ]
   }
 }
