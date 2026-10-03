@@ -130,6 +130,9 @@ and the [i18n guide](contributing/i18n.md).
 
 ## Hosting
 
-The static output (`apps/web/dist`) is deployed to Cloudflare static assets, which serves
-`_headers` and handles trailing slashes ([ADR 0008](adr/0008-cloudflare-hosting.md)). Deployment
-automation is not part of Phase 0.
+The static output (`apps/web/dist`) is served by an assets-only Cloudflare Worker, which applies
+`_headers` and handles trailing slashes ([ADR 0008](adr/0008-cloudflare-hosting.md)). The
+`Deploy` workflow publishes a Preview for each pull request and production from `main`
+([ADR 0013](adr/0013-deploy-workers-static-assets-from-github-actions.md),
+[setup](contributing/deployment.md)). Until launch every response carries
+`X-Robots-Tag: noindex` ([ADR 0014](adr/0014-block-search-indexing-until-launch.md)).

@@ -94,7 +94,13 @@ published to npm (for example for the private cloud repo), it will first need a 
 8. **CSP** lives in `apps/web/public/_headers`. Inline scripts/styles are hashed at build time
    by `apps/web/integrations/csp-hashes.ts`. `'wasm-unsafe-eval'` is allowed for WebAssembly;
    `'unsafe-eval'` and `'unsafe-inline'` are never allowed (ADR 0012).
-9. Significant decisions get an ADR in `docs/adr/` (copy `0000-template.md`).
+9. **Pre-launch noindex.** `ALLOW_SEARCH_INDEXING` in `apps/web/search-indexing.ts` keeps the
+   whole site out of search engines (ADR 0014). Do not flip it, or add another robots
+   mechanism, outside the launch steps in that ADR.
+10. **Deploys** run from `.github/workflows/deploy.yml` with `apps/web/wrangler.jsonc` (ADR
+    0013). `_headers` rules with the same path do not merge on Cloudflare; add headers to the
+    existing rule.
+11. Significant decisions get an ADR in `docs/adr/` (copy `0000-template.md`).
 
 ## How to add a tool
 

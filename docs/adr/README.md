@@ -18,3 +18,5 @@ a PR. Accepted ADRs are not edited later except for their status; a new ADR supe
 | [0010](0010-payments-paddle-merchant-of-record.md) | Payments via Paddle as Merchant of Record | Accepted (future) |
 | [0011](0011-cross-origin-isolation-per-route.md) | Cross-origin isolation only on pages that need it | Accepted |
 | [0012](0012-content-security-policy.md) | Content Security Policy | Accepted |
+| [0013](0013-deploy-workers-static-assets-from-github-actions.md) | Deploy to Cloudflare Workers static assets from GitHub Actions | Accepted |
+| [0014](0014-block-search-indexing-until-launch.md) | Block search indexing until launch | Accepted |
