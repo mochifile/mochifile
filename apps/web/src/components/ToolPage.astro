@@ -97,7 +97,7 @@ const jsonLd = serializeJsonLd(
     siblings.length > 0 && (
       <nav class="mt-12" aria-labelledby="tool-more-pages">
         <h2 id="tool-more-pages" class="mb-3 text-xl font-semibold">
-          {m.tool_more_pages_heading({}, { locale })}
+          {manifest.relatedPagesLabel?.[locale] ?? m.tool_more_pages_heading({}, { locale })}
         </h2>
         <ul class="flex flex-wrap gap-2">
           {siblings.map((other) => (

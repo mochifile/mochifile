@@ -22,7 +22,7 @@ Defined in [`packages/tool-kit/src/contract.ts`](../../packages/tool-kit/src/con
 
 | Part | File | Rules |
 | --- | --- | --- |
-| Manifest | `src/manifest.ts` | Plain data via `defineToolManifest()`: `id`, `category` (`image`, `media`, `pdf`), `runtime` (`browser`, `server`), `accepts` (MIME types), `limits`, `defaults`, `meta` per locale (`slug`, `title` ≤ 70 chars, `description` ≤ 160 chars) and optional `variants` (`key`, preset `options`, `meta` per locale). Validated when imported. |
+| Manifest | `src/manifest.ts` | Plain data via `defineToolManifest()`: `id`, `category` (`image`, `media`, `pdf`), `runtime` (`browser`, `server`), `accepts` (MIME types), `limits`, `defaults`, `meta` per locale (`slug`, `title` ≤ 70 chars, `description` ≤ 160 chars) optional `variants` (`key`, preset `options`, `meta` per locale) and optional `relatedPagesLabel` per locale (heading above the links between the tool's pages, ≤ 40 chars; defaults to "Popular options"). Validated when imported. |
 | Process | `src/process.ts` | `(files, options, { signal, onProgress }) => Promise<ToolResult[]>`. Pure: no DOM, no network, no logging of file data. Check `signal` with `throwIfAborted`. Throw `ToolError` for expected failures. |
 | Worker | `src/worker.ts` | `exposeTool(defineTool(manifest, processFiles, { prepare }))`. `prepare` is optional: it loads what `process()` needs (e.g. WebAssembly) before the user picks a file. Nothing else. |
 | UI | `src/Ui.tsx` | Default export `({ locale, initialOptions }) => JSX`. `initialOptions` are a variant's options, as untyped data: narrow them. Uses `createToolClient` to run the worker (call `client.prepare()` on the first sign of intent if the tool has a `prepare` hook), `@mochifile/ui` components and Paraglide messages. |

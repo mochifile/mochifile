@@ -14,7 +14,7 @@
   "tool_privacy_browser": "Your files are processed right here in your browser. They are never uploaded to our servers.",
   "tool_max_file_size": "Maximum file size: {maxSize}.",
   "tool_requires_js": "This tool needs JavaScript. Please enable it in your browser to continue.",
-  "tool_more_pages_heading": "Popular shortcuts",
+  "tool_more_pages_heading": "Popular options",
   "breadcrumb_label": "Breadcrumb",
   "breadcrumb_home": "Home"
 }
