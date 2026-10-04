@@ -4,7 +4,7 @@ Friendly, privacy-first file tools for everyone. Mochifile shrinks, converts and
 
 This is the single source of truth for how Mochifile looks, sounds and behaves. Agents (Claude Code, Codex) and contributors implement from this system: use the tokens by name, follow the rules below, and never invent a colour, size or radius that is not here. If something is missing, ask for it to be added instead of improvising.
 
-**Status:** v1. Colours, type, spacing, radius, dark theme and core components are settled. The logo and mascot are **provisional** (see *Logo* and *Mascot*).
+**Status:** v1. Colours, type, spacing, radius, dark theme and core components are settled. The logo is final (v1). The mascot is **provisional** (see *Mascot*).
 
 ## Essence
 
@@ -63,7 +63,7 @@ All text pairs meet WCAG AA (4.5:1, 3:1 for 24px+) in both themes; control borde
 
 Use the type styles by name (`display-xl` … `caption`). Body copy is never smaller than 16px; hints never smaller than 14px. Never use Inter, Roboto or Arial as a design choice.
 
-**Responsive headings.** The tool page H1 is `display-xl` from 600px up and `title` under 600px. Two steps down is deliberate: real Portuguese titles at 360px must leave the primary action above the fold (see *Layout and spacing*), and the fold rule wins over heading size. Other headings step down one level under 600px (`display-lg` → `title`, `title` → `title-sm`). Never shorten a title to make it fit: titles carry the words people search for.
+**Responsive headings.** The tool page H1 is `display-xl` from 600px up and `title` under 600px. Two steps down is deliberate: real Portuguese titles at 360px must leave the primary action above the fold (see *Layout and spacing*), and the fold rule wins over heading size. Other headings step down one level under 600px (`display-lg` → `title`, `title` → `title-sm`, `title-sm` → `label-lg`), so every heading level stays distinct on phones. Never shorten a title to make it fit: titles carry the words people search for.
 
 ## Shape: the squish
 
@@ -102,10 +102,17 @@ Rules: the mascot reacts, it never talks in speech bubbles and never blocks a co
 
 ## Logo
 
-- **Symbol:** the mascot's silhouette with eyes only (*Assets › Logos*). Used as favicon, avatar and next to the wordmark.
-- **Wordmark:** "mochifile" in lowercase, Fredoka 700, with the dots of both i's replaced by small squished mochi drops: the first `strawberry`, the second `matcha`.
-- Always write the name as **Mochifile** in text and **mochifile** in the wordmark. Never "Mochi" alone (trademark rule).
-- **Provisional:** the final wordmark will be redrawn as custom outlines; the 16px and 32px favicons need pixel-tuned versions. Until then, do not ship the wordmark as live text in places where the font may not load (emails, images).
+The logo is final (v1). All files are in *Assets › Logos*; never redraw it or set it in a font.
+
+- **Symbol:** the mochi-document with eyes: cream body, a folded top-right corner in `ube`, a bold rounded outline in `ink`. Favicon, avatars, app icon, and next to the wordmark.
+- **Wordmark:** "mochifile", drawn as custom monoline letters (round caps and joins, one stroke weight): a squished "o", a soft tail on the "l", and the dots of both i's replaced by squished mochi drops, the first `strawberry`, the second `matcha`. It is not a font: use the SVG.
+- **Lockups:** horizontal (default: header, footer, documents), stacked (square spaces, splash), wordmark alone (where the symbol already appears nearby), symbol alone (favicon, avatars, small spaces).
+- **On dark grounds:** use the `-on-dark` files: the letters become cream, the dots and symbol keep their colours.
+- **Mono:** one-colour ink versions exist for stamps, embossing and single-colour print only.
+- **Clear space:** at least the height of the "o" on every side. **Minimum size:** horizontal logo 96px wide on screen; below that, use the symbol alone.
+- **Favicons:** `favicon.svg` (modern browsers), a pixel-drawn 16px PNG and a 32px PNG; app icons (180px, 512px) are the symbol on a `mango` square.
+- **Never:** stretch, recolour the letters with brand colours, swap the dot colours, add effects or outlines, set the name in a font, or place it on busy photos.
+- Always write the name as **Mochifile** in text and **mochifile** only in the logo. Never "Mochi" alone (trademark rule).
 
 ## Iconography
 
