@@ -10,19 +10,30 @@ const range = (from: number, to: number) =>
 
 /**
  * Every character the fonts draw. Printable ASCII and Latin-1 (all Portuguese letters, ×, ·,
- * no-break space), the wordmark's dotless ı, typographic punctuation, → and −, and the spaces
- * number formatting may produce. Characters outside it fall back to the next font in the
- * stack; a unit test checks that the site's text stays inside it.
+ * no-break space), typographic punctuation, → and −, and the spaces number formatting may
+ * produce. Characters outside it fall back to the next font in the stack; a unit test checks
+ * that the site's text stays inside it. Extra characters are code points, so invisible ones
+ * (thin and narrow spaces) stay readable in review.
  */
 export const CHARSET = [
   range(0x20, 0x7e),
   range(0xa0, 0xff),
-  'ı', // ı
-  ' ‑ ', // thin space, non-breaking hyphen, narrow no-break space
-  '–—', // – —
-  '‘’“”', // ‘ ’ “ ”
-  '•…›', // • … ›
-  '→−', // → −
+  String.fromCodePoint(
+    0x2009, // thin space
+    0x2011, // non-breaking hyphen
+    0x202f, // narrow no-break space
+    0x2013, // en dash
+    0x2014, // em dash
+    0x2018, // left single quote
+    0x2019, // right single quote
+    0x201c, // left double quote
+    0x201d, // right double quote
+    0x2022, // bullet
+    0x2026, // ellipsis
+    0x203a, // single right-pointing angle quote, the breadcrumb separator
+    0x2192, // rightwards arrow
+    0x2212, // minus sign
+  ),
 ].join('')
 
 export interface SubsetFont {
