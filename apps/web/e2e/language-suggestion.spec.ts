@@ -1,5 +1,6 @@
 import type { Browser, BrowserContextOptions, Page } from '@playwright/test'
 import { expect, projectContextOptions, test } from './fixtures.ts'
+import { readLayoutShifts, recordLayoutShifts } from './layout-shifts.ts'
 
 /**
  * The language suggestion banner (ADR 0019): offers the page in the visitor's preferred
@@ -151,26 +152,14 @@ test('is keyboard accessible, axe-clean and shifts nothing', async ({
 }) => {
   const { context, page } = await visitorPage(testBrowser, 'pt-BR')
   try {
-    await page.addInitScript(() => {
-      const shifts: number[] = []
-      ;(window as unknown as { __shifts: number[] }).__shifts = shifts
-      try {
-        new PerformanceObserver((list) => {
-          for (const entry of list.getEntries())
-            shifts.push((entry as unknown as { value: number }).value)
-        }).observe({ type: 'layout-shift', buffered: true })
-      } catch {
-        // layout-shift entries exist only in Chromium.
-      }
-    })
+    await recordLayoutShifts(page)
     await page.goto('/')
     await expect(banner(page)).toBeVisible()
     // An overlay: fixed position, so nothing else on the page moves.
     expect(await banner(page).evaluate((el) => getComputedStyle(el).position)).toBe('fixed')
     if (browserName === 'chromium') {
-      expect(
-        await page.evaluate(() => (window as unknown as { __shifts: number[] }).__shifts),
-      ).toEqual([])
+      const { total, moved } = await readLayoutShifts(page)
+      expect(total, moved).toBe(0)
     }
 
     const { default: AxeBuilder } = await import('@axe-core/playwright')
