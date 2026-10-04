@@ -2,11 +2,12 @@
 @import "@mochifile/ui/styles.css";
 
 /*
- * Tool UIs live in packages/tools and reach the site through node_modules links, which
- * Tailwind's automatic detection skips; without this their classes would silently not exist.
- * Point it at the folder: a glob of the tool folders matched nothing.
+ * Tool UIs and their shared pieces reach the site through node_modules links, which
+ * Tailwind's automatic detection skips; without these sources their classes would not exist.
+ * Point at the folders: a glob of the tool folders matched nothing.
  */
 @source "../../../../packages/tools";
+@source "../../../../packages/tool-ui";
 
 /*
  * The brand fonts come from Astro's font API (astro.config.ts), whose variables include
