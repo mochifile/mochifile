@@ -75,8 +75,13 @@ const jsonLd = serializeJsonLd(
     </ol>
   </nav>
   {/* Everything except the interactive widget is static HTML, for SEO and no-JS visitors. */}
-  <h1 class="type-title sm:type-display-lg">{meta.title}</h1>
-  <p class="mt-2 max-w-reading-max type-body sm:type-body-lg">{meta.tagline}</p>
+  <h1 class="type-title sm:type-display-xl">{meta.title}</h1>
+  {/*
+    Two lines are reserved on phones (a tagline has at most 60 characters, so it never needs
+    more): the fallback font can wrap it differently from Figtree, and the hero must keep its
+    height when the font swaps in, or the tool panel below would shift.
+  */}
+  <p class="mt-2 min-h-14 max-w-reading-max type-body sm:min-h-0 sm:type-body-lg">{meta.tagline}</p>
   </div>
   {/*
     client:only: the tool UI is useless without JavaScript, and server-rendering it would show a
