@@ -10,7 +10,8 @@
     "preview": "astro preview",
     "typecheck": "astro check",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "fonts": "node fonts/subset.ts"
   },
   "dependencies": {
     "@astrojs/react": "7.0.0",
@@ -36,6 +37,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "parse5": "8.0.1",
+    "subset-font": "2.9.0",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "wrangler": "4.143.0"
