@@ -12,6 +12,13 @@
   --spacing-button-icon: 22px;
   /* ToolCard README: "min height 124px". */
   --spacing-tool-card-min: 124px;
+  /*
+   * Width of each header language link, so its position never depends on how wide a font
+   * draws the name (the right-aligned links moved 3 px when Figtree replaced the fallback).
+   * A measured layout value, not a design token: the widest label, "Português" in bold, is
+   * 91 px. Fits beside the logo at 360 px. Re-measure when adding a language.
+   */
+  --spacing-language-link: 96px;
 }
 
 /* Button README: secondary "2.5px ink outline"; Dropzone README: "2.5px dashed" border. */
