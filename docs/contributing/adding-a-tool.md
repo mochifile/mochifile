@@ -22,7 +22,7 @@ Defined in [`packages/tool-kit/src/contract.ts`](../../packages/tool-kit/src/con
 
 | Part | File | Rules |
 | --- | --- | --- |
-| Manifest | `src/manifest.ts` | Plain data via `defineToolManifest()`: `id`, `category` (`image`, `media`, `pdf`), `runtime` (`browser`, `server`), `accepts` (MIME types), `limits`, `defaults`, `meta` per locale (`slug`, `title` ≤ 70 chars, `description` ≤ 160 chars) optional `variants` (`key`, preset `options`, `meta` per locale) and optional `relatedPagesLabel` per locale (heading above the links between the tool's pages, ≤ 40 chars; defaults to "Popular options"). Validated when imported. |
+| Manifest | `src/manifest.ts` | Plain data via `defineToolManifest()`: `id`, `category` (`image`, `media`, `pdf`), `runtime` (`browser`, `server`), `accepts` (MIME types), `limits`, `defaults`, `meta` per locale (`slug`, `title` ≤ 70 chars, `description` ≤ 160 chars for search engines, `tagline` ≤ 60 chars: the one-line purpose under the H1) optional `variants` (`key`, preset `options`, `meta` per locale) and optional `relatedPagesLabel` per locale (heading above the links between the tool's pages, ≤ 40 chars; defaults to "Popular options"). Validated when imported. |
 | Process | `src/process.ts` | `(files, options, { signal, onProgress }) => Promise<ToolResult[]>`. Pure: no DOM, no network, no logging of file data. Check `signal` with `throwIfAborted`. Throw `ToolError` for expected failures. |
 | Worker | `src/worker.ts` | `exposeTool(defineTool(manifest, processFiles, { prepare }))`. `prepare` is optional: it loads what `process()` needs (e.g. WebAssembly) before the user picks a file. Nothing else. |
 | UI | `src/Ui.tsx` | Default export `({ locale, initialOptions }) => JSX`. `initialOptions` are a variant's options, as untyped data: narrow them. Uses `createToolClient` to run the worker (call `client.prepare()` on the first sign of intent if the tool has a `prepare` hook), `@mochifile/ui` components and Paraglide messages. Follow `docs/design-system/` (the component READMEs); the page wraps the UI in the tool panel, under the category's colour block. |
@@ -50,7 +50,7 @@ Defined in [`packages/tool-kit/src/contract.ts`](../../packages/tool-kit/src/con
       (`apps/web/integrations/third-party-licenses.ts`) if its code reaches the browser
 - [ ] The file picker is the shared `Dropzone` (or the tool's one primary action carries
       `data-primary-action`): `apps/web/e2e/fold.spec.ts` checks it is fully visible on a
-      390 × 844 phone, on every page and variant, in every language
+      390 × 844 and a 360 × 800 phone, on every page and variant, in every language
 - [ ] If the tool panel's height changed, `tool-reserve` in
       `packages/ui/src/component-constants.css` is recalibrated (no layout shift on load)
 - [ ] Heavy assets (WebAssembly, large libraries) load in the tool's `prepare` hook, so no

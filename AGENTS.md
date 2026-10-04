@@ -118,8 +118,8 @@ published to npm (for example for the private cloud repo), it will first need a 
 Follow [docs/contributing/adding-a-tool.md](docs/contributing/adding-a-tool.md). In short:
 
 1. Copy `packages/tools/_template` to `packages/tools/<tool-id>` and rename the package.
-2. Edit `src/manifest.ts` (id, category, accepts, limits, defaults, per-locale slug/title/description,
-   and optional `variants`: extra pages with preset options).
+2. Edit `src/manifest.ts` (id, category, accepts, limits, defaults, per-locale
+   slug/title/description/tagline, and optional `variants`: extra pages with preset options).
 3. Implement `src/process.ts` and its tests; keep it pure.
 4. Build the UI in `src/Ui.tsx` with `@mochifile/ui` components.
 5. Add messages in `messages/{en,pt}.json` (keys prefixed with the tool id in snake_case) and add
