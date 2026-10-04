@@ -60,7 +60,8 @@ const jsonLd = serializeJsonLd(
         breadcrumbs.map((item, index) => {
           const current = index === breadcrumbs.length - 1
           return (
-            <li class="flex items-center gap-2">
+            // On phones the last crumb, which repeats the H1, is left to screen readers.
+            <li class:list={['flex items-center gap-2', current && 'max-sm:sr-only']}>
               {index > 0 && <span aria-hidden="true">›</span>}
               {current ? (
                 <span aria-current="page">{item.name}</span>
@@ -74,7 +75,8 @@ const jsonLd = serializeJsonLd(
     </ol>
   </nav>
   {/* Everything except the interactive widget is static HTML, for SEO and no-JS visitors. */}
-  <h1 class="type-display-lg sm:type-display-xl">{meta.title}</h1>
+  <h1 class="type-title sm:type-display-lg">{meta.title}</h1>
+  <p class="mt-2 max-w-reading-max type-body sm:type-body-lg">{meta.tagline}</p>
   </div>
   {/*
     client:only: the tool UI is useless without JavaScript, and server-rendering it would show a
