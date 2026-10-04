@@ -26,6 +26,13 @@ Fontsource Latin files (30 KB and 20 KB) and preloaded both. On tool pages, Ligh
 - **Preload only Fredoka**, which draws the H1. Figtree is fetched when the CSS needs it. Both
   use `font-display: swap` with Astro's metric-matched fallbacks, so text shows at once and
   nothing shifts when the fonts arrive.
+- **Fallbacks sized for every common system.** Astro sizes fallback faces for the last family
+  of the stack only. With `sans-serif` last that meant Arial alone, so on Android (Roboto) and
+  Linux the unsized fallback wrapped text differently and the page shifted when Figtree
+  arrived. The stack passed to Astro ends at `system-ui` (always available; the trailing
+  `sans-serif` of tokens.json adds nothing), which gives faces sized for Segoe UI, Roboto,
+  Helvetica Neue and Arial. CI installs Roboto on the e2e runner, so the layout-shift test sees
+  what Android visitors see.
 - **Lighthouse method.** Lighthouse (mobile, 13.5.0, 3 runs per page) runs on a local
   production build served by `apps/web/e2e/serve.ts`, which applies the real `_headers` and,
   since this decision, **compresses like production**: Cloudflare sends text, JS, CSS, JSON,
