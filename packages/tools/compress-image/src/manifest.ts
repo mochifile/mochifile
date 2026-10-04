@@ -88,8 +88,8 @@ export const manifest = defineToolManifest<CompressImageOptions>({
         pt: 'Deixe uma foto com menos de 50 KB, um limite comum em formulários de governo, concursos e vagas de emprego. Grátis, privado e no navegador.',
       },
       {
-        en: 'The usual limit on government and job forms.',
-        pt: 'O limite comum em formulários de governo e concursos.',
+        en: 'For government forms and exam registrations.',
+        pt: 'Para formulários de governo e inscrições em concursos.',
       },
     ),
     variant(
@@ -114,8 +114,8 @@ export const manifest = defineToolManifest<CompressImageOptions>({
         pt: 'Comprima uma foto para 200 KB ou menos para envio de documentos e sites, mantendo boa qualidade. Grátis, privado e feito no seu navegador.',
       },
       {
-        en: 'For document uploads, with good quality kept.',
-        pt: 'Para envio de documentos, com boa qualidade.',
+        en: 'For sending documents in good quality.',
+        pt: 'Para enviar documentos com boa qualidade.',
       },
     ),
     variant(
@@ -127,8 +127,8 @@ export const manifest = defineToolManifest<CompressImageOptions>({
         pt: 'Deixe uma foto com 500 KB ou menos para e-mail, anúncios e portais, ainda nítida. Grátis, privado e feito no seu navegador.',
       },
       {
-        en: 'For email and listings, and still sharp.',
-        pt: 'Para e-mail e anúncios, e ainda nítida.',
+        en: 'For email and sale listings, with the photo still sharp.',
+        pt: 'Para e-mail e anúncios de venda, com a foto nítida.',
       },
     ),
     variant(
