@@ -60,7 +60,8 @@ from it.
     headings*): two steps down is deliberate, because one step (`display-lg`, 44 px) pushes
     the primary action 20–24 px below the fold on every Portuguese page at 360 × 800, and the
     fold rule wins over heading size. Titles are never shortened to fit. Other headings step
-    down one level under 600 px (`display-lg` → `title`, `title` → `title-sm`);
+    down one level under 600 px (`display-lg` → `title`, `title` → `title-sm`, `title-sm` →
+    `label-lg`), so every heading level stays distinct on phones;
   - under 600 px the breadcrumb shows only the parent level, on one line (a long name is cut
     with "…"); the other crumbs stay for screen readers and in the structured data. The
     logo links home, and the last crumb repeats the H1. One line also keeps the hero's height
@@ -68,6 +69,19 @@ from it.
   - under 600 px the size chips sit in a four-column grid ("Other size" takes two cells), so
     they always take two rows whatever the system's text rendering. From 600 px they wrap
     freely, as the SizeChip README says.
+- **Logo (final v1, 2026-10-04).** The brand book's logo is drawn as vectors and never set in
+  a font. Header and footer use the horizontal lockup inline (`Logo.astro`, drawing from
+  `apps/web/src/assets/logo/`): in the header the letters follow the text
+  colour (`ink`, which matches the light file in the light theme and the on-dark file in the
+  dark theme); the footer uses the on-dark file as drawn. The symbol and the i-dots keep the
+  file's exact colours in every theme: the `strawberry` and `matcha` tokens deepen in dark, and
+  the brand book says the dots never change. These SVGs hold raw colours, which the design
+  guard allows because it does not scan `.svg` assets. The link's accessible name is exactly
+  "Mochifile"; the drawing is `aria-hidden`. Widths are 120 px under 600 px and 200 px from
+  600 px (`--spacing-logo-phone`, `--spacing-logo`), above the 96 px minimum, with the clear
+  space (the "o"'s height) kept on every side; an e2e test checks both. Favicons (SVG, 16 and
+  32 px PNG), the 180 px Apple touch icon and a minimal web manifest with the 512 px icon come
+  from the same folder.
 - `docs/design-system/` is excluded from Biome: it is maintained as given, not reformatted.
 
 ## Consequences
@@ -78,5 +92,5 @@ from it.
   CSS catch them, and the existing axe tests catch broken contrast.
 - Fonts add about 50 KB (two variable woff2 files), preloaded. Lighthouse is compared before
   and after the restyle.
-- The logo and mascot are provisional in the brand book; they are implemented as specified and
-  will be replaced when the final drawings exist.
+- The logo is final (v1); the mascot is still provisional in the brand book and will be
+  replaced when its final drawings exist.
