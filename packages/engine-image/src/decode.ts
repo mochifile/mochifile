@@ -16,7 +16,8 @@
  */
 import { ToolError } from '@mochifile/tool-kit'
 import type { Codecs } from './codecs.ts'
-import { displaySize, type ImageInfo } from './sniff.ts'
+import { applyOrientation } from './pixels.ts'
+import { displaySize, type ImageFormat, type ImageInfo } from './sniff.ts'
 
 export type DecodePath = 'image-decoder' | 'bitmap' | 'wasm'
 
@@ -57,9 +58,64 @@ export const CANARY_PIXELS = [
 const ORIENTED_JPEG =
   '/9j/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAABAAYAAAAAAAD/4AAQSkZJRgABAQAAAQABAAD/2wCEAAgICAgJCAkKCgkNDgwODRMREBARExwUFhQWFBwrGx8bGx8bKyYuJSMlLiZENS8vNUROQj5CTl9VVV93cXecnNEBCAgICAkICQoKCQ0ODA4NExEQEBETHBQWFBYUHCsbHxsbHxsrJi4lIyUuJkQ1Ly81RE5CPkJOX1VVX3dxd5yc0f/CABEIACAAQAMBIgACEQEDEQH/xAAqAAEBAAAAAAAAAAAAAAAAAAAABgEBAQEBAAAAAAAAAAAAAAAAAAgGB//aAAwDAQACEAMQAAAAixlO/wAgKqmsACvEq0pICqprAA//xAAUEAEAAAAAAAAAAAAAAAAAAABQ/9oACAEBAAE/AAP/xAAUEQEAAAAAAAAAAAAAAAAAAAAw/9oACAECAQE/AA//xAAUEQEAAAAAAAAAAAAAAAAAAAAw/9oACAEDAQE/AA//2Q=='
 
+/**
+ * 64×64 samples, top half red and bottom half blue, for the native HEIC and AVIF probes
+ * (ADR 0022). Synthetic: HEIC written by macOS's encoder (`sips`), AVIF by `@jsquash/avif`.
+ * Not smaller: macOS pads a tiny HEIC's coded frame, which libheif then rejects as suspicious.
+ */
+const PROBE_HEIC =
+  'AAAAJGZ0eXBoZWl4AAAAAG1pZjFNaVByTWlIQW1pYWZoZWl4AAABh21ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAHBpY3QA' +
+  'AAAAAAAAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAAADnBpdG0AAAAAAAEAAAAjaWlu' +
+  'ZgAAAAAAAQAAABVpbmZlAgAAAAABAABodmMxAAAAAOdpcHJwAAAAxmlwY28AAAATY29scm5jbHgAAgACAAaAAAAADGNs' +
+  'bGkAywBAAAAAFGlzcGUAAAAAAAAAQAAAAEAAAAAJaXJvdAAAAAAQcGl4aQAAAAADCgoKAAAAcmh2Y0MBAiAAAACwAAAA' +
+  'AAAe8AD8/fr6AAALA6AAAQAYQAEMAf//AiAAAAMAsAAAAwAAAwAeFwJAoQABACNCAQECIAAAAwCwAAADAAADAB6gFCBB' +
+  'wY7YgXuRZVNwICBgCKIAAQAJRAHAYsshAUyQAAAAGWlwbWEAAAAAAAAAAQABBoECAwWGhAAAAB5pbG9jAAAAAEQAAAEA' +
+  'AQAAAAEAAAG7AAAAOQAAAAFtZGF0AAAAAAAAAEkAAAA1KAGvovL4Gj//5pR3/aBGXwm+Q8VTi/XJT7wF6f6lE97P6AuI' +
+  'f/6BHgfWQe/1SIF+6HJqu/w='
+const PROBE_AVIF =
+  'AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAA' +
+  'AAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAACwAAAAoaWluZgAA' +
+  'AAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAEAAAABAAAAA' +
+  'EHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAACAAIABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAA' +
+  'ADRtZGF0EgAKCRgVf/2CBAQNCDIdGYAQQQQEALTbes9xmtE4Q9SL5AtveDF6Ff3XfwM='
+
 export const probeImages = {
   canaryPng: () => base64Bytes(CANARY_PNG),
   orientedJpeg: () => base64Bytes(ORIENTED_JPEG),
+  heic: () => base64Bytes(PROBE_HEIC),
+  avif: () => base64Bytes(PROBE_AVIF),
+}
+
+/** RGBA of the probe sample's pixel in column 32 of `row`. */
+export const probePixel = (data: Uint8ClampedArray, row: number) =>
+  data.subarray(row * 256 + 128, row * 256 + 132)
+
+/** Formats every browser decodes natively; HEIC and AVIF depend on the browser (ADR 0022). */
+export const ALWAYS_NATIVE: ReadonlySet<ImageFormat> = new Set(['jpeg', 'png', 'webp'])
+
+const MIME: Record<'heic' | 'avif', string> = { heic: 'image/heic', avif: 'image/avif' }
+
+/**
+ * Whether the browser decodes `format` here (in this worker) and reads it back as expected:
+ * the sample's top half must come out red and its bottom half blue. Lossy samples, so the
+ * colours are checked loosely.
+ */
+export async function probeNativeDecode(format: 'heic' | 'avif'): Promise<boolean> {
+  try {
+    const bitmap = await createImageBitmap(
+      new Blob([probeImages[format]()], { type: MIME[format] }),
+      { premultiplyAlpha: 'none' },
+    )
+    const ok = bitmap.width === 64 && bitmap.height === 64
+    const pixels = ok ? readback(bitmap, 64, 64) : undefined
+    bitmap.close()
+    if (!pixels) return false
+    const [r1 = 0, , b1 = 255] = probePixel(pixels.data, 8)
+    const [r2 = 255, , b2 = 0] = probePixel(pixels.data, 56)
+    return r1 > 180 && b1 < 80 && b2 > 180 && r2 < 80
+  } catch {
+    return false
+  }
 }
 
 function base64Bytes(base64: string): Uint8Array<ArrayBuffer> {
@@ -193,6 +249,15 @@ async function decoding<T>(promise: Promise<T>): Promise<T> {
   }
 }
 
+/** Which decoder a format takes: the browser's or WebAssembly. */
+export function decoderFor(
+  path: DecodePath,
+  format: ImageFormat,
+  nativeFormats: ReadonlySet<ImageFormat> = ALWAYS_NATIVE,
+): 'native' | 'wasm' {
+  return path !== 'wasm' && nativeFormats.has(format) ? 'native' : 'wasm'
+}
+
 /** Decodes `bytes` to display orientation at `target` size (≤ display size). */
 export async function decodeImage({
   path,
@@ -200,12 +265,15 @@ export async function decodeImage({
   info,
   target,
   codecs,
+  nativeFormats = ALWAYS_NATIVE,
 }: {
   path: DecodePath
   bytes: Uint8Array<ArrayBuffer>
   info: ImageInfo
   target: Size
   codecs: Codecs
+  /** Formats the browser decodes; others take the WebAssembly route whatever the path. */
+  nativeFormats?: ReadonlySet<ImageFormat>
 }): Promise<ImageData> {
   const display = displaySize(info)
   const fit = async (image: ImageData) =>
@@ -213,7 +281,7 @@ export async function decodeImage({
       ? codecs.resize(image, target.width, target.height)
       : image
 
-  if (path === 'wasm') {
+  if (decoderFor(path, info.format, nativeFormats) === 'wasm') {
     if (display.width * display.height > WASM_MAX_PIXELS) {
       throw new ToolError('dimensions-too-large', 'Too large for the WebAssembly decoder', {
         details: { maxMegapixels: WASM_MAX_PIXELS / 1_000_000 },
@@ -222,7 +290,10 @@ export async function decodeImage({
     if (lastFullDecode?.bytes !== bytes) {
       // Drop the previous file's pixels before decoding the next one.
       lastFullDecode = undefined
-      lastFullDecode = { bytes, image: await decoding(codecs.decode(info.format, bytes)) }
+      const decoded = await decoding(codecs.decode(info.format, bytes))
+      // The AVIF decoder leaves rotation and mirroring to us; the others apply them.
+      const image = info.format === 'avif' ? applyOrientation(decoded, info.orientation) : decoded
+      lastFullDecode = { bytes, image }
     }
     const full = lastFullDecode.image
     if (full.width > target.width || full.height > target.height) return fit(full)
@@ -259,13 +330,23 @@ export async function decodeImage({
 
   const resized = target.width < display.width || target.height < display.height
   const bitmap = await decoding(
-    createImageBitmap(new Blob([bytes]), {
-      imageOrientation: 'from-image',
-      premultiplyAlpha: 'none',
-      ...(resized
-        ? { resizeWidth: target.width, resizeHeight: target.height, resizeQuality: 'high' as const }
-        : {}),
-    }),
+    createImageBitmap(
+      new Blob(
+        [bytes],
+        info.format === 'heic' || info.format === 'avif' ? { type: MIME[info.format] } : {},
+      ),
+      {
+        imageOrientation: 'from-image',
+        premultiplyAlpha: 'none',
+        ...(resized
+          ? {
+              resizeWidth: target.width,
+              resizeHeight: target.height,
+              resizeQuality: 'high' as const,
+            }
+          : {}),
+      },
+    ),
   )
   try {
     return fit(readback(bitmap, bitmap.width, bitmap.height))

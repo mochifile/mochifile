@@ -12,6 +12,15 @@ export {
   MAX_WORKING_PIXELS,
   type OutputFormat,
 } from './compress.ts'
+export {
+  CONVERT_QUALITY,
+  type ConvertContext,
+  type ConvertMeta,
+  type ConvertOptions,
+  type ConvertOutcome,
+  type ConvertResult,
+  convertImage,
+} from './convert.ts'
 export { type DecodePath, WASM_MAX_PIXELS } from './decode.ts'
 export {
   DEFAULT_QUALITY,
@@ -23,9 +32,16 @@ export {
 } from './fit-to-size.ts'
 export {
   type BrowserEngine,
+  type BrowserEngineOptions,
   createBrowserEngine,
   type NavigatorLike,
   shouldPreloadOnIdle,
 } from './prepare.ts'
-export { displaySize, type ImageFormat, type ImageInfo, sniffImage } from './sniff.ts'
+export {
+  displaySize,
+  type EncodableFormat,
+  type ImageFormat,
+  type ImageInfo,
+  sniffImage,
+} from './sniff.ts'
 export { stripMetadata } from './strip-metadata.ts'

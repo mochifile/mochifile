@@ -5,6 +5,7 @@ import {
   dctScaledSize,
   decodeImage,
   probeImages,
+  probePixel,
   WASM_MAX_PIXELS,
 } from './decode.ts'
 import { sniffImage } from './sniff.ts'
@@ -32,6 +33,23 @@ describe('probe images', () => {
     expect(decoded.data[2]).toBeLessThan(60)
     expect(decoded.data.at(-2)).toBeGreaterThan(200)
   })
+
+  it.each(['heic', 'avif'] as const)(
+    'the %s sample is 64 × 64, red on top and blue at the bottom, as the native probe expects',
+    async (format) => {
+      const bytes = probeImages[format]()
+      expect(sniffImage(bytes)).toMatchObject({ format, width: 64, height: 64 })
+      const decoded = await codecs.decode(format, bytes)
+      expect([decoded.width, decoded.height]).toEqual([64, 64])
+      // The pixels probeNativeDecode reads.
+      const [r1 = 0, , b1 = 255] = probePixel(decoded.data, 8)
+      const [r2 = 255, , b2 = 0] = probePixel(decoded.data, 56)
+      expect(r1).toBeGreaterThan(180)
+      expect(b1).toBeLessThan(80)
+      expect(b2).toBeGreaterThan(180)
+      expect(r2).toBeLessThan(80)
+    },
+  )
 })
 
 describe('dctScaledSize', () => {
