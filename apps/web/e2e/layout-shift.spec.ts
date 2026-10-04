@@ -26,11 +26,27 @@ for (const PHONE of PHONES) {
       try {
         const page = await context.newPage()
         await page.addInitScript(() => {
-          const shifts: number[] = []
-          ;(window as unknown as { __shifts: number[] }).__shifts = shifts
+          type Shift = { value: number; moved: string[] }
+          const shifts: Shift[] = []
+          ;(window as unknown as { __shifts: Shift[] }).__shifts = shifts
+          /** What moved, so a failure says where to look, e.g. `A «Home» x24→26 y92→92`. */
+          const describe = (source: {
+            node?: Node | null
+            previousRect: DOMRectReadOnly
+            currentRect: DOMRectReadOnly
+          }) => {
+            const node = source.node
+            const text = (node?.textContent ?? '').trim().slice(0, 30)
+            const { previousRect: a, currentRect: b } = source
+            return `${node?.nodeName ?? '?'} «${text}» x${a.x}→${b.x} y${a.y}→${b.y} w${a.width}→${b.width}`
+          }
           new PerformanceObserver((list) => {
             for (const entry of list.getEntries()) {
-              shifts.push((entry as unknown as { value: number }).value)
+              const shift = entry as unknown as {
+                value: number
+                sources: Parameters<typeof describe>[0][]
+              }
+              shifts.push({ value: shift.value, moved: shift.sources.map(describe) })
             }
           }).observe({ type: 'layout-shift', buffered: true })
         })
@@ -39,10 +55,14 @@ for (const PHONE of PHONES) {
         await page.evaluate(() => document.fonts.ready)
         // Let any late layout (fonts, the island) settle before reading the entries.
         await page.waitForTimeout(500)
-        const total = await page.evaluate(() =>
-          (window as unknown as { __shifts: number[] }).__shifts.reduce((sum, v) => sum + v, 0),
+        const shifts = await page.evaluate(
+          () => (window as unknown as { __shifts: { value: number; moved: string[] }[] }).__shifts,
         )
-        if (total > 0) failures.push(`${path}: ${total.toFixed(4)}`)
+        const total = shifts.reduce((sum, shift) => sum + shift.value, 0)
+        if (total > 0) {
+          const moved = shifts.flatMap((shift) => shift.moved).join('; ')
+          failures.push(`${path}: ${total.toFixed(4)} (${moved})`)
+        }
       } finally {
         await context.close()
       }
