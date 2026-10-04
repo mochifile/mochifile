@@ -55,8 +55,10 @@ from it.
   - the hero block holds the breadcrumb, the H1 and the page's **tagline**: a one-line
     purpose (`meta.tagline`, at most 60 characters, per locale), separate from the SEO
     description, which leads the copy below the tool;
-  - the tool page H1 is `display-lg`, stepping down to `title` under 600 px, as the brand
-    book's heading rule says;
+  - the tool page H1 is `display-xl` from 600 px and `title` under 600 px. The brand book's
+    rule steps down one level (`display-lg`, 44 px), but at 360 × 800 that pushes the primary
+    action 20–24 px below the fold on every Portuguese page, so phones use `title` until the
+    maintainer decides otherwise;
   - under 600 px the breadcrumb's last crumb, which repeats the H1, is left to screen readers;
   - under 600 px the size chips sit in a four-column grid ("Other size" takes two cells), so
     they always take two rows whatever the system's text rendering. From 600 px they wrap
