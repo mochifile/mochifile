@@ -117,14 +117,14 @@ const jsonLd = serializeJsonLd(
     <Content />
   </article>
   <section class="mt-16 flex max-w-reading-max flex-col gap-2 rounded-lg-squish-b bg-ube-tint p-6 text-ube-ink" aria-labelledby="tool-facts">
-    <h2 id="tool-facts" class="type-title-sm">{m.tool_facts_heading({}, { locale })}</h2>
+    <h2 id="tool-facts" class="type-label-lg sm:type-title-sm">{m.tool_facts_heading({}, { locale })}</h2>
     {manifest.runtime === 'browser' && <p>{m.tool_privacy_browser({}, { locale })}</p>}
     <p>{m.tool_max_file_size({ maxSize }, { locale })}</p>
   </section>
   {
     siblings.length > 0 && (
       <nav class="mt-16" aria-labelledby="tool-more-pages">
-        <h2 id="tool-more-pages" class="mb-3 type-title-sm">
+        <h2 id="tool-more-pages" class="mb-3 type-label-lg sm:type-title-sm">
           {manifest.relatedPagesLabel?.[locale] ?? m.tool_more_pages_heading({}, { locale })}
         </h2>
         <ul class="flex flex-wrap gap-2">

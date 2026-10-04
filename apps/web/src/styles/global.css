@@ -52,7 +52,10 @@
   }
   .page-copy h3 {
     margin-top: var(--space-2);
-    @apply type-title-sm;
+    @apply type-label-lg;
+    @variant sm {
+      @apply type-title-sm;
+    }
   }
   .page-copy ul {
     list-style: disc;
