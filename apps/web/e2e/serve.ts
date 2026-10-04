@@ -30,10 +30,23 @@ const types: Record<string, string> = {
   '.txt': 'text/plain; charset=utf-8',
   '.json': 'application/json',
   '.wasm': 'application/wasm',
+  '.png': 'image/png',
+  '.woff2': 'font/woff2',
+  '.webmanifest': 'application/manifest+json',
 }
 
 /** Content types Cloudflare compresses; others (fonts, images) are already compressed. */
-const COMPRESSIBLE = new Set(['.html', '.js', '.css', '.svg', '.xml', '.txt', '.json', '.wasm'])
+const COMPRESSIBLE = new Set([
+  '.html',
+  '.js',
+  '.css',
+  '.svg',
+  '.xml',
+  '.txt',
+  '.json',
+  '.webmanifest',
+  '.wasm',
+])
 const compressed = new Map<string, Buffer>()
 
 /** The file's bytes in the encoding Cloudflare would pick for this request, if any. */

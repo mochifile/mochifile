@@ -36,7 +36,13 @@ const alternates = buildAlternates(paths, site)
     {/* Only the display face is preloaded: it draws the H1, the largest text on tool pages. */}
     <Font cssVariable="--font-fredoka" preload />
     <Font cssVariable="--font-figtree" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {/* The final logo's icons (docs/design-system/assets/Logos): SVG for modern browsers,
+        pixel-drawn PNGs for the rest, the app icon on a mango square. */}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Mochifile" />
@@ -48,7 +54,8 @@ const alternates = buildAlternates(paths, site)
   </head>
   <body class="flex min-h-dvh flex-col bg-surface-page text-ink antialiased">
     <header>
-      <div class="mx-auto flex max-w-content-max items-center justify-between gap-4 px-4 py-2">
+      {/* The gap keeps the logo's clear space (0.57 × its height: 11px, then 19px from 600px). */}
+      <div class="mx-auto flex max-w-content-max items-center justify-between gap-4 px-4 py-2 sm:gap-6">
         <Logo href={localePath(locale)} />
         <nav aria-label={m.nav_language({}, { locale })}>
           <ul class="flex gap-1 type-body-sm font-semibold">
@@ -85,6 +92,10 @@ const alternates = buildAlternates(paths, site)
     </main>
     <footer class="rounded-t-2xl bg-surface-inverse type-body-sm text-ink-on-inverse-muted">
       <div class="mx-auto flex max-w-content-max flex-col gap-2 px-6 py-10">
+        {/* The margin keeps the logo's clear space above the text. */}
+        <div class="mb-6">
+          <Logo href={localePath(locale)} ground="on-dark" />
+        </div>
         <p>{m.footer_privacy_note({}, { locale })}</p>
         <p>
           <a class="rounded-sm text-ink-on-inverse underline focus-ring" href="https://github.com/mochifile/mochifile">

@@ -19,6 +19,12 @@
    * 91 px. Fits beside the logo at 360 px. Re-measure when adding a language.
    */
   --spacing-language-link: 96px;
+  /*
+   * Header and footer logo widths, approved by the maintainer: above the brand book's 96px
+   * minimum (README › Logo), 120px fits beside the language links at 360px.
+   */
+  --spacing-logo-phone: 120px;
+  --spacing-logo: 200px;
 }
 
 /* Button README: secondary "2.5px ink outline"; Dropzone README: "2.5px dashed" border. */
