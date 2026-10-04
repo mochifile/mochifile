@@ -41,20 +41,26 @@ from it.
   line. SVG assets and license texts are not scanned: illustrations legitimately contain hex
   colours.
 - **Fonts are self-hosted.** Fredoka and Figtree come from pinned `@fontsource-variable`
-  packages (OFL-1.1) through Astro's local font provider, Latin subset only (it includes the
-  dotless ı of the wordmark). Astro generates metric-matched fallbacks, so swapping fonts
+  packages (OFL-1.1) through Astro's local font provider, subset to what en and pt need
+  ([ADR 0021](0021-subset-brand-fonts.md)). Astro generates metric-matched fallbacks, so swapping fonts
   shifts nothing. Noto Sans stays in the font stack but is not downloaded while every locale
   is Latin; download it when a non-Latin locale is added. Both fonts are listed in the
   third-party notices. The CSP stays `'self'`: Astro's inline `@font-face` styles are hashed
   like any other inline style.
-- **Mobile fold rule.** On a 390 × 844 phone, in every language, every tool page's primary
-  action (`[data-primary-action]`) is fully visible on first view, without scrolling. An e2e
-  test enforces it on every tool page and variant in the sitemap. To meet it, the hero
-  block holds the breadcrumb and the H1 only (the brand book's "one-line purpose" waits for a
-  short per-page line; the longer meta description leads the copy below the tool), and under
-  600 px the size chips sit in a four-column grid ("Other size" takes two cells), so they
-  always take two rows whatever the system's text rendering. From 600 px they wrap freely, as
-  the SizeChip README says.
+- **Mobile fold rule.** On a 390 × 844 phone and on a 360 × 800 one (the most common Android
+  size for our audience), in every language, every tool page's primary action
+  (`[data-primary-action]`) is fully visible on first view, without scrolling. E2e tests
+  enforce it, and check that nothing shifts while the page loads, on every tool page and
+  variant in the sitemap at both sizes. To meet it:
+  - the hero block holds the breadcrumb, the H1 and the page's **tagline**: a one-line
+    purpose (`meta.tagline`, at most 60 characters, per locale), separate from the SEO
+    description, which leads the copy below the tool;
+  - the tool page H1 is `display-lg`, stepping down to `title` under 600 px, as the brand
+    book's heading rule says;
+  - under 600 px the breadcrumb's last crumb, which repeats the H1, is left to screen readers;
+  - under 600 px the size chips sit in a four-column grid ("Other size" takes two cells), so
+    they always take two rows whatever the system's text rendering. From 600 px they wrap
+    freely, as the SizeChip README says.
 - `docs/design-system/` is excluded from Biome: it is maintained as given, not reformatted.
 
 ## Consequences
