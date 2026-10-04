@@ -36,4 +36,26 @@ describe('ZIP downloads', () => {
       vi.unstubAllGlobals()
     }
   })
+
+  it('retries loading the library after a failed load', async () => {
+    vi.resetModules()
+    vi.doMock('client-zip', () => {
+      throw new Error('offline')
+    })
+    const fresh = await import('./zip.ts')
+    const createObjectURL = vi.fn(() => 'blob:archive')
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL: vi.fn() })
+    try {
+      const files = [{ name: 'photo.jpg', blob: new Blob(['image']) }]
+      await expect(fresh.downloadZip(files, 'photos.zip')).rejects.toThrow()
+      vi.doMock('client-zip', () => ({ downloadZip: zip }))
+      await fresh.downloadZip(files, 'photos.zip')
+      expect(click).toHaveBeenCalledOnce()
+    } finally {
+      click.mockRestore()
+      vi.unstubAllGlobals()
+      vi.doUnmock('client-zip')
+    }
+  })
 })

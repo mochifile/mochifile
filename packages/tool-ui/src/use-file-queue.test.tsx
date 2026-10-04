@@ -72,6 +72,28 @@ describe('useFileQueue', () => {
     expect(revokeObjectURL).toHaveBeenCalledTimes(3)
   })
 
+  it('ignores requeue for a file that is being processed', async () => {
+    let finish = (_result: ToolResult) => {}
+    const run = vi.fn(
+      () =>
+        new Promise<ToolResult>((resolve) => {
+          finish = resolve
+        }),
+    )
+    const { result } = renderHook(() =>
+      useFileQueue<{ size: number }, object>({ run, maxFiles: 2, validate: () => {} }),
+    )
+    act(() => result.current.add([file('a.jpg')], { size: 50 }))
+    await waitFor(() => expect(result.current.items[0]?.status).toBe('working'))
+    const id = result.current.items[0]?.id
+    if (id === undefined) throw new Error('Missing queue item')
+    act(() => result.current.requeue(new Set([id]), { size: 100 }))
+    expect(result.current.items[0]).toMatchObject({ status: 'working', settings: { size: 50 } })
+    await act(async () => finish(output('a.jpg')))
+    await waitFor(() => expect(result.current.done).toHaveLength(1))
+    expect(run).toHaveBeenCalledOnce()
+  })
+
   it('aborts the active file and cancels the files still waiting', async () => {
     const run = vi.fn(
       (_item, { signal }: { signal: AbortSignal }) =>

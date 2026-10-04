@@ -42,4 +42,32 @@ describe('usePrepareOnIntent', () => {
     expect(screen.getByTestId('tool').getAttribute('data-engine')).toBe('ready')
     expect(load).toHaveBeenCalledTimes(2)
   })
+
+  it('calls load once when two events arrive in the same tick', async () => {
+    const load = vi.fn(async () => {})
+    render(<Harness load={load} preloadOnIdle={() => false} />)
+    await act(async () => {
+      fireEvent.pointerOver(screen.getByTestId('tool'))
+      fireEvent.focusIn(screen.getByTestId('tool'))
+    })
+    expect(load).toHaveBeenCalledOnce()
+  })
+
+  it('preloads on idle only once, even after the load fails', async () => {
+    vi.useFakeTimers()
+    try {
+      const load = vi.fn().mockRejectedValue(new Error('offline'))
+      render(<Harness load={load} preloadOnIdle={() => true} />)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000)
+      })
+      expect(load).toHaveBeenCalledOnce()
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000)
+      })
+      expect(load).toHaveBeenCalledOnce()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

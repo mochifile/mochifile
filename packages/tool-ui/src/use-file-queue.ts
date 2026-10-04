@@ -155,7 +155,8 @@ export function useFileQueue<Settings, Meta>({
   const requeue = (ids: ReadonlySet<number>, settings: Partial<Settings> = {}) => {
     setItems((list) =>
       list.map((item) => {
-        if (!ids.has(item.id)) return item
+        // A file being processed keeps its run; requeueing it would start a second one.
+        if (!ids.has(item.id) || item.status === 'working') return item
         if (item.result) URL.revokeObjectURL(item.result.url)
         const { result: _result, error: _error, stage: _stage, ...rest } = item
         return {
