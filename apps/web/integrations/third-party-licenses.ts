@@ -50,7 +50,7 @@ export const SHIPPED: readonly ShippedPackage[] = [
   { name: 'comlink', from: { workspace: 'packages/tool-kit' }, usedFor: 'worker messaging' },
   {
     name: 'client-zip',
-    from: { workspace: 'packages/tools/compress-image' },
+    from: { workspace: 'packages/tool-ui' },
     usedFor: 'ZIP downloads',
   },
   {
