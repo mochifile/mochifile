@@ -17,8 +17,8 @@
     "@mochifile/engine-image": "workspace:*",
     "@mochifile/i18n": "workspace:*",
     "@mochifile/tool-kit": "workspace:*",
-    "@mochifile/ui": "workspace:*",
-    "client-zip": "2.5.1"
+    "@mochifile/tool-ui": "workspace:*",
+    "@mochifile/ui": "workspace:*"
   },
   "peerDependencies": {
     "react": "^19.0.0"
