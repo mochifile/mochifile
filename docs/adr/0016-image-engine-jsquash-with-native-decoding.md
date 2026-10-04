@@ -127,3 +127,31 @@ reproducing the notices, which the site will publish with the first tool that sh
   for a 20 MP photo before the change), so the two are not a direct before/after comparison.
   The photo size used on the Moto G was not recorded. A same-device Android before/after
   would need the Poco X3 again or a build from before PR #12.
+- **2026-10-04: HEIC and AVIF input, and conversion** ([ADR 0022](0022-heic-and-avif-decoding.md)).
+  - **Reading.** The engine also reads HEIC and AVIF. `sniffImage` reads their size, rotation
+    (`irot`) and alpha from the file's `meta` box without decoding. Engines that need these
+    formats ask for them (`createBrowserEngine({ extraFormats })`); compress-image does not, so
+    nothing changes for it.
+  - **Decoders.** Each extra format is probed in the worker by decoding a 64 × 64 sample with
+    `createImageBitmap`. Where that works (and the canvas readback is exact), the browser
+    decodes it. Elsewhere the format's WebAssembly decoder is loaded during `prepare`:
+    - HEIC: libheif + libde265 (`libheif-js`, 1.42 MB, about 470 KB gzipped). It applies the
+      file's rotation and mirroring and assembles iPhone grid images. It decodes a 12 MP
+      iPhone photo in about 0.8 s in Node on an M2.
+    - AVIF: libavif + libaom (`@jsquash/avif`, 1.2 MB). Rotation is applied afterwards.
+
+    Both are imported dynamically, so engines that never need them never load their code.
+    Samples smaller than 64 × 64 don't work: macOS pads a tiny HEIC's coded frame, and
+    libheif's security limit then rejects it.
+  - **Converting.** `convertImage` converts at full resolution, without the 16 MP working limit
+    (the 100 MP input limit stays).
+    - JPG is written by mozjpeg at quality 85 and WebP by libwebp at 82; PNG is lossless.
+    - A file already in the wanted format is not re-encoded: only its metadata is removed.
+    - Transparency is filled with white for JPG, and the result says so.
+    - WebAssembly decoding keeps its 24 MP limit, so on browsers without native HEIC a 48 MP
+      iPhone "HEIF Max" photo is refused with a clear error. Native decoding (Safari) has no
+      such limit.
+    - Phone memory and speed are measured in the convert-image PR and recorded here.
+  - **Licences.** The notices add libheif 1.23.2 and libde265 1.0.15 (LGPL-3.0, with exact
+    source links) and libavif 1.0.1 and libaom 3.7.0 (BSD-2-Clause and the AOMedia Patent
+    License). The texts these packages don't ship are kept in `apps/web/integrations/notices/`.
