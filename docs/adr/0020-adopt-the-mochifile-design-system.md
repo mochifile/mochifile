@@ -55,10 +55,12 @@ from it.
   - the hero block holds the breadcrumb, the H1 and the page's **tagline**: a one-line
     purpose (`meta.tagline`, at most 60 characters, per locale), separate from the SEO
     description, which leads the copy below the tool;
-  - the tool page H1 is `display-xl` from 600 px and `title` under 600 px. The brand book's
-    rule steps down one level (`display-lg`, 44 px), but at 360 × 800 that pushes the primary
-    action 20–24 px below the fold on every Portuguese page, so phones use `title` until the
-    maintainer decides otherwise;
+  - the tool page H1 is `display-xl` from 600 px and `title` under 600 px. **Settled** by the
+    maintainer (2026-10-04) and recorded in the brand book (*Typography › Responsive
+    headings*): two steps down is deliberate, because one step (`display-lg`, 44 px) pushes
+    the primary action 20–24 px below the fold on every Portuguese page at 360 × 800, and the
+    fold rule wins over heading size. Titles are never shortened to fit. Other headings step
+    down one level under 600 px (`display-lg` → `title`, `title` → `title-sm`);
   - under 600 px the breadcrumb shows only the parent level, on one line (a long name is cut
     with "…"); the other crumbs stay for screen readers and in the structured data. The
     logo links home, and the last crumb repeats the H1. One line also keeps the hero's height
