@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { ToolError } from './errors.ts'
-import { formatBytes, matchesMime, renameFile, splitFileName, validateFiles } from './files.ts'
+import {
+  fileMimeType,
+  formatBytes,
+  matchesMime,
+  renameFile,
+  splitFileName,
+  validateFiles,
+} from './files.ts'
 import { validManifest } from './test-fixtures.ts'
 
 const file = (size: number, type = 'image/png') => ({ size, type })
@@ -11,6 +18,23 @@ describe('matchesMime', () => {
     expect(matchesMime('IMAGE/HEIC', ['image/*'])).toBe(true)
     expect(matchesMime('video/mp4', ['image/*'])).toBe(false)
     expect(matchesMime('', ['image/*'])).toBe(false)
+  })
+})
+
+describe('fileMimeType', () => {
+  it('uses the browser type when there is one', () => {
+    expect(fileMimeType({ type: 'image/HEIC', size: 1, name: 'a.jpg' })).toBe('image/heic')
+  })
+
+  it('infers the type from the extension when the browser gives none', () => {
+    // HEIC often arrives untyped on Windows and some Android browsers.
+    expect(fileMimeType({ type: '', size: 1, name: 'IMG_0001.HEIC' })).toBe('image/heic')
+    expect(fileMimeType({ type: 'application/octet-stream', size: 1, name: 'x.heif' })).toBe(
+      'image/heif',
+    )
+    expect(fileMimeType({ type: '', size: 1, name: 'photo.avif' })).toBe('image/avif')
+    expect(fileMimeType({ type: '', size: 1, name: 'notes.txt' })).toBe('')
+    expect(fileMimeType({ type: '', size: 1 })).toBe('')
   })
 })
 
@@ -36,6 +60,10 @@ describe('validateFiles', () => {
     expect(codeOf(() => validateFiles([file(1, 'application/pdf')], validManifest))).toBe(
       'unsupported-type',
     )
+    // An untyped file is judged by its extension.
+    const untyped = (name: string) => ({ size: 1, type: '', name })
+    expect(codeOf(() => validateFiles([untyped('a.png')], validManifest))).toBe('ok')
+    expect(codeOf(() => validateFiles([untyped('a.exe')], validManifest))).toBe('unsupported-type')
     expect(codeOf(() => validateFiles([file(101)], validManifest))).toBe('file-too-large')
     expect(codeOf(() => validateFiles([file(100), file(100)], validManifest))).toBe(
       'total-too-large',

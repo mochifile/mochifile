@@ -11,7 +11,30 @@ export function matchesMime(type: string, accepts: readonly string[]): boolean {
   })
 }
 
-type FileLike = Pick<File, 'size' | 'type'>
+type FileLike = Pick<File, 'size' | 'type'> & { name?: string }
+
+/**
+ * MIME types by extension, for files that arrive without a type. HEIC photos often do: Windows
+ * and some Android browsers report an empty type or `application/octet-stream` (ADR 0022). The
+ * worker still checks the file's bytes; this only decides whether to accept it for checking.
+ */
+const MIME_BY_EXTENSION: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  heic: 'image/heic',
+  heif: 'image/heif',
+  avif: 'image/avif',
+}
+
+/** The file's MIME type, or one inferred from its extension when the browser gives none. */
+export function fileMimeType(file: FileLike): string {
+  const type = file.type.toLowerCase()
+  if (type && type !== 'application/octet-stream') return type
+  const ext = splitFileName(file.name ?? '').ext.toLowerCase()
+  return MIME_BY_EXTENSION[ext] ?? type
+}
 
 /** Validates files against a manifest's `accepts` and `limits`. Throws `ToolError`. */
 export function validateFiles(
@@ -25,7 +48,7 @@ export function validateFiles(
   }
   let total = 0
   for (const file of files) {
-    if (!matchesMime(file.type, accepts)) {
+    if (!matchesMime(fileMimeType(file), accepts)) {
       throw new ToolError('unsupported-type', `Unsupported type "${file.type}"`)
     }
     if (file.size > limits.maxFileSizeBytes) {
