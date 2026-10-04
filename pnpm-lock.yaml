@@ -455,6 +455,40 @@ importers:
         specifier: 'catalog:'
         version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
 
+  packages/tools/convert-image:
+    dependencies:
+      '@mochifile/engine-image':
+        specifier: workspace:*
+        version: link:../../engine-image
+      '@mochifile/i18n':
+        specifier: workspace:*
+        version: link:../../i18n
+      '@mochifile/tool-kit':
+        specifier: workspace:*
+        version: link:../../tool-kit
+      '@mochifile/tool-ui':
+        specifier: workspace:*
+        version: link:../../tool-ui
+      '@mochifile/ui':
+        specifier: workspace:*
+        version: link:../../ui
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.1
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.3.0
+      react:
+        specifier: 'catalog:'
+        version: 19.3.0
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+
   packages/ui:
     devDependencies:
       '@testing-library/dom':

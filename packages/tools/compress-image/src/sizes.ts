@@ -20,19 +20,7 @@ export type SizeUnit = 'kb' | 'mb'
 
 const UNIT_BYTES: Record<SizeUnit, number> = { kb: 1_000, mb: 1_000_000 }
 
-/**
- * Formats a size the way people see it on forms: "48.7 KB", "1.2 MB" (with the locale's
- * decimal separator). Uses "KB" rather than Intl's "kB" because that is what forms say.
- */
-export function formatSize(bytes: number, locale: string): string {
-  const unit: SizeUnit = bytes >= 1_000_000 ? 'mb' : 'kb'
-  const value = bytes / UNIT_BYTES[unit]
-  const digits = value < 10 ? 1 : 0
-  const number = new Intl.NumberFormat(locale, { maximumFractionDigits: digits }).format(
-    Math.floor(value * 10 ** digits) / 10 ** digits,
-  )
-  return `${number} ${unit === 'mb' ? 'MB' : 'KB'}`
-}
+export { formatSize } from '@mochifile/tool-ui'
 
 /** Suffix for output file names: `50kb`, `1mb`, `1.5mb`. */
 export function sizeSuffix(bytes: number): string {
