@@ -1,4 +1,9 @@
-import { compressToTarget, type ImageEngine, type ImageFormat } from '@mochifile/engine-image'
+import {
+  compressToTarget,
+  type EncodableFormat,
+  type ImageEngine,
+  type ImageFormat,
+} from '@mochifile/engine-image'
 import {
   type ProcessFn,
   renameFile,
@@ -9,15 +14,20 @@ import {
 import type { CompressImageOptions } from './manifest.ts'
 import { MAX_TARGET, MIN_TARGET, sizeSuffix } from './sizes.ts'
 
-const MIME: Record<ImageFormat, string> = {
+const MIME: Record<EncodableFormat, string> = {
   jpeg: 'image/jpeg',
   png: 'image/png',
   webp: 'image/webp',
 }
-const EXTENSION: Record<ImageFormat, string> = { jpeg: 'jpg', png: 'png', webp: 'webp' }
+const EXTENSION: Record<EncodableFormat, string> = { jpeg: 'jpg', png: 'png', webp: 'webp' }
 
 /** `IMG_1.JPG` → `IMG_1-50kb.JPG`; the extension changes only with the format. */
-export function outputName(name: string, targetBytes: number, from: ImageFormat, to: ImageFormat) {
+export function outputName(
+  name: string,
+  targetBytes: number,
+  from: ImageFormat,
+  to: EncodableFormat,
+) {
   const ext = from === to && splitFileName(name).ext ? undefined : EXTENSION[to]
   return renameFile(name, { suffix: sizeSuffix(targetBytes), ...(ext ? { ext } : {}) })
 }

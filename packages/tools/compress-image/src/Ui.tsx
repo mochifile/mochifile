@@ -1,4 +1,4 @@
-import type { CompressMeta, ImageFormat, OutputFormat } from '@mochifile/engine-image'
+import type { CompressMeta, EncodableFormat, OutputFormat } from '@mochifile/engine-image'
 import { type NavigatorLike, shouldPreloadOnIdle } from '@mochifile/engine-image/preload-policy'
 import type { Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
@@ -32,7 +32,7 @@ const client = createToolClient(
   () => new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' }),
 )
 
-const FORMAT_LABEL: Record<ImageFormat, string> = { jpeg: 'JPG', png: 'PNG', webp: 'WebP' }
+const FORMAT_LABEL: Record<EncodableFormat, string> = { jpeg: 'JPG', png: 'PNG', webp: 'WebP' }
 const OUTPUT_FORMATS = ['original', 'jpeg', 'webp'] as const satisfies readonly OutputFormat[]
 
 type Status = 'queued' | 'working' | 'done' | 'error' | 'cancelled'
