@@ -13,8 +13,8 @@ Fontsource Latin files (30 KB and 20 KB) and preloaded both. On tool pages, Ligh
 ## Decision
 
 - **Subset.** `apps/web/fonts/subset.ts` subsets both fonts to a fixed character set: printable
-  ASCII, Latin-1 (every Portuguese letter), the wordmark's dotless ı, typographic punctuation,
-  → − › and the spaces number formatting produces. It also limits the weight axis to the
+  ASCII, Latin-1 (every Portuguese letter), typographic punctuation, → − › and the spaces
+  number formatting produces. It also limits the weight axis to the
   weights the brand book uses: Fredoka 500–700, Figtree 400–700. The generated woff2 files are
   committed in `apps/web/fonts/`, so builds stay offline. The generator is `subset-font`
   (HarfBuzz), a dev dependency only. The OFL allows modified versions; neither font declares
