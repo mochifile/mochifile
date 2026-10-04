@@ -1,0 +1,33 @@
+{
+  "name": "@mochifile/tool-convert-image",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Convert photos between HEIC, JPG, PNG, WebP and AVIF, in the browser.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    "./manifest": "./src/manifest.ts",
+    "./ui": "./src/Ui.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mochifile/engine-image": "workspace:*",
+    "@mochifile/i18n": "workspace:*",
+    "@mochifile/tool-kit": "workspace:*",
+    "@mochifile/tool-ui": "workspace:*",
+    "@mochifile/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "react": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
