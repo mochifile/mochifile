@@ -76,7 +76,7 @@ test('language switcher links between locales', async ({ page }) => {
 })
 
 for (const path of ['/', '/pt/comprimir-imagem-para-50kb/']) {
-  test(`the logo is named "Mochifile"; the wordmark's dotless ı stays visual (${path})`, async ({
+  test(`the logo is named "Mochifile", and its drawing is hidden from assistive technology (${path})`, async ({
     page,
   }) => {
     await page.goto(path)
@@ -88,20 +88,54 @@ for (const path of ['/', '/pt/comprimir-imagem-para-50kb/']) {
         [...link.children].every((child) => child.getAttribute('aria-hidden') === 'true'),
       ),
     ).toBe(true)
-    // Titles, meta tags and structured data use the plain name.
-    const head = await page.evaluate(() =>
-      [
-        document.title,
-        ...[...document.querySelectorAll('meta[content]')].map(
-          (meta) => meta.getAttribute('content') ?? '',
-        ),
-        ...[...document.querySelectorAll('script[type="application/ld+json"]')].map(
-          (script) => script.textContent ?? '',
-        ),
-      ].join('\n'),
-    )
-    expect(head).toContain('Mochifile')
-    expect(head).not.toContain('ı')
+  })
+}
+
+/** The "o" is 72 of the horizontal logo's 126 units: its clear space is 0.57 × the height. */
+const CLEAR_SPACE = 72 / 126
+
+for (const viewport of [
+  { width: 360, height: 800 },
+  { width: 1280, height: 800 },
+]) {
+  test(`header and footer logos keep the brand book's minimum size and clear space (${viewport.width} px)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport)
+    await page.goto('/')
+    for (const logo of await page.locator('[data-logo]').all()) {
+      const box = await logo.boundingBox()
+      if (!box) throw new Error('logo has no box')
+      // Brand book › Logo: the horizontal logo is at least 96px wide on screen.
+      expect(box.width).toBeGreaterThanOrEqual(96)
+      // Nothing else intrudes on the clear space around it.
+      const clear = box.height * CLEAR_SPACE
+      const intruders = await logo.evaluate(
+        (link, area) => {
+          const container = link.closest('header, footer') ?? document.body
+          return [...container.querySelectorAll('a, p, button, li, span')]
+            .filter((el) => !link.contains(el) && !el.contains(link))
+            .filter((el) => {
+              const r = el.getBoundingClientRect()
+              return (
+                r.width > 0 &&
+                r.left < area.right &&
+                r.right > area.left &&
+                r.top < area.bottom &&
+                r.bottom > area.top
+              )
+            })
+            .map((el) => el.textContent?.trim() ?? el.nodeName)
+        },
+        {
+          left: box.x - clear,
+          right: box.x + box.width + clear,
+          top: box.y - clear,
+          bottom: box.y + box.height + clear,
+        },
+      )
+      expect(intruders).toEqual([])
+    }
   })
 }
 

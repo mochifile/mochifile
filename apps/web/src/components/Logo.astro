@@ -1,34 +1,34 @@
 ---
+import LogoOnLight from '../assets/logo/mochifile-logo-horizontal.svg'
+import LogoOnDark from '../assets/logo/mochifile-logo-horizontal-on-dark.svg'
+
 /**
- * The Mochifile logo: the symbol plus the lowercase "mochifile" wordmark, whose i-dots are
- * small squished drops (first strawberry, second matcha). Provisional, per the design system
- * README › Logo. The dotless "ı" is visual only: the link's accessible name is "Mochifile" and
- * everything inside is hidden from assistive technology, so screen readers, titles, meta tags
- * and structured data only ever see the plain name.
+ * The Mochifile logo (final v1, docs/design-system README › Logo): the horizontal lockup from
+ * docs/design-system/assets/Logos, drawn as vectors, never set in a font. Inline SVG, so it
+ * costs no request. On light grounds the letters follow the text colour (ink in the light and
+ * dark themes, matching the light and on-dark files); `on-dark` is the on-dark file as drawn,
+ * for the ink footer. The symbol and the i-dots keep their fixed colours in every theme.
+ *
+ * The link's accessible name is "Mochifile"; the drawing is hidden from assistive technology.
+ * Width is `w-logo-phone` (120px) under 600px and `w-logo` (200px) from 600px, above the 96px
+ * minimum; callers keep the clear space (the "o"'s height, 0.57 × the logo's height) around it.
  */
+
 interface Props {
   href: string
+  /** `light` (default) for page grounds, `on-dark` for the ink footer. */
+  ground?: 'light' | 'on-dark'
 }
 
-const { href } = Astro.props
+const { href, ground = 'light' } = Astro.props
+const Drawing = ground === 'on-dark' ? LogoOnDark : LogoOnLight
 ---
 
-<a href={href} aria-label="Mochifile" class="inline-flex min-h-target-min items-center gap-2 rounded-md text-ink focus-ring">
-  <svg viewBox="10 4 100 100" aria-hidden="true" class="size-8 shrink-0 sm:size-10">
-    <path
-      d="M22 30 Q22 12 40 12 L80 12 L102 34 L102 76 Q104 99 80 100 L38 100 Q16 99 18 78 Z"
-      stroke-width="5"
-      stroke-linejoin="round"
-      class="fill-mochi-body stroke-mochi-outline"
-    />
-    <path
-      d="M80 12 L80 26 Q80 34 88 34 L102 34 Z"
-      stroke-width="5"
-      stroke-linejoin="round"
-      class="fill-ube stroke-mochi-outline"
-    />
-    <circle cx="46" cy="58" r="5" class="fill-mochi-outline" />
-    <circle cx="76" cy="58" r="5" class="fill-mochi-outline" />
-  </svg>
-  <span aria-hidden="true" class="type-label-lg font-bold whitespace-nowrap sm:type-title-sm">moch<span class="relative inline-block">ı<svg viewBox="0 0 10 8" class="absolute top-1 left-1/2 w-2 -translate-x-1/2"><ellipse cx="5" cy="4" rx="4.6" ry="3.4" transform="rotate(-12 5 4)" class="fill-strawberry" /></svg></span>f<span class="relative inline-block">ı<svg viewBox="0 0 10 8" class="absolute top-1 left-1/2 w-2 -translate-x-1/2"><ellipse cx="5" cy="4" rx="4.6" ry="3.4" transform="rotate(10 5 4)" class="fill-matcha" /></svg></span>le</span>
+<a
+  href={href}
+  aria-label="Mochifile"
+  data-logo
+  class="inline-flex w-logo-phone shrink-0 rounded-sm text-ink focus-ring sm:w-logo"
+>
+  <Drawing aria-hidden="true" focusable="false" class="block h-auto w-full" />
 </a>
