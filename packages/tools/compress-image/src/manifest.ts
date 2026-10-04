@@ -14,6 +14,7 @@ const variant = (
   targetBytes: number,
   label: { en: string; pt: string },
   description: { en: string; pt: string },
+  tagline: { en: string; pt: string },
 ) => ({
   key,
   options: { targetBytes },
@@ -22,11 +23,13 @@ const variant = (
       slug: `compress-image-to-${key}`,
       title: `Compress an image to ${label.en}`,
       description: description.en,
+      tagline: tagline.en,
     },
     pt: {
       slug: `comprimir-imagem-para-${key}`,
       title: `Comprimir imagem para ${label.pt}`,
       description: description.pt,
+      tagline: tagline.pt,
     },
   },
 })
@@ -51,12 +54,14 @@ export const manifest = defineToolManifest<CompressImageOptions>({
       title: 'Compress an image to a target size',
       description:
         'Shrink a JPG, PNG or WebP photo to the size limit you need, like 50 KB or 100 KB, for forms and uploads. Free, private, nothing uploaded.',
+      tagline: 'For forms and sites that refuse big photos.',
     },
     pt: {
       slug: 'comprimir-imagem',
       title: 'Comprimir imagem para o tamanho que você precisa',
       description:
         'Reduza uma foto JPG, PNG ou WebP para o limite de que você precisa, como 50 KB ou 100 KB, em formulários e envios. Grátis, privado e sem upload.',
+      tagline: 'Para formulários e portais que recusam fotos grandes.',
     },
   },
   relatedPagesLabel: { en: 'Other target sizes', pt: 'Outros tamanhos' },
@@ -69,6 +74,10 @@ export const manifest = defineToolManifest<CompressImageOptions>({
         en: 'Make a photo 20 KB or smaller for strict upload limits, such as signature or small ID photo fields. Free, private and done in your browser.',
         pt: 'Deixe uma foto com 20 KB ou menos para limites rígidos, como campos de assinatura ou foto 3x4. Grátis, privado e feito no seu navegador.',
       },
+      {
+        en: 'For signature and small ID photo fields.',
+        pt: 'Para campos de assinatura e foto 3x4.',
+      },
     ),
     variant(
       '50kb',
@@ -77,6 +86,10 @@ export const manifest = defineToolManifest<CompressImageOptions>({
       {
         en: 'Get a photo under 50 KB, a common limit on government, exam and job application forms. Free, private and done in your browser.',
         pt: 'Deixe uma foto com menos de 50 KB, um limite comum em formulários de governo, concursos e vagas de emprego. Grátis, privado e no navegador.',
+      },
+      {
+        en: 'The usual limit on government and job forms.',
+        pt: 'O limite comum em formulários de governo e concursos.',
       },
     ),
     variant(
@@ -87,6 +100,10 @@ export const manifest = defineToolManifest<CompressImageOptions>({
         en: 'Reduce a photo to 100 KB or less for online applications, registrations and profile uploads. Free, private and done in your browser.',
         pt: 'Reduza uma foto para 100 KB ou menos para inscrições online, cadastros e fotos de perfil. Grátis, privado e feito no seu navegador.',
       },
+      {
+        en: 'For applications, sign-ups and profile photos.',
+        pt: 'Para inscrições, cadastros e fotos de perfil.',
+      },
     ),
     variant(
       '200kb',
@@ -95,6 +112,10 @@ export const manifest = defineToolManifest<CompressImageOptions>({
       {
         en: 'Compress a photo to 200 KB or less for document uploads and websites, with good quality kept. Free, private and done in your browser.',
         pt: 'Comprima uma foto para 200 KB ou menos para envio de documentos e sites, mantendo boa qualidade. Grátis, privado e feito no seu navegador.',
+      },
+      {
+        en: 'For document uploads, with good quality kept.',
+        pt: 'Para envio de documentos, com boa qualidade.',
       },
     ),
     variant(
@@ -105,6 +126,10 @@ export const manifest = defineToolManifest<CompressImageOptions>({
         en: 'Make a photo 500 KB or smaller for email, listings and portals while it stays sharp. Free, private and done in your browser.',
         pt: 'Deixe uma foto com 500 KB ou menos para e-mail, anúncios e portais, ainda nítida. Grátis, privado e feito no seu navegador.',
       },
+      {
+        en: 'For email and listings, and still sharp.',
+        pt: 'Para e-mail e anúncios, e ainda nítida.',
+      },
     ),
     variant(
       '1mb',
@@ -113,6 +138,10 @@ export const manifest = defineToolManifest<CompressImageOptions>({
       {
         en: 'Get a photo under 1 MB for portals and email attachments with almost no visible loss. Free, private and done in your browser.',
         pt: 'Deixe uma foto com menos de 1 MB para portais e anexos de e-mail, quase sem perda visível. Grátis, privado e feito no seu navegador.',
+      },
+      {
+        en: 'For portals and email, with almost no visible loss.',
+        pt: 'Para portais e e-mail, quase sem perda visível.',
       },
     ),
   ],

@@ -8,7 +8,7 @@
   "compress_image_custom_error_range": "Choose a size between {min} and {max}.",
   "compress_image_format_legend": "2. Save as",
   "compress_image_format_original": "Same as original",
-  "compress_image_format_original_hint": "JPG stays JPG, PNG stays PNG when possible",
+  "compress_image_format_original_hint": "Keeps the photo's format when possible",
   "compress_image_format_jpeg": "JPG",
   "compress_image_format_jpeg_hint": "Accepted by almost every form",
   "compress_image_format_webp": "WebP",
