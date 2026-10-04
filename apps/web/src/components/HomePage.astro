@@ -18,9 +18,13 @@ const { locale } = Astro.props
   description={m.home_description({}, { locale })}
   paths={samePathInAllLocales('/')}
 >
-  <section class="flex flex-col gap-4 py-8 text-center">
+  {/*
+    Left-aligned: centred lines move sideways when Figtree replaces its fallback, a layout
+    shift (seen on Linux). The home page redesign comes later.
+  */}
+  <section class="flex flex-col gap-4 py-8">
     <h1 class="type-display-lg sm:type-display-xl">{m.home_heading({}, { locale })}</h1>
-    <p class="mx-auto max-w-reading-max type-body-lg text-ink-muted">{m.home_lead({}, { locale })}</p>
+    <p class="max-w-reading-max type-body-lg text-ink-muted">{m.home_lead({}, { locale })}</p>
   </section>
   {
     tools.length > 0 ? (
@@ -52,7 +56,7 @@ const { locale } = Astro.props
         ))}
       </ul>
     ) : (
-      <p class="text-center text-ink-muted">{m.home_coming_soon({}, { locale })}</p>
+      <p class="text-ink-muted">{m.home_coming_soon({}, { locale })}</p>
     )
   }
 </BaseLayout>
