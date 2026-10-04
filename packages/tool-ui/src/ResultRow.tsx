@@ -17,7 +17,7 @@ export interface ResultRowProps<Settings, Meta> {
   index: number
   labels: ResultRowLabels
   formatBytes: (bytes: number) => string
-  sizeSummary: (before: number, after: number) => string
+  sizeSummary: (before: number, after: number, item: QueueItem<Settings, Meta>) => string
   stageMessage: (stage: string | undefined) => string
   errorMessage: (item: QueueItem<Settings, Meta>) => string
   resultDetails?: ReactNode
@@ -51,7 +51,7 @@ export function ResultRow<Settings, Meta>({
         <span className="min-w-0 break-all type-body-strong">{item.file.name}</span>
         <span className={item.result ? 'type-title-sm text-ink' : 'type-body-sm text-ink-muted'}>
           {item.result
-            ? sizeSummary(item.file.size, item.result.blob.size)
+            ? sizeSummary(item.file.size, item.result.blob.size, item)
             : formatBytes(item.file.size)}
         </span>
       </div>
