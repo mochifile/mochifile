@@ -23,6 +23,13 @@ export interface ShippedPackage {
   usedFor: string
   /** Extra license files inside the package, e.g. for bundled native code. */
   extraLicenses?: string[]
+  /**
+   * License texts the package does not include for code it bundles, kept verbatim from the
+   * upstream release in `integrations/notices/` (fetched once, so builds stay offline).
+   */
+  vendoredLicenses?: string[]
+  /** Facts the notice must state: bundled components, copyright lines, exact source links. */
+  notes?: string[]
 }
 
 export const SHIPPED: readonly ShippedPackage[] = [
@@ -81,6 +88,33 @@ export const SHIPPED: readonly ShippedPackage[] = [
     ],
   },
   {
+    // LGPL-3.0 (ADR 0022): libheif.wasm is served unmodified as its own file, replaceable.
+    name: 'libheif-js',
+    from: { workspace: 'packages/engine-image' },
+    usedFor: 'HEIC decoding where the browser cannot decode HEIC (WebAssembly)',
+    extraLicenses: ['libheif-wasm/LICENSE'],
+    notes: [
+      'Bundles libheif 1.23.2, Copyright (c) 2017-2025 Dirk Farin, under the GNU LGPL-3.0 or later. Source: https://github.com/strukturag/libheif/tree/v1.23.2',
+      'Bundles libde265 1.0.15, Copyright (c) 2013-2014 struktur AG, Dirk Farin, under the GNU LGPL-3.0 or later (license text above). Source: https://github.com/strukturag/libde265/tree/v1.0.15',
+      'Built as WebAssembly by libheif-js 1.23.2: https://github.com/catdad-experiments/libheif-js (build scripts: https://github.com/catdad-experiments/libheif-emscripten).',
+      'The file libheif.wasm is served unmodified, as a separate file. You may replace it with your own build of these libraries; Mochifile itself is AGPL-3.0 and its full source is at https://github.com/mochifile/mochifile.',
+    ],
+  },
+  {
+    name: '@jsquash/avif',
+    from: { workspace: 'packages/engine-image' },
+    usedFor: 'AVIF decoding where the browser cannot decode AVIF (WebAssembly)',
+    vendoredLicenses: [
+      'libavif-1.0.1-LICENSE.txt',
+      'libaom-3.7.0-LICENSE.txt',
+      'libaom-3.7.0-PATENTS.txt',
+    ],
+    notes: [
+      'Bundles libavif 1.0.1, Copyright 2019 Joe Drago (BSD-2-Clause). Source: https://github.com/AOMediaCodec/libavif/tree/v1.0.1',
+      'Bundles the libaom 3.7.0 AV1 decoder, Copyright (c) 2016 Alliance for Open Media (BSD-2-Clause), with the Alliance for Open Media Patent License 1.0. Source: https://aomedia.googlesource.com/aom/+/refs/tags/v3.7.0',
+    ],
+  },
+  {
     name: 'wasm-feature-detect',
     from: { parent: '@jsquash/webp' },
     usedFor: 'choosing the WebP encoder build',
@@ -111,8 +145,11 @@ export interface Notice {
   version: string
   license: string
   usedFor: string
+  notes: string[]
   texts: Array<{ file: string; text: string }>
 }
+
+const noticesDir = join(dirname(fileURLToPath(import.meta.url)), 'notices')
 
 export function readNotice(entry: ShippedPackage): Notice {
   const dir = packageDir(entry)
@@ -128,11 +165,19 @@ export function readNotice(entry: ShippedPackage): Notice {
     version: pkg.version,
     license: pkg.license ?? 'see license text',
     usedFor: entry.usedFor,
-    texts: files.map((file) => {
-      const path = join(dir, file)
-      if (!existsSync(path)) throw new Error(`${entry.name}: missing ${file}`)
-      return { file, text: readFileSync(path, 'utf8').trim() }
-    }),
+    notes: entry.notes ?? [],
+    texts: [
+      ...files.map((file) => {
+        const path = join(dir, file)
+        if (!existsSync(path)) throw new Error(`${entry.name}: missing ${file}`)
+        return { file, text: readFileSync(path, 'utf8').trim() }
+      }),
+      ...(entry.vendoredLicenses ?? []).map((file) => {
+        const path = join(noticesDir, file)
+        if (!existsSync(path)) throw new Error(`${entry.name}: missing notices/${file}`)
+        return { file, text: readFileSync(path, 'utf8').trim() }
+      }),
+    ],
   }
 }
 
@@ -154,6 +199,7 @@ export function formatNotices(notices: readonly Notice[]): string {
       rule,
       `${notice.name} ${notice.version} (${notice.license})`,
       rule,
+      ...(notice.notes.length > 0 ? ['', ...notice.notes.map((note) => `* ${note}`)] : []),
       ...notice.texts.flatMap(({ file, text }) => ['', `--- ${file} ---`, '', text]),
     ].join('\n'),
   )
