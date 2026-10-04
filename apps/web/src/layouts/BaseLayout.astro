@@ -52,6 +52,7 @@ const alternates = buildAlternates(paths, site)
         <Logo href={localePath(locale)} />
         <nav aria-label={m.nav_language({}, { locale })}>
           <ul class="flex gap-1 type-body-sm font-semibold">
+            {/* Fixed-width cells: see --spacing-language-link. */}
             {
               locales.map((target) => (
                 <li>
@@ -62,7 +63,7 @@ const alternates = buildAlternates(paths, site)
                     data-language-switch
                     aria-current={target === locale ? 'true' : undefined}
                     class:list={[
-                      'press inline-flex min-h-target-min items-center rounded-pill border-chip px-2 focus-ring sm:px-3',
+                      'press inline-flex min-h-target-min w-language-link items-center justify-center rounded-pill border-chip px-1 focus-ring',
                       target === locale
                         ? 'border-ink font-bold'
                         : 'border-transparent hover:border-border-control',
