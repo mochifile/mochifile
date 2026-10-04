@@ -44,7 +44,11 @@
   }
   .page-copy h2 {
     margin-top: var(--space-6);
-    @apply type-title;
+    /* Steps down one level under 600px (design system README › Responsive headings). */
+    @apply type-title-sm;
+    @variant sm {
+      @apply type-title;
+    }
   }
   .page-copy h3 {
     margin-top: var(--space-2);
