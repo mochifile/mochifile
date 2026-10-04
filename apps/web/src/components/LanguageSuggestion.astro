@@ -32,21 +32,27 @@ const others = locales.filter((target) => target !== locale)
       class="fixed inset-x-4 top-[calc(var(--space-4)+env(safe-area-inset-top))] z-50 mx-auto flex max-w-reading-max flex-wrap items-center gap-3 rounded-lg border-chip border-ink bg-surface-card p-4 text-ink sm:top-auto sm:bottom-[calc(var(--space-4)+env(safe-area-inset-bottom))]"
     >
       <p class="w-full font-medium">{m.language_suggestion_text({}, { locale: target })}</p>
-      <a
-        href={paths[target]}
-        hreflang={localeTags[target]}
-        data-language-choice
-        class="inline-flex min-h-target-min items-center rounded-pill bg-action px-4 font-medium text-action-ink focus-ring"
-      >
-        {m.language_suggestion_action({}, { locale: target })}
-      </a>
-      <button
-        type="button"
-        data-language-dismiss
-        class="inline-flex min-h-target-min items-center rounded-pill border border-border-control px-4 hover:bg-mango-tint focus-ring"
-      >
-        {m.language_suggestion_dismiss({}, { locale: target })}
-      </button>
+      {/*
+        Full-width rows on phones, two equal columns from 600 px: either way neither button's
+        position depends on the other's text, so nothing moves when the brand font arrives.
+      */}
+      <div class="grid w-full gap-3 sm:grid-cols-2">
+        <a
+          href={paths[target]}
+          hreflang={localeTags[target]}
+          data-language-choice
+          class="inline-flex min-h-target-min items-center justify-center rounded-pill bg-action px-4 text-center font-medium text-action-ink focus-ring"
+        >
+          {m.language_suggestion_action({}, { locale: target })}
+        </a>
+        <button
+          type="button"
+          data-language-dismiss
+          class="inline-flex min-h-target-min items-center justify-center rounded-pill border border-border-control px-4 text-center hover:bg-mango-tint focus-ring"
+        >
+          {m.language_suggestion_dismiss({}, { locale: target })}
+        </button>
+      </div>
     </aside>
   ))
 }

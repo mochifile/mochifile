@@ -55,18 +55,24 @@ const jsonLd = serializeJsonLd(
   {/* Category hero block; the tool panel below overlaps its bottom edge. */}
   <div class:list={['rounded-2xl-squish-a px-5 pt-4 pb-16 text-ink-on-block sm:px-10 sm:pt-8 sm:pb-20', categoryBlock[manifest.category]]}>
   <nav aria-label={m.breadcrumb_label({}, { locale })} class="mb-2 type-caption">
+    {/*
+      On phones only the parent level shows (the logo already links home), on one line, a long
+      name cut with "…"; the other crumbs and full names stay for screen readers. Wrapping or
+      neighbours of varying width would depend on the font, and the hero must keep its layout
+      when the brand font replaces the fallback, or the page would shift.
+    */}
     <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
       {
         breadcrumbs.map((item, index) => {
           const current = index === breadcrumbs.length - 1
+          const parent = index === breadcrumbs.length - 2
           return (
-            // On phones the last crumb, which repeats the H1, is left to screen readers.
-            <li class:list={['flex items-center gap-2', current && 'max-sm:sr-only']}>
-              {index > 0 && <span aria-hidden="true">›</span>}
+            <li class:list={['flex min-w-0 items-center gap-2', !parent && 'max-sm:sr-only']}>
+              {index > 0 && <span aria-hidden="true" class="max-sm:hidden">›</span>}
               {current ? (
                 <span aria-current="page">{item.name}</span>
               ) : (
-                <a href={item.path} class="rounded-sm underline focus-ring">{item.name}</a>
+                <a href={item.path} class="min-w-0 rounded-sm underline focus-ring max-sm:truncate">{item.name}</a>
               )}
             </li>
           )
