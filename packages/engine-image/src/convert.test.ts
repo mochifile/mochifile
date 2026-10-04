@@ -37,11 +37,11 @@ describe('convertImage', () => {
     ['webp', 'jpeg'],
     ['webp', 'png'],
   ] as const)('converts %s to %s at full size', async (from, to) => {
-    // PNG encoding is slow; a smaller image still verifies conversion without downscaling.
-    const smallPngCase = from === 'jpeg' && to === 'png'
-    const width = smallPngCase ? 400 : 1200
-    const height = smallPngCase ? 300 : 900
-    const photo = smallPngCase
+    // PNG encoding in input setup or output is slow; this still checks for downscaling.
+    const pngCase = from === 'png' || to === 'png'
+    const width = pngCase ? 400 : 1200
+    const height = pngCase ? 300 : 900
+    const photo = pngCase
       ? await engine.codecs.encodeJpeg(syntheticImage(width, height), 85)
       : await readPhoto('flowers')
     const input =
