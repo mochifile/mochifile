@@ -5,9 +5,21 @@
  */
 let zipModule: Promise<typeof import('client-zip')> | undefined
 
+function loadZip(): Promise<typeof import('client-zip')> {
+  if (!zipModule) {
+    const loading = import('client-zip')
+    zipModule = loading
+    // Forget a failed load (e.g. offline) so a later call can retry.
+    loading.catch(() => {
+      if (zipModule === loading) zipModule = undefined
+    })
+  }
+  return zipModule
+}
+
 /** Starts loading the ZIP library; call it when the tool prepares. */
 export function preloadZip(): void {
-  zipModule ??= import('client-zip')
+  loadZip().catch(() => {})
 }
 
 /** ZIP entries for `files`, numbering repeated names: `a.jpg`, `a (2).jpg`, `a (3).jpg`. */
@@ -33,8 +45,7 @@ export async function downloadZip(
   files: ReadonlyArray<{ name: string; blob: Blob }>,
   zipName: string,
 ): Promise<void> {
-  zipModule ??= import('client-zip')
-  const { downloadZip: zip } = await zipModule
+  const { downloadZip: zip } = await loadZip()
   const url = URL.createObjectURL(await zip(zipEntries(files)).blob())
   const link = document.createElement('a')
   link.href = url

@@ -33,15 +33,22 @@ export function usePrepareOnIntent({
   const preloadOnIdleRef = useRef(preloadOnIdle)
   preloadOnIdleRef.current = preloadOnIdle
 
+  // A ref guards the state so two events in the same tick cannot both call `load`.
+  const stateRef = useRef<PrepareState>('idle')
+  const update = useCallback((next: PrepareState) => {
+    stateRef.current = next
+    setState(next)
+  }, [])
+
   const prepare = useCallback(() => {
-    if (state !== 'idle') return
-    setState('loading')
+    if (stateRef.current !== 'idle') return
+    update('loading')
     loadRef.current().then(
-      () => setState('ready'),
+      () => update('ready'),
       // A failed preparation (e.g. offline) is retried on the next sign of intent.
-      () => setState('idle'),
+      () => update('idle'),
     )
-  }, [state])
+  }, [update])
 
   useEffect(() => {
     const root = rootRef.current
@@ -53,6 +60,7 @@ export function usePrepareOnIntent({
     }
   }, [prepare])
 
+  // `prepare` is stable, so this runs once: a failed idle load waits for the next intent event.
   useEffect(() => {
     if (!preloadOnIdleRef.current()) return
     if ('requestIdleCallback' in window) {
