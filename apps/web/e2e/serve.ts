@@ -6,12 +6,17 @@
  * - like Cloudflare, lets a rule that repeats an earlier rule's path replace it (no merging)
  * - serves `<path>/index.html` and redirects `/path` to `/path/`
  * - serves `404.html` with status 404
+ * - compresses like Cloudflare does in production (checked against mochifile.com): text, JS,
+ *   CSS, JSON, XML, SVG and WebAssembly get brotli at quality 4 when the browser accepts it,
+ *   gzip otherwise; fonts and images are sent as they are. Lighthouse runs against this
+ *   server (ADR 0021), so it must see the bytes visitors download.
  *
  * Usage: node e2e/serve.ts <dir> <port>
  */
 import { readFileSync, statSync } from 'node:fs'
-import { createServer } from 'node:http'
+import { createServer, type IncomingMessage } from 'node:http'
 import { extname, join, normalize, resolve } from 'node:path'
+import { brotliCompressSync, constants, gzipSync } from 'node:zlib'
 
 const root = resolve(process.argv[2] ?? 'dist')
 const port = Number(process.argv[3] ?? 4321)
@@ -25,6 +30,29 @@ const types: Record<string, string> = {
   '.txt': 'text/plain; charset=utf-8',
   '.json': 'application/json',
   '.wasm': 'application/wasm',
+}
+
+/** Content types Cloudflare compresses; others (fonts, images) are already compressed. */
+const COMPRESSIBLE = new Set(['.html', '.js', '.css', '.svg', '.xml', '.txt', '.json', '.wasm'])
+const compressed = new Map<string, Buffer>()
+
+/** The file's bytes in the encoding Cloudflare would pick for this request, if any. */
+function encode(file: string, request: IncomingMessage): { body: Buffer; encoding?: string } {
+  const body = readFileSync(file)
+  if (!COMPRESSIBLE.has(extname(file))) return { body }
+  const accepted = String(request.headers['accept-encoding'] ?? '')
+  const encoding = /\bbr\b/.test(accepted) ? 'br' : /\bgzip\b/.test(accepted) ? 'gzip' : undefined
+  if (!encoding) return { body }
+  const key = `${encoding}:${file}`
+  let out = compressed.get(key)
+  if (!out) {
+    out =
+      encoding === 'br'
+        ? brotliCompressSync(body, { params: { [constants.BROTLI_PARAM_QUALITY]: 4 } })
+        : gzipSync(body)
+    compressed.set(key, out)
+  }
+  return { body: out, encoding }
 }
 
 type Rule = { pattern: RegExp; headers: Array<[string, string]> }
@@ -80,12 +108,22 @@ createServer((request, response) => {
   }
   const file = isDir(target) ? join(target, 'index.html') : target
   if (isFile(file)) {
-    response.writeHead(200, { 'Content-Type': types[extname(file)] ?? 'application/octet-stream' })
-    response.end(readFileSync(file))
+    const { body, encoding } = encode(file, request)
+    response.writeHead(200, {
+      'Content-Type': types[extname(file)] ?? 'application/octet-stream',
+      Vary: 'Accept-Encoding',
+      ...(encoding ? { 'Content-Encoding': encoding } : {}),
+    })
+    response.end(body)
     return
   }
-  response.writeHead(404, { 'Content-Type': types['.html'] })
-  response.end(readFileSync(join(root, '404.html')))
+  const { body, encoding } = encode(join(root, '404.html'), request)
+  response.writeHead(404, {
+    'Content-Type': types['.html'],
+    Vary: 'Accept-Encoding',
+    ...(encoding ? { 'Content-Encoding': encoding } : {}),
+  })
+  response.end(body)
 }).listen(port, () => {
   process.stdout.write(`Serving ${root} at http://localhost:${port}\n`)
 })
