@@ -59,7 +59,10 @@ from it.
     rule steps down one level (`display-lg`, 44 px), but at 360 × 800 that pushes the primary
     action 20–24 px below the fold on every Portuguese page, so phones use `title` until the
     maintainer decides otherwise;
-  - under 600 px the breadcrumb's last crumb, which repeats the H1, is left to screen readers;
+  - under 600 px the breadcrumb shows only the parent level, on one line (a long name is cut
+    with "…"); the other crumbs stay for screen readers and in the structured data. The
+    logo links home, and the last crumb repeats the H1. One line also keeps the hero's height
+    the same in every font, so nothing shifts when the brand fonts arrive;
   - under 600 px the size chips sit in a four-column grid ("Other size" takes two cells), so
     they always take two rows whatever the system's text rendering. From 600 px they wrap
     freely, as the SizeChip README says.
