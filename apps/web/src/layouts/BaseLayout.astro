@@ -33,8 +33,9 @@ const alternates = buildAlternates(paths, site)
     {noindex && <meta name="robots" content="noindex" />}
     {!noindex && <link rel="canonical" href={canonical} />}
     {!noindex && alternates.map((alt) => <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />)}
+    {/* Only the display face is preloaded: it draws the H1, the largest text on tool pages. */}
     <Font cssVariable="--font-fredoka" preload />
-    <Font cssVariable="--font-figtree" preload />
+    <Font cssVariable="--font-figtree" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <meta property="og:type" content="website" />
@@ -61,7 +62,7 @@ const alternates = buildAlternates(paths, site)
                     data-language-switch
                     aria-current={target === locale ? 'true' : undefined}
                     class:list={[
-                      'press inline-flex min-h-target-min items-center rounded-pill border-chip px-3 focus-ring',
+                      'press inline-flex min-h-target-min items-center rounded-pill border-chip px-2 focus-ring sm:px-3',
                       target === locale
                         ? 'border-ink font-bold'
                         : 'border-transparent hover:border-border-control',

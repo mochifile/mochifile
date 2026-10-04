@@ -76,17 +76,18 @@
 /*
  * Height reserved for the tool panel (padding included) before its client-only tool renders,
  * so the page below does not shift (layout shift fix, see apps/web ToolPage). A measured
- * layout height, not a design token: the tallest compress-image panel in English and
- * Portuguese at 390–599 px (624 px), 600–1023 px (606 px) and from 1024 px (441 px).
- * Recalibrate whenever the tool panel changes.
+ * layout height, not a design token. Tallest compress-image panel, English and Portuguese:
+ * 624 px at 360–599 px wide, 606 px at 600–1023 px, 442 px from 1024 px; each value below
+ * adds a margin for text that renders wider on other systems. Checked by
+ * apps/web/e2e/layout-shift.spec.ts; recalibrate whenever the tool panel changes.
  */
 @utility tool-reserve {
-  min-height: 39rem;
+  min-height: 664px;
   @media (width >= 600px) {
-    min-height: 38rem;
+    min-height: 648px;
   }
   @media (width >= 64rem) {
-    min-height: 28rem;
+    min-height: 480px;
   }
 }
 
