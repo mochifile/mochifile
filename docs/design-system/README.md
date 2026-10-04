@@ -61,7 +61,9 @@ All text pairs meet WCAG AA (4.5:1, 3:1 for 24px+) in both themes; control borde
 - **Code: JetBrains Mono.** API page only.
 - **Fallback: Noto Sans** for scripts Fredoka/Figtree lack (Devanagari, Arabic, CJK). Always keep it in the stack.
 
-Use the type styles by name (`display-xl` … `caption`). Body copy is never smaller than 16px; hints never smaller than 14px. On screens under 600px, step headings down one level (`display-xl` → `display-lg`). Never use Inter, Roboto or Arial as a design choice.
+Use the type styles by name (`display-xl` … `caption`). Body copy is never smaller than 16px; hints never smaller than 14px. Never use Inter, Roboto or Arial as a design choice.
+
+**Responsive headings.** The tool page H1 is `display-xl` from 600px up and `title` under 600px. Two steps down is deliberate: real Portuguese titles at 360px must leave the primary action above the fold (see *Layout and spacing*), and the fold rule wins over heading size. Other headings step down one level under 600px (`display-lg` → `title`, `title` → `title-sm`). Never shorten a title to make it fit: titles carry the words people search for.
 
 ## Shape: the squish
 
