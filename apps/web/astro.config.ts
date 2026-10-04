@@ -18,12 +18,19 @@ const includeTemplateTool = process.env.MOCHIFILE_INCLUDE_TEMPLATE === 'true'
 
 const alternates = sitemapAlternates()
 
-/** `Fredoka, "Noto Sans", system-ui, sans-serif` → `["Noto Sans", "system-ui", "sans-serif"]`. */
+/**
+ * `Fredoka, "Noto Sans", system-ui, sans-serif` → `["Noto Sans", "system-ui"]`. Astro sizes
+ * its metric-matched fallback faces for the last family only: for `sans-serif` that is Arial
+ * alone, which Android and Linux lack, so text shifted there when the brand fonts arrived.
+ * Ending at `system-ui` (always available, so `sans-serif` adds nothing) gives a chain sized
+ * for Segoe UI, Roboto, Helvetica Neue and Arial (ADR 0021).
+ */
 const fallbacksOf = (family: string) =>
   family
     .split(',')
     .slice(1)
     .map((name) => name.trim().replace(/^"(.*)"$/, '$1'))
+    .filter((name) => name !== 'sans-serif')
 
 export default defineConfig({
   site: SITE_URL,

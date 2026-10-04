@@ -63,6 +63,10 @@ jobs:
       - name: Install ${{ matrix.browser }}
         working-directory: apps/web
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      # Android's system font, so text before the brand fonts arrive renders in a size-adjusted
+      # fallback as on our visitors' phones; the layout-shift test depends on it (ADR 0021).
+      - name: Install Roboto
+        run: sudo apt-get install --yes --no-install-recommends fonts-roboto
       - name: Run smoke tests
         run: pnpm test:e2e -- --project=${{ matrix.browser }}
       # Also uploaded when the job passes, so traces of flaky (retried) tests are kept.
