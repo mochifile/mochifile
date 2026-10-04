@@ -13,7 +13,13 @@ import {
   scaledSize,
 } from './fit-to-size.ts'
 import { flattenOnWhite, hasTransparency } from './pixels.ts'
-import { displaySize, type ImageFormat, type ImageInfo, sniffImage } from './sniff.ts'
+import {
+  displaySize,
+  type EncodableFormat,
+  type ImageFormat,
+  type ImageInfo,
+  sniffImage,
+} from './sniff.ts'
 import { stripMetadata } from './strip-metadata.ts'
 
 /** `original` keeps the input format when it can reach the target (PNG may become JPEG). */
@@ -50,6 +56,8 @@ const PREVIEW_AIM = 0.92
 export interface ImageEngine {
   codecs: Codecs
   decode(bytes: Uint8Array<ArrayBuffer>, info: ImageInfo, target: Size): Promise<ImageData>
+  /** Which decoder a format takes, for diagnostics. Absent means WebAssembly. */
+  decoderFor?(format: ImageFormat): 'native' | 'wasm'
 }
 
 export type CompressOutcome = 'compressed' | 'already-under'
@@ -57,7 +65,8 @@ export type CompressOutcome = 'compressed' | 'already-under'
 /** Facts for the UI. Plain values only, never file contents. */
 export interface CompressMeta {
   outcome: CompressOutcome
-  format: ImageFormat
+  /** The output's format. */
+  format: EncodableFormat
   originalFormat: ImageFormat
   originalBytes: number
   outputBytes: number
@@ -108,7 +117,13 @@ export async function compressToTarget(
     })
   }
 
-  const requested: ImageFormat = format === 'original' ? info.format : format
+  // `original` keeps an encodable input format; HEIC or AVIF would be written as JPEG.
+  const requested: EncodableFormat =
+    format !== 'original'
+      ? format
+      : info.format === 'heic' || info.format === 'avif'
+        ? 'jpeg'
+        : info.format
   const base = {
     originalFormat: info.format,
     originalBytes: bytes.length,
@@ -126,7 +141,7 @@ export async function compressToTarget(
       meta: {
         ...base,
         outcome: 'already-under',
-        format: info.format,
+        format: requested,
         outputBytes: stripped.length,
         width: display.width,
         height: display.height,

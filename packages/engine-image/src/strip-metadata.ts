@@ -30,7 +30,9 @@ function concat(parts: readonly Uint8Array[]): Uint8Array {
 export function stripMetadata(bytes: Uint8Array, info: ImageInfo): Uint8Array {
   if (info.format === 'jpeg') return stripJpeg(bytes, info.orientation)
   if (info.format === 'png') return stripPng(bytes)
-  return stripWebp(bytes)
+  if (info.format === 'webp') return stripWebp(bytes)
+  // HEIC and AVIF are never passed through: the engine can only re-encode them.
+  throw new ToolError('processing-failed', `Cannot strip metadata from ${info.format}`)
 }
 
 /**

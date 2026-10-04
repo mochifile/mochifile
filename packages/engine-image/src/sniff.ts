@@ -4,8 +4,11 @@
  * the decode size. Every read is bounds-checked: the input is untrusted.
  */
 import { ToolError } from '@mochifile/tool-kit'
+import { detectHeif, readHeifHeader } from './heif.ts'
 
-export type ImageFormat = 'jpeg' | 'png' | 'webp'
+export type ImageFormat = 'jpeg' | 'png' | 'webp' | 'heic' | 'avif'
+/** Formats the engine can write. HEIC and AVIF are read only. */
+export type EncodableFormat = 'jpeg' | 'png' | 'webp'
 
 /** EXIF orientation, 1 (upright) to 8. Values 5–8 swap width and height when displayed. */
 export type Orientation = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
@@ -15,7 +18,10 @@ export interface ImageInfo {
   /** Stored (coded) width and height, before applying orientation. */
   width: number
   height: number
-  /** Only read for JPEG; browsers ignore it for PNG and WebP. */
+  /**
+   * From EXIF for JPEG and from the `irot` rotation for HEIC/AVIF (as the equivalent EXIF
+   * value); browsers ignore EXIF orientation in PNG and WebP.
+   */
   orientation: Orientation
   /** Whether the format and header allow transparent pixels (the pixels decide in the end). */
   mayHaveAlpha: boolean
@@ -35,16 +41,35 @@ export function detectFormat(bytes: Uint8Array): ImageFormat | undefined {
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'jpeg'
   if (ascii(bytes, 0, 8) === '\x89PNG\r\n\x1a\n') return 'png'
   if (ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 4) === 'WEBP') return 'webp'
-  return undefined
+  return detectHeif(bytes)
 }
 
-/** Reads the header of a JPEG, PNG or WebP file. Throws `ToolError('invalid-file')`. */
+/** Reads the header of a JPEG, PNG, WebP, HEIC or AVIF file. Throws `ToolError('invalid-file')`. */
 export function sniffImage(bytes: Uint8Array): ImageInfo {
   const format = detectFormat(bytes)
   if (format === 'jpeg') return sniffJpeg(bytes)
   if (format === 'png') return sniffPng(bytes)
   if (format === 'webp') return sniffWebp(bytes)
+  if (format === 'heic' || format === 'avif') return sniffHeif(bytes, format)
   throw invalid('unknown format')
+}
+
+/**
+ * `irot` counts quarter turns anticlockwise; as EXIF orientation, one turn is 8 (display
+ * rotated 90° anticlockwise), two are 3 and three are 6. Mirroring (`imir`) is left to the
+ * decoders, which apply every transformation; here it matters only whether sides swap.
+ */
+const ROTATION_TO_ORIENTATION: Record<0 | 1 | 2 | 3, Orientation> = { 0: 1, 1: 8, 2: 3, 3: 6 }
+
+function sniffHeif(bytes: Uint8Array, format: 'heic' | 'avif'): ImageInfo {
+  const header = readHeifHeader(bytes)
+  return {
+    format,
+    width: header.width,
+    height: header.height,
+    orientation: ROTATION_TO_ORIENTATION[header.rotation],
+    mayHaveAlpha: header.mayHaveAlpha,
+  }
 }
 
 /** Width and height as displayed, after applying the orientation. */
