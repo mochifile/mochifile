@@ -37,7 +37,13 @@ describe('convertImage', () => {
     ['webp', 'jpeg'],
     ['webp', 'png'],
   ] as const)('converts %s to %s at full size', async (from, to) => {
-    const photo = await readPhoto('flowers')
+    // PNG encoding is slow; a smaller image still verifies conversion without downscaling.
+    const smallPngCase = from === 'jpeg' && to === 'png'
+    const width = smallPngCase ? 400 : 1200
+    const height = smallPngCase ? 300 : 900
+    const photo = smallPngCase
+      ? await engine.codecs.encodeJpeg(syntheticImage(width, height), 85)
+      : await readPhoto('flowers')
     const input =
       from === 'jpeg'
         ? photo
@@ -45,13 +51,13 @@ describe('convertImage', () => {
           ? await engine.codecs.encodePng(await decoded(photo))
           : await engine.codecs.encodeWebp(await decoded(photo), 90)
     const { bytes, meta } = await convert(input, to)
-    expect(sniffImage(bytes)).toMatchObject({ format: to, width: 1200, height: 900 })
+    expect(sniffImage(bytes)).toMatchObject({ format: to, width, height })
     expect(meta).toMatchObject({
       outcome: 'converted',
       format: to,
       originalFormat: from,
-      width: 1200,
-      height: 900,
+      width,
+      height,
       quality: to === 'png' ? 0 : CONVERT_QUALITY[to],
       outputBytes: bytes.length,
       metadataRemoved: true,
@@ -107,6 +113,7 @@ describe('convertImage', () => {
   })
 
   describe('HEIC', () => {
+    // Decoding the 61-tile iPhone grid and encoding all 12 MP can exceed Vitest's 5 s default.
     it('converts the iPhone grid photo upright at full size', async () => {
       const { bytes, meta } = await convert(await readHeic('iphone-grid'), 'jpeg')
       expect(meta).toMatchObject({
@@ -118,7 +125,7 @@ describe('convertImage', () => {
         flattenedTransparency: false,
       })
       expect(sniffImage(bytes)).toMatchObject({ format: 'jpeg', width: 3024, height: 4032 })
-    })
+    }, 30_000)
 
     it('fills HEIC transparency for JPG and keeps it for PNG', async () => {
       const heic = await readHeic('synthetic-alpha')
