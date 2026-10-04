@@ -48,7 +48,6 @@ export default defineConfig({
       provider: fontProviders.local(),
       name: FONTS.figtree.family,
       cssVariable: '--font-figtree',
-      display: 'optional',
       fallbacks: fallbacksOf(designTokens.type.families[FONTS.figtree.role]),
       options: {
         variants: [
