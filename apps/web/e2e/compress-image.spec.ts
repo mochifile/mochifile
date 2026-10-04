@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
-import { gzipSync } from 'node:zlib'
 import AxeBuilder from '@axe-core/playwright'
 import type { Download, Page } from '@playwright/test'
+import { expectSmallUntilIntent } from './budget.ts'
 import { expect, test } from './fixtures.ts'
 import {
   bytesContain,
@@ -273,31 +273,7 @@ test.describe('loading', () => {
     browserName,
   }) => {
     test.skip(browserName !== 'chromium', 'navigator.connection exists only in Chromium')
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, 'connection', {
-        value: { saveData: true, effectiveType: '4g' },
-      })
-    })
-    const scripts: Array<Promise<number>> = []
-    const requests: string[] = []
-    page.on('response', (response) => {
-      const url = response.url()
-      requests.push(url)
-      if (url.endsWith('.js')) scripts.push(response.body().then((body) => gzipSync(body).length))
-    })
-    await page.goto('/compress-image-to-50kb/')
-    await expect(fileInput(page)).toBeAttached()
-    await page.waitForTimeout(3000)
-    expect(requests.filter((url) => url.endsWith('.wasm'))).toEqual([])
-    expect(requests.filter((url) => url.includes('worker'))).toEqual([])
-    await expect(page.locator('[data-engine="idle"]')).toBeAttached()
-    // JavaScript before interaction, compressed as the CDN serves it.
-    const gzipped = (await Promise.all(scripts)).reduce((sum, size) => sum + size, 0)
-    expect(gzipped).toBeLessThanOrEqual(90 * 1024)
-
-    await page.locator('[data-engine]').hover()
-    await page.locator('[data-engine="ready"]').waitFor({ timeout: 30_000 })
-    expect(requests.some((url) => url.endsWith('.wasm'))).toBe(true)
+    await expectSmallUntilIntent(page, '/compress-image-to-50kb/')
   })
 })
 
