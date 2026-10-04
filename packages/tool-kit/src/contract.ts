@@ -42,6 +42,11 @@ export interface ToolLocaleMeta {
   title: string
   /** Meta description. At most 160 characters. */
   description: string
+  /**
+   * One-line purpose shown under the H1 in the page's colour block, e.g. "For forms and
+   * sites that refuse big photos." Separate from the SEO description. At most 60 characters.
+   */
+  tagline: string
 }
 
 /**

@@ -6,8 +6,18 @@ const variant = (key: string, enSlug: string, ptSlug: string, options = { qualit
   key,
   options,
   meta: {
-    en: { slug: enSlug, title: 'Example at 50', description: 'Starts at quality 50.' },
-    pt: { slug: ptSlug, title: 'Exemplo a 50', description: 'Começa com qualidade 50.' },
+    en: {
+      slug: enSlug,
+      title: 'Example at 50',
+      description: 'Starts at quality 50.',
+      tagline: 'Quality 50.',
+    },
+    pt: {
+      slug: ptSlug,
+      title: 'Exemplo a 50',
+      description: 'Começa com qualidade 50.',
+      tagline: 'Qualidade 50.',
+    },
   },
 })
 
@@ -31,11 +41,16 @@ describe('validateManifest', () => {
     expect(validateManifest(validManifest)).toEqual([])
   })
 
-  it('rejects bad slugs, long titles and long descriptions', () => {
+  it('rejects bad slugs, long titles, descriptions and taglines', () => {
     const problems = validateManifest({
       ...validManifest,
       meta: {
-        en: { slug: 'Not_Kebab', title: 'x'.repeat(71), description: 'y'.repeat(161) },
+        en: {
+          slug: 'Not_Kebab',
+          title: 'x'.repeat(71),
+          description: 'y'.repeat(161),
+          tagline: 'z'.repeat(61),
+        },
         pt: validManifest.meta.pt,
       },
     })
@@ -43,7 +58,16 @@ describe('validateManifest', () => {
       'meta.en.slug must be lowercase kebab-case',
       'meta.en.title exceeds 70 chars',
       'meta.en.description exceeds 160 chars',
+      'meta.en.tagline exceeds 60 chars',
     ])
+  })
+
+  it('requires a tagline in every locale', () => {
+    const problems = validateManifest({
+      ...validManifest,
+      meta: { en: { ...validManifest.meta.en, tagline: ' ' }, pt: validManifest.meta.pt },
+    })
+    expect(problems).toEqual(['meta.en.tagline is empty'])
   })
 
   it('rejects invalid limits', () => {

@@ -8,7 +8,17 @@ export const validManifest: ToolManifest<{ quality: number }> = {
   limits: { maxFiles: 2, maxFileSizeBytes: 100, maxTotalSizeBytes: 150 },
   defaults: { quality: 80 },
   meta: {
-    en: { slug: 'example-tool', title: 'Example tool', description: 'An example tool.' },
-    pt: { slug: 'ferramenta-exemplo', title: 'Ferramenta exemplo', description: 'Um exemplo.' },
+    en: {
+      slug: 'example-tool',
+      title: 'Example tool',
+      description: 'An example tool.',
+      tagline: 'For examples.',
+    },
+    pt: {
+      slug: 'ferramenta-exemplo',
+      title: 'Ferramenta exemplo',
+      description: 'Um exemplo.',
+      tagline: 'Para exemplos.',
+    },
   },
 }

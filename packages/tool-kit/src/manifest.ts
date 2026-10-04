@@ -11,6 +11,8 @@ const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const MIME = /^[a-z]+\/(?:\*|[a-z0-9][a-z0-9.+-]*)$/
 export const TITLE_MAX = 70
 export const DESCRIPTION_MAX = 160
+/** Short enough for about two lines on a phone, so the tool stays above the fold. */
+export const TAGLINE_MAX = 60
 export const RELATED_PAGES_LABEL_MAX = 40
 /** Content key of a tool's main page; variants may not use it. */
 export const MAIN_PAGE_KEY = 'index'
@@ -97,6 +99,10 @@ function validateMeta(meta: Partial<Record<string, ToolLocaleMeta>>, at: string)
     if (!entry.description.trim()) problems.push(`${at}.${locale}.description is empty`)
     if (entry.description.length > DESCRIPTION_MAX) {
       problems.push(`${at}.${locale}.description exceeds ${DESCRIPTION_MAX} chars`)
+    }
+    if (!entry.tagline.trim()) problems.push(`${at}.${locale}.tagline is empty`)
+    if (entry.tagline.length > TAGLINE_MAX) {
+      problems.push(`${at}.${locale}.tagline exceeds ${TAGLINE_MAX} chars`)
     }
   }
   return problems
