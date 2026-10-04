@@ -92,12 +92,18 @@ test.describe('variant pages preselect their output', () => {
 
 test('a HEIC photo becomes a JPG without sending anything anywhere', async ({ page }) => {
   test.setTimeout(240_000)
+  const t0 = Date.now()
+  page.on('request', (r) => console.log('DEBUG', Date.now() - t0, r.url()))
+  page.on('worker', () => console.log('DEBUG worker', Date.now() - t0))
+  page.on('console', (m) => console.log('DEBUG console', m.text()))
   await page.goto('/heic-to-jpg/')
   await waitForEngine(page)
+  console.log('DEBUG engine ready', Date.now() - t0)
 
   // From here on, nothing may leave the browser: not the photo, not a single request.
   const requests = recordRequests(page)
   await add(page, await iphoneHeic())
+  console.log('DEBUG file added', Date.now() - t0)
   const result = await downloadResult(page)
 
   expect(result.name).toBe('IMG_0001.jpg')
