@@ -48,7 +48,13 @@ export function loadNodeCodecs(): Promise<Codecs> {
         pngDecode: await compile('@jsquash/png/codec/pkg/squoosh_png_bg.wasm'),
         oxipng: await compile('@jsquash/oxipng/codec/pkg/squoosh_oxipng_bg.wasm'),
         resize: await compile('@jsquash/resize/lib/resize/pkg/squoosh_resize_bg.wasm'),
+        heicDecode: new Uint8Array(
+          await readFile(require.resolve('libheif-js/libheif-wasm/libheif.wasm')),
+        ),
+        avifDecode: await compile('@jsquash/avif/codec/dec/avif_dec.wasm'),
       },
+      heic: true,
+      avif: true,
     }))()
   return codecs
 }

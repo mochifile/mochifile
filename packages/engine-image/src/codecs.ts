@@ -13,6 +13,7 @@ import decodePngWasm, { init as initPngDecode } from '@jsquash/png/decode.js'
 import resizeWasm, { initResize } from '@jsquash/resize'
 import decodeWebpWasm, { init as initWebpDecode } from '@jsquash/webp/decode.js'
 import encodeWebpWasm, { init as initWebpEncode } from '@jsquash/webp/encode.js'
+import type { HeicDecode } from './heic-wasm.ts'
 import type { ImageFormat } from './sniff.ts'
 
 /** Precompiled modules, for environments that cannot fetch `.wasm` files (Node tests). */
@@ -25,6 +26,10 @@ export interface WasmModules {
   pngDecode: WebAssembly.Module
   oxipng: WebAssembly.Module
   resize: WebAssembly.Module
+  /** libheif's `.wasm` bytes (HEIC), only needed when `heic` is requested. */
+  heicDecode?: Uint8Array
+  /** libavif decoder, only needed when `avif` is requested. */
+  avifDecode?: WebAssembly.Module
 }
 
 export interface Codecs {
@@ -34,7 +39,10 @@ export interface Codecs {
   encodePng(image: ImageData): Promise<Uint8Array>
   /** High-quality downscale (Lanczos3, gamma-correct, alpha-aware). */
   resize(image: ImageData, width: number, height: number): Promise<ImageData>
-  /** Full-size WebAssembly decode. JPEG orientation is applied. */
+  /**
+   * Full-size WebAssembly decode. JPEG orientation and HEIC transformations are applied; AVIF
+   * comes as stored (see `applyOrientation`). HEIC and AVIF need their decoder loaded.
+   */
   decode(format: ImageFormat, bytes: Uint8Array): Promise<ImageData>
 }
 
@@ -51,17 +59,29 @@ const toArrayBuffer = (bytes: Uint8Array): ArrayBuffer =>
     : bytes.slice().buffer
 
 /**
- * Loads the codecs. Encoders and the resizer always load; the decoders only when `decoders`
- * is true (the WebAssembly decode path, ADR 0016). Resolves once every `.wasm` is ready, so no
- * request happens later.
+ * Loads the codecs. Encoders and the resizer always load; the JPEG, PNG and WebP decoders only
+ * when `decoders` is true (the WebAssembly decode path, ADR 0016); the HEIC and AVIF decoders
+ * only when asked for, where the browser cannot decode those formats (ADR 0022). Resolves once
+ * every `.wasm` is ready, so no request happens later.
  */
 export async function loadCodecs({
   decoders,
+  heic = false,
+  avif = false,
   modules,
 }: {
   decoders: boolean
+  heic?: boolean
+  avif?: boolean
   modules?: WasmModules
 }): Promise<Codecs> {
+  // Imported on demand, so engines that never decode HEIC or AVIF never load their code.
+  const [heicDecode, avifDecode] = await Promise.all([
+    heic
+      ? import('./heic-wasm.ts').then(({ loadHeicDecoder }) => loadHeicDecoder(modules?.heicDecode))
+      : undefined,
+    avif ? loadAvifDecoder(modules?.avifDecode) : undefined,
+  ])
   await Promise.all([
     (initJpegEncode as EmscriptenInit)(modules?.jpegEncode),
     (initWebpEncode as EmscriptenInit)(modules?.webpEncode),
@@ -100,7 +120,21 @@ export async function loadCodecs({
       const buffer = toArrayBuffer(bytes)
       if (format === 'jpeg') return decodeJpegWasm(buffer, { preserveOrientation: true })
       if (format === 'webp') return decodeWebpWasm(buffer)
-      return decodePngWasm(buffer)
+      if (format === 'png') return decodePngWasm(buffer)
+      const decoder = format === 'heic' ? heicDecode : avifDecode
+      if (!decoder) throw new Error(`The ${format} decoder was not loaded`)
+      return decoder(bytes)
     },
+  }
+}
+
+/** The jSquash AVIF decoder (libavif), loaded on demand. */
+async function loadAvifDecoder(module?: WebAssembly.Module): Promise<HeicDecode> {
+  const { default: decode, init } = await import('@jsquash/avif/decode.js')
+  await (init as EmscriptenInit)(module)
+  return async (bytes) => {
+    const image = await decode(toArrayBuffer(bytes))
+    if (!image) throw new Error('AVIF decoding failed')
+    return image
   }
 }

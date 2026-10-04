@@ -13,6 +13,34 @@ export async function readPhoto(name: Photo): Promise<Uint8Array> {
   return new Uint8Array(await readFile(new URL(`../../fixtures/${name}.jpg`, import.meta.url)))
 }
 
+export const HEIC_FIXTURES = ['iphone-grid', 'synthetic', 'synthetic-alpha'] as const
+export type HeicFixture = (typeof HEIC_FIXTURES)[number]
+
+/** HEIC fixtures (see `fixtures/README.md`): a real iPhone grid photo and two synthetic files. */
+export async function readHeic(name: HeicFixture): Promise<Uint8Array> {
+  return new Uint8Array(await readFile(new URL(`../../fixtures/${name}.heic`, import.meta.url)))
+}
+
+let avifEncoder: Promise<(image: ImageData) => Promise<Uint8Array>> | undefined
+
+/**
+ * Encodes an AVIF in Node with the jSquash encoder, which production never loads (the engine
+ * only reads AVIF). Lets tests make AVIF inputs without committing binary files.
+ */
+export function encodeAvif(image: ImageData): Promise<Uint8Array> {
+  avifEncoder ??= (async () => {
+    const { createRequire } = await import('node:module')
+    const require = createRequire(import.meta.url)
+    const { default: encode, init } = await import('@jsquash/avif/encode.js')
+    const wasm = await WebAssembly.compile(
+      await readFile(require.resolve('@jsquash/avif/codec/enc/avif_enc.wasm')),
+    )
+    await (init as unknown as (module: WebAssembly.Module) => Promise<unknown>)(wasm)
+    return async (input: ImageData) => new Uint8Array(await encode(input, { quality: 80 }))
+  })()
+  return avifEncoder.then((encode) => encode(image))
+}
+
 /** Text planted in metadata; it must never survive in an output file. */
 export const SECRET = 'GPS 37.7749 N 122.4194 W - secret camera serial 0042'
 
