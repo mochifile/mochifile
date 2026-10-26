@@ -40,17 +40,15 @@ English and Portuguese.
 
 ## Documentation
 
-| | |
-| --- | --- |
-| [Development setup](CONTRIBUTING.md#development-setup) | Clone, install, run, and open a pull request |
-| [Architecture](docs/architecture.md) | How the site, the tools and the packages fit together |
-| [Design System](docs/design-system/README.md) | Colours, type, components, logo and mascot |
-| [Adding a tool](docs/contributing/adding-a-tool.md) | The tool contract, step by step |
-| [Translations](docs/contributing/i18n.md) | How strings, page copy and locales work |
-| [Testing](docs/contributing/testing.md) | Unit and end-to-end tests |
-| [Deployment](docs/contributing/deployment.md) | Previews, production and Cloudflare |
-| [Decisions](docs/adr/README.md) | The architecture decision records |
-| [AGENTS.md](AGENTS.md) | The rules, for people and for AI coding agents |
+- [Development setup](CONTRIBUTING.md#development-setup): clone, install, run, and open a pull request
+- [Architecture](docs/architecture.md): how the site, the tools and the packages fit together
+- [Design System](docs/design-system/README.md): colours, type, components, logo and mascot
+- [Adding a tool](docs/contributing/adding-a-tool.md): the tool contract, step by step
+- [Translations](docs/contributing/i18n.md): how strings, page copy and locales work
+- [Testing](docs/contributing/testing.md): unit and end-to-end tests
+- [Deployment](docs/contributing/deployment.md): previews, production and Cloudflare
+- [Decisions](docs/adr/README.md): the architecture decision records
+- [AGENTS.md](AGENTS.md): the rules, for people and for AI coding agents
 
 ## Development
 
