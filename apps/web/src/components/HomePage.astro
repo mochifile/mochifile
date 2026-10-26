@@ -37,9 +37,9 @@ const { locale } = Astro.props
                 {manifest.meta[locale].description}
               </span>
             </a>
-            {/* Variant pages (e.g. a target size) as shortcuts, also giving crawlers a path. */}
+            {/* Variant pages (e.g. a target size) as shortcuts, also giving crawlers a path. One per row: side by side, how many fit changes when the fonts swap, a layout shift. */}
             {manifest.variants && manifest.variants.length > 0 && (
-              <ul class="mt-auto flex flex-wrap gap-2 type-body-sm" aria-label={manifest.meta[locale].title}>
+              <ul class="mt-auto flex flex-col items-start gap-2 type-body-sm" aria-label={manifest.meta[locale].title}>
                 {manifest.variants.map((variant) => (
                   <li>
                     <a

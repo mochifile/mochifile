@@ -12,7 +12,8 @@
     "pathPattern": [
       "./messages/{locale}.json",
       "../tools/_template/messages/{locale}.json",
-      "../tools/compress-image/messages/{locale}.json"
+      "../tools/compress-image/messages/{locale}.json",
+      "../tools/convert-image/messages/{locale}.json"
     ]
   }
 }

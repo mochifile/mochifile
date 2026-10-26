@@ -6,6 +6,7 @@
 import {
   createNodeEngine,
   exifSegment,
+  readHeic,
   readPhoto,
   SECRET,
   syntheticImage,
@@ -87,6 +88,16 @@ export const largePhoto = (width: number, height: number) =>
     const bytes = await codecs.encodeJpeg(syntheticImage(width, height), 85)
     return upload(`camera-${(width * height) / 1e6}mp.jpg`, 'image/jpeg', bytes)
   })
+
+/** A real iPhone photo (4032 × 3024, rotated: displays 3024 × 4032), metadata blanked. */
+export const iphoneHeic = () =>
+  cached('heic:iphone', async () =>
+    upload('IMG_0001.HEIC', 'image/heic', await readHeic('iphone-grid')),
+  )
+
+/** A small HEIC with an empty MIME type, like Windows and Android report for HEIC files. */
+export const untypedHeic = () =>
+  cached('heic:untyped', async () => upload('IMG_0002.heic', '', await readHeic('synthetic')))
 
 export function bytesContain(bytes: Buffer, text: string): boolean {
   return bytes.includes(Buffer.from(text))

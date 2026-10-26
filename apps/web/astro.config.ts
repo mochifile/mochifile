@@ -95,7 +95,20 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
-    worker: { format: 'es' },
+    worker: {
+      format: 'es',
+      rollupOptions: {
+        output: {
+          // Lazy worker chunks (the HEIC decoder) import `ToolError` and the bundler's helpers.
+          // Left inside the worker entry, they make WebKit load the entry a second time, which
+          // starts a second engine and fetches its WebAssembly again after a file is chosen.
+          manualChunks: (id: string) =>
+            id.includes('rolldown/runtime') || id.includes('/packages/tool-kit/')
+              ? 'worker-shared'
+              : undefined,
+        },
+      },
+    },
     // jSquash loads its .wasm files relative to its own modules; pre-bundling breaks that in dev.
     optimizeDeps: {
       exclude: [
