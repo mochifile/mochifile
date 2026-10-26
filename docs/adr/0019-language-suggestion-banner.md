@@ -1,6 +1,6 @@
 # 0019. Language suggestion banner, never a redirect
 
-- **Status:** Accepted
+- **Status:** Accepted; phone placement amended by [ADR 0023](0023-phone-menu-with-the-popover-api.md)
 - **Date:** 2026-10-03
 
 ## Context
