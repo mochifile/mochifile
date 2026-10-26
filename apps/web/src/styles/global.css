@@ -31,6 +31,41 @@
 }
 
 /*
+ * The wordmark (Logo.astro, ADR 0024). Each file's proportions are pinned to its master's
+ * (960 × 171 and 960 × 173 px), so the box never changes when a copy of another size, rounded
+ * to whole pixels, arrives: no layout shift.
+ */
+[data-wordmark="light"] {
+  aspect-ratio: 960 / 171;
+}
+[data-wordmark="dark"] {
+  aspect-ratio: 960 / 173;
+}
+
+/*
+ * The header's wordmark comes in two files, one per colour scheme. The cream one shows when the
+ * theme is dark, chosen like the tokens are: the system preference unless `data-theme="light"`,
+ * or forced by `data-theme="dark"`. The footer's wordmark is not themed and always shows.
+ */
+[data-logo-themed] [data-wordmark="dark"] {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) [data-logo-themed] [data-wordmark="light"] {
+    display: none;
+  }
+  :root:not([data-theme="light"]) [data-logo-themed] [data-wordmark="dark"] {
+    display: block;
+  }
+}
+:root[data-theme="dark"] [data-logo-themed] [data-wordmark="light"] {
+  display: none;
+}
+:root[data-theme="dark"] [data-logo-themed] [data-wordmark="dark"] {
+  display: block;
+}
+
+/*
  * While the phone menu is open (ADR 0023), everything but the header steps out of view. The
  * menu then reads as a full screen, and the next Tab after its last item cannot land on a link
  * hidden beneath it (WCAG 2.4.11): hidden content is not focusable. Nothing moves.
