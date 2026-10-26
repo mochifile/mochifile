@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ResultRow } from './ResultRow.tsx'
 import type { QueueItem } from './use-file-queue.ts'
 
@@ -59,5 +59,25 @@ describe('ResultRow', () => {
       </ul>,
     )
     expect(screen.getByRole('alert').textContent).toBe('Try another photo')
+  })
+
+  it('offers a remove button named after the file only when the tool asks for it', () => {
+    const onRemove = vi.fn()
+    const view = row({ ...base, status: 'queued' })
+    expect(screen.queryByRole('button')).toBeNull()
+    view.rerender(
+      <ul>
+        <ResultRow
+          {...props}
+          labels={{ ...props.labels, remove: 'Remove', removeNamed: (name) => `Remove ${name}` }}
+          item={{ ...base, status: 'queued' }}
+          onRemove={onRemove}
+        />
+      </ul>,
+    )
+    const button = screen.getByRole('button', { name: 'Remove photo.jpg' })
+    expect(button.textContent).toBe('Remove')
+    fireEvent.click(button)
+    expect(onRemove).toHaveBeenCalledOnce()
   })
 })

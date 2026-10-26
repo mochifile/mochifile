@@ -1,4 +1,4 @@
-import { buttonClasses, cn, Mascot, Notice, ProgressBar } from '@mochifile/ui'
+import { Button, buttonClasses, cn, Mascot, Notice, ProgressBar } from '@mochifile/ui'
 import type { ReactNode } from 'react'
 import { DownloadIcon } from './DownloadIcon.tsx'
 import type { QueueItem } from './use-file-queue.ts'
@@ -10,6 +10,10 @@ export interface ResultRowLabels {
   download: string
   downloadNamed: (name: string) => string
   progressLabel: (name: string) => string
+  /** Visible text of the remove button, e.g. "Remove"; needed with `onRemove`. */
+  remove?: string
+  /** Its accessible name, which must start with the visible text: "Remove IMG_0412.jpg". */
+  removeNamed?: (name: string) => string
 }
 
 export interface ResultRowProps<Settings, Meta> {
@@ -22,6 +26,8 @@ export interface ResultRowProps<Settings, Meta> {
   errorMessage: (item: QueueItem<Settings, Meta>) => string
   resultDetails?: ReactNode
   resultActions?: ReactNode
+  /** Takes the file out of the list; shows a remove button in every state. */
+  onRemove?: () => void
 }
 
 const RESULT_SQUISH = ['rounded-lg-squish-a', 'rounded-lg-squish-b', 'rounded-lg-squish-c'] as const
@@ -37,7 +43,19 @@ export function ResultRow<Settings, Meta>({
   errorMessage,
   resultDetails,
   resultActions,
+  onRemove,
 }: ResultRowProps<Settings, Meta>) {
+  const removeButton = onRemove && labels.remove && (
+    <Button
+      variant="secondary"
+      className="w-full sm:w-auto"
+      aria-label={labels.removeNamed?.(item.file.name) ?? labels.remove}
+      data-remove={item.id}
+      onClick={onRemove}
+    >
+      {labels.remove}
+    </Button>
+  )
   return (
     <li
       className={cn(
@@ -90,7 +108,11 @@ export function ResultRow<Settings, Meta>({
             {labels.download}
           </a>
           {resultActions}
+          {removeButton}
         </div>
+      )}
+      {!(item.status === 'done' && item.result) && removeButton && (
+        <div className="flex flex-wrap gap-3">{removeButton}</div>
       )}
     </li>
   )

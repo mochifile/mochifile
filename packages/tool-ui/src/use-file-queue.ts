@@ -28,10 +28,15 @@ export interface FileQueue<Settings, Meta> {
    * return value says whether that happened. Invalid files are added as errors.
    */
   add(files: File[], settings: Settings): { tooMany: boolean }
-  /** Processes the given items again, with changed settings. */
+  /**
+   * Processes the given items again, with changed settings or, without them, the settings each
+   * was added with (as when continuing after a cancel).
+   */
   requeue(ids: ReadonlySet<number>, settings?: Partial<Settings>): void
   /** Stops the current file and skips the queued ones. */
   cancel(): void
+  /** Takes one file out of the list, stopping it first if it is being processed. */
+  remove(id: number): void
   /** Stops and removes everything. */
   clear(): void
   /** Items processed successfully. */
@@ -51,6 +56,7 @@ export function useFileQueue<Settings, Meta>({
   run,
   maxFiles,
   validate,
+  paused = false,
 }: {
   /** Processes one file; called with the item's current settings. */
   run: (
@@ -60,6 +66,11 @@ export function useFileQueue<Settings, Meta>({
   maxFiles: number
   /** Throws a `ToolError` if the file is not acceptable (type, size). */
   validate: (file: File) => void
+  /**
+   * While true, files wait in the list instead of starting, as when the tool's code has not
+   * loaded; they start when it turns false. A file already being processed finishes.
+   */
+  paused?: boolean
 }): FileQueue<Settings, Meta> {
   const [items, setItemsState] = useState<QueueItem<Settings, Meta>[]>([])
   const itemsRef = useRef<QueueItem<Settings, Meta>[]>([])
@@ -68,6 +79,8 @@ export function useFileQueue<Settings, Meta>({
   // The latest `run`, so an in-flight queue uses the current settings and client.
   const runRef = useRef(run)
   runRef.current = run
+  const pausedRef = useRef(paused)
+  pausedRef.current = paused
 
   const setItems = useCallback(
     (update: (list: QueueItem<Settings, Meta>[]) => QueueItem<Settings, Meta>[]) => {
@@ -95,6 +108,7 @@ export function useFileQueue<Settings, Meta>({
     runningRef.current = true
     try {
       for (;;) {
+        if (pausedRef.current) break
         const next = itemsRef.current.find((item) => item.status === 'queued')
         if (!next) break
         const controller = new AbortController()
@@ -106,6 +120,8 @@ export function useFileQueue<Settings, Meta>({
             onProgress: ({ ratio, stage }) =>
               patch(next.id, { progress: ratio, ...(stage ? { stage } : {}) }),
           })
+          // Removed or cleared while it finished: no object URL for a row that is gone.
+          if (!itemsRef.current.some((item) => item.id === next.id)) continue
           patch(next.id, {
             status: 'done',
             result: {
@@ -134,6 +150,11 @@ export function useFileQueue<Settings, Meta>({
       abortRef.current = null
     }
   }, [patch])
+
+  // Files added while paused start once the queue may run.
+  useEffect(() => {
+    if (!paused) void runQueue()
+  }, [paused, runQueue])
 
   const add = (files: File[], settings: Settings) => {
     const room = maxFiles - itemsRef.current.length
@@ -177,6 +198,15 @@ export function useFileQueue<Settings, Meta>({
     abortRef.current?.abort()
   }
 
+  const remove = (id: number) => {
+    const item = itemsRef.current.find((candidate) => candidate.id === id)
+    if (!item) return
+    // The queue moves on to the next file once the aborted run settles.
+    if (item.status === 'working') abortRef.current?.abort()
+    if (item.result) URL.revokeObjectURL(item.result.url)
+    setItems((list) => list.filter((candidate) => candidate.id !== id))
+  }
+
   const clear = () => {
     abortRef.current?.abort()
     for (const item of itemsRef.current) if (item.result) URL.revokeObjectURL(item.result.url)
@@ -188,6 +218,7 @@ export function useFileQueue<Settings, Meta>({
     add,
     requeue,
     cancel,
+    remove,
     clear,
     done: items.filter((item) => item.status === 'done'),
     busy: items.some((item) => item.status === 'queued' || item.status === 'working'),

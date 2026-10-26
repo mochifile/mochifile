@@ -1,13 +1,20 @@
 import { type RefObject, useCallback, useEffect, useRef, useState } from 'react'
 
-export type PrepareState = 'idle' | 'loading' | 'ready'
+export type PrepareState = 'idle' | 'loading' | 'ready' | 'failed'
 
 export interface PrepareOnIntent {
   /** Attach to the tool's root: any sign of intent inside it starts loading. */
   rootRef: RefObject<HTMLDivElement | null>
-  /** `idle`, `loading` or `ready`; tools expose it as `data-engine` (end-to-end tests wait on it). */
+  /**
+   * `idle`, `loading`, `ready` or `failed`; tools expose it as `data-engine` (end-to-end tests
+   * wait on it). `failed` means loading failed after the person showed intent: the tool says so
+   * and offers to try again.
+   */
   state: PrepareState
-  /** Starts loading now, e.g. when files arrive. Does nothing once loading has started. */
+  /**
+   * Starts loading now, e.g. when files arrive or the person asks to try again. Does nothing
+   * while loading or once ready; after a failure it tries again.
+   */
   prepare: () => void
 }
 
@@ -15,12 +22,17 @@ export interface PrepareOnIntent {
  * Loads a tool's worker and codecs on the first sign of intent (pointer, keyboard focus, touch,
  * drag) or when the page is idle, so nothing is fetched after a file is chosen (ADR 0016).
  * Listeners are passive: they only observe, so they never delay scrolling or typing.
+ *
+ * A failed idle preload stays silent and is retried on the next sign of intent: nobody asked
+ * for the tool yet. Once the person has shown intent, a failure becomes `failed`, and only an
+ * explicit `prepare()` (a "Try again" button, or adding files) tries again, so hovering over
+ * the message does not keep refetching.
  */
 export function usePrepareOnIntent({
   load,
   preloadOnIdle,
 }: {
-  /** Loads everything the tool needs; a rejection is retried on the next sign of intent. */
+  /** Loads everything the tool needs; may reject (offline, blocked, worker failed). */
   load: () => Promise<void>
   /** Whether loading may start without intent (false on Save-Data or slow connections). */
   preloadOnIdle: () => boolean
@@ -35,41 +47,54 @@ export function usePrepareOnIntent({
 
   // A ref guards the state so two events in the same tick cannot both call `load`.
   const stateRef = useRef<PrepareState>('idle')
+  // Whether the person has shown intent: only then is a failure worth telling them about.
+  const wantedRef = useRef(false)
   const update = useCallback((next: PrepareState) => {
     stateRef.current = next
     setState(next)
   }, [])
 
-  const prepare = useCallback(() => {
-    if (stateRef.current !== 'idle') return
+  const start = useCallback(() => {
     update('loading')
     loadRef.current().then(
       () => update('ready'),
-      // A failed preparation (e.g. offline) is retried on the next sign of intent.
-      () => update('idle'),
+      () => update(wantedRef.current ? 'failed' : 'idle'),
     )
   }, [update])
+
+  const prepare = useCallback(() => {
+    wantedRef.current = true
+    if (stateRef.current === 'idle' || stateRef.current === 'failed') start()
+  }, [start])
 
   useEffect(() => {
     const root = rootRef.current
     if (!root) return
-    const events = ['pointerover', 'focusin', 'touchstart', 'dragenter'] as const
-    for (const event of events) root.addEventListener(event, prepare, { passive: true })
-    return () => {
-      for (const event of events) root.removeEventListener(event, prepare)
+    // Intent during an idle preload marks it as wanted, so its failure is shown.
+    const onIntent = () => {
+      wantedRef.current = true
+      if (stateRef.current === 'idle') start()
     }
-  }, [prepare])
+    const events = ['pointerover', 'focusin', 'touchstart', 'dragenter'] as const
+    for (const event of events) root.addEventListener(event, onIntent, { passive: true })
+    return () => {
+      for (const event of events) root.removeEventListener(event, onIntent)
+    }
+  }, [start])
 
-  // `prepare` is stable, so this runs once: a failed idle load waits for the next intent event.
+  // `start` is stable, so this runs once: a failed idle load waits for the next intent event.
   useEffect(() => {
     if (!preloadOnIdleRef.current()) return
+    const preload = () => {
+      if (stateRef.current === 'idle') start()
+    }
     if ('requestIdleCallback' in window) {
-      const id = requestIdleCallback(prepare, { timeout: 4000 })
+      const id = requestIdleCallback(preload, { timeout: 4000 })
       return () => cancelIdleCallback(id)
     }
-    const id = setTimeout(prepare, 1500)
+    const id = setTimeout(preload, 1500)
     return () => clearTimeout(id)
-  }, [prepare])
+  }, [start])
 
   return { rootRef, state, prepare }
 }
