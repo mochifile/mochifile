@@ -67,15 +67,20 @@ jobs:
       # fallback as on our visitors' phones; the layout-shift test depends on it (ADR 0021).
       - name: Install Roboto
         run: sudo apt-get install --yes --no-install-recommends fonts-roboto
-      # Shorter than the job's timeout, so a stuck run still reaches the upload below with
-      # whatever report and traces exist, instead of the whole job being cancelled.
+      # Turborepo groups each task's output in GitHub Actions and prints it only when the task
+      # ends, so a run that hit its timeout left an empty log. Streaming shows each test as it
+      # finishes. Playwright's own globalTimeout (12 min) ends a stuck run first and writes its
+      # report; the step timeout below is the backstop.
       - name: Run smoke tests
         timeout-minutes: 15
+        env:
+          TURBO_LOG_ORDER: stream
         run: pnpm test:e2e -- --project=${{ matrix.browser }}
-      # Also uploaded when the job passes, so traces of flaky (retried) tests are kept.
-      # test-results/ holds traces only for failed attempts, so it is empty on a clean run.
+      # Also uploaded when the job passes, so traces of flaky (retried) tests are kept, and when
+      # it is cancelled: `always()` still runs after the job's own timeout, `!cancelled()` does
+      # not. test-results/ holds traces only for failed attempts, so it is empty on a clean run.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: ${{ !cancelled() }}
+        if: ${{ always() }}
         with:
           name: playwright-report-${{ matrix.browser }}
           path: |
