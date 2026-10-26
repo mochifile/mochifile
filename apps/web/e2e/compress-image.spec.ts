@@ -59,7 +59,7 @@ test.describe('compress image to 50 KB', () => {
     await waitForEngine(page)
 
     // From here on, nothing may leave the browser: not the photo, not a single request.
-    const requests = recordRequests(page)
+    const requests = await recordRequests(page)
     await add(page, await photoWithLocation())
     const result = await downloadResult(page)
 
@@ -87,7 +87,7 @@ test.describe('output format', () => {
   test('WebP stays WebP by default, with a hint that forms often want JPG', async ({ page }) => {
     await page.goto('/compress-image-to-100kb/')
     await waitForEngine(page)
-    const requests = recordRequests(page)
+    const requests = await recordRequests(page)
     await add(page, await webpPhoto())
     await expect(page.getByText('Many forms only accept JPG')).toBeVisible()
     const asWebp = await downloadResult(page)
@@ -122,7 +122,7 @@ test('a transparent PNG becomes JPG on white, with a one-click WebP alternative'
 }) => {
   await page.goto('/compress-image-to-20kb/')
   await waitForEngine(page)
-  const requests = recordRequests(page)
+  const requests = await recordRequests(page)
   await add(page, await transparentPng())
   const row = rows(page).first()
   await expect(row).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
@@ -166,7 +166,7 @@ test('a sideways photo is turned upright, and shrinking is explained', async ({ 
 test('several photos download together as a ZIP', async ({ page }) => {
   await page.goto('/compress-image-to-200kb/')
   await waitForEngine(page)
-  const requests = recordRequests(page)
+  const requests = await recordRequests(page)
   await add(page, await photo('landscape'), await photo('flowers'), await photo('portrait'))
   for (let i = 0; i < 3; i += 1) {
     await expect(rows(page).nth(i)).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
