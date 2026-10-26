@@ -27,31 +27,30 @@ faq:
 ---
 
 Muitos sites recusam fotos acima de um limite: "máximo de 100 KB", "o arquivo deve ter menos
-de 50 KB". Escolha o limite de que você precisa, adicione suas fotos e baixe cópias que ficam
-garantidamente dentro dele. A foto mantém toda a qualidade que o limite permite.
+de 50 KB". Escolha o limite de que você precisa, adicione suas fotos e baixe cópias dentro dele.
 
 ## Como a foto chega ao limite
 
-Primeiro, a qualidade é reduzida aos poucos até a foto caber. Se nem a menor qualidade que
+Primeiro, a qualidade é reduzida até a foto caber. Se nem a menor qualidade que
 usamos bastar, a foto também fica menor em pixels (nunca é aumentada), e o resultado mostra
 as novas dimensões. Fotos com mais de 16 megapixels que precisam ser comprimidas também ficam
 menores, para caber na memória do seu aparelho. Cada resultado é medido antes de chegar até
 você: se uma foto não consegue ficar dentro do limite, você vê o menor tamanho que
 conseguimos, e não um arquivo.
 
-"Igual ao original" mantém JPG como JPG e PNG como PNG sempre que possível.
+"Igual ao original" mantém o formato da foto (JPG, PNG ou WebP) sempre que possível.
 
 ## Suas fotos ficam com você
 
-Tudo acontece no seu navegador. Suas fotos não são enviadas para lugar nenhum, então ninguém
-mais tem acesso a elas. Detalhes ocultos que as fotos guardam, como o local onde foram
-tiradas e o modelo da câmera, são removidos de todos os resultados.
+Tudo acontece no seu navegador: suas fotos não são enviadas para lugar nenhum. Detalhes ocultos
+que as fotos guardam, como o local onde foram tiradas e o modelo da câmera, são removidos de
+todos os resultados.
 
 ## Dicas
 
 - Confira o limite no formulário que você está preenchendo e escolha exatamente esse
   tamanho.
 - Se o formulário só aceita JPG, escolha **JPG** em "Salvar como".
-- Fotos com fundo liso chegam a tamanhos pequenos com mais qualidade.
+- Fotos com fundo liso costumam manter mais qualidade em tamanhos pequenos.
 - Recortar a foto antes (só o rosto ou só o documento) deixa mais detalhe para o que
   importa.

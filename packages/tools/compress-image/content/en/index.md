@@ -24,29 +24,28 @@ faq:
 ---
 
 Many websites refuse photos above a size limit: "maximum 100 KB", "file must be under 50 KB".
-Pick the limit you need, add your photos, and download copies that are guaranteed to be at or
-under it. The photo keeps as much quality as the limit allows.
+Pick the limit you need, add your photos, and download copies at or under it.
 
 ## How the photo gets under the limit
 
-First the quality is lowered, a little at a time, until the photo fits. If even the lowest
-quality we use is too big, the photo is also made smaller in pixels, never larger, and the
-result shows its new dimensions. Photos over 16 megapixels that need compressing are also
-made smaller, so they fit in your device's memory. Each result is measured before you get it: if a photo cannot
-get under the limit, you see the smallest size we reached instead of a file.
+First the quality is lowered until the photo fits. If even the lowest quality we use is too
+big, the photo is also made smaller in pixels, never larger, and the result shows its new
+dimensions. Photos over 16 megapixels that need compressing are also made smaller, so they fit
+in your device's memory. Each result is measured before you get it: if a photo cannot get
+under the limit, you see the smallest size we reached instead of a file.
 
-"Same as original" keeps JPG as JPG and PNG as PNG whenever it can.
+"Same as original" keeps the photo's format (JPG, PNG or WebP) whenever it can.
 
 ## Your photos stay private
 
-Everything happens in your browser. Your photos are never uploaded, so nobody else can see
-them. Hidden details stored in photos, such as the place where they were taken and the
-camera model, are removed from every result.
+Everything happens in your browser: your photos are never uploaded. Hidden details stored in
+photos, such as the place where they were taken and the camera model, are removed from every
+result.
 
 ## Tips
 
 - Check the limit on the form you are filling in, and pick that exact size.
 - If a form only accepts JPG, choose **JPG** under "Save as".
-- A photo with a plain background reaches small sizes with better quality.
+- A photo with a plain background usually keeps more quality at small sizes.
 - Cropping the photo first (to just your face, or just the document) leaves more detail for
   what matters.
