@@ -1,77 +1,83 @@
-# Mochifile
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/design-system/assets/Logos/mochifile-wordmark-dark.png">
+  <img src="docs/design-system/assets/Logos/mochifile-wordmark-light.png" alt="Mochifile" width="280">
+</picture>
 
-**Simple file tools that run in your browser.** Compress an image to a target size, make a
-passport photo, convert HEIC, shrink a video for WhatsApp, compress a PDF — without installing
-anything and, whenever possible, without your files ever leaving your device.
+**Make it fit.**
 
-Mochifile is built for people who just want the job done: friendly pages, no jargon, fast on
-any phone, available in several languages.
+Simple, private file tools that run in your browser.
 
-> **Status:** Phase 0 (foundation). The site, the tool contract and the tooling are in place;
-> the first real tools come next.
+[mochifile.com](https://mochifile.com) · [Compress an image](https://mochifile.com/compress-image/) · [Contribute](CONTRIBUTING.md)
+
+> **Status:** pre-launch. The site is live with one tool and more are in development. It stays
+> out of search engines until launch ([ADR 0014](docs/adr/0014-block-search-indexing-until-launch.md)).
+
+---
+
+## What is Mochifile?
+
+Mochifile is for the moment a form says "photo must be under 50 KB" and you just want it to
+work. You choose a tool, add your files and download the result. No account, no installing
+anything, and, because the work happens in your browser, your files stay on your device.
+
+Today there is one tool: [Compress image to a target size](https://mochifile.com/compress-image/).
+It shrinks JPG, PNG and WebP photos to the limit you pick, from 5 KB to 20 MB. The site is in
+English and Portuguese.
 
 ## Principles
 
-- **Private by design.** Tools run client-side (Web Workers + WebAssembly) whenever possible.
-  Files are never uploaded when a browser path exists.
-- **Fast.** Static pages with zero JavaScript by default; each tool page loads only its own code.
-- **For everyone.** Plain language, accessible UI, one URL per language (`/` for English,
-  `/pt/` for Portuguese).
-- **Open core.** This repository is public under AGPL-3.0. Accounts, payments and server-side
-  AI will live in a separate private repository.
+- **Private by design.** Tools run in your browser, in Web Workers, whenever possible. Files
+  are not uploaded when a browser path exists, and file contents and names are never logged
+  ([ADR 0006](docs/adr/0006-client-side-processing-first.md),
+  [ADR 0009](docs/adr/0009-privacy-by-design.md)).
+- **Useful for everyone.** Plain words, big targets, clear errors. Every page exists in every
+  language, each with its own URL ([ADR 0007](docs/adr/0007-i18n-per-locale-urls.md)).
+- **Open source.** This repository is AGPL-3.0. Accounts, payments and server-side AI would
+  live in a separate private repository, never here ([ADR 0003](docs/adr/0003-open-core-licensing.md)).
+- **Honest.** Claims are checked, not just made: a strict Content-Security-Policy limits the
+  page to its own origin ([ADR 0012](docs/adr/0012-content-security-policy.md)), and the
+  end-to-end tests fail on any policy violation or console error.
 
-## Quick start
+## Documentation
 
-Requirements: Node.js 24 (see `.nvmrc`) and pnpm 12 (pinned in `package.json`; with Corepack
-or pnpm ≥ 10 the right version is used automatically).
+| | |
+| --- | --- |
+| [Development setup](CONTRIBUTING.md#development-setup) | Clone, install, run, and open a pull request |
+| [Architecture](docs/architecture.md) | How the site, the tools and the packages fit together |
+| [Design System](docs/design-system/README.md) | Colours, type, components, logo and mascot |
+| [Adding a tool](docs/contributing/adding-a-tool.md) | The tool contract, step by step |
+| [Translations](docs/contributing/i18n.md) | How strings, page copy and locales work |
+| [Testing](docs/contributing/testing.md) | Unit and end-to-end tests |
+| [Deployment](docs/contributing/deployment.md) | Previews, production and Cloudflare |
+| [Decisions](docs/adr/README.md) | The architecture decision records |
+| [AGENTS.md](AGENTS.md) | The rules, for people and for AI coding agents |
+
+## Development
+
+You need Node.js 24 (see `.nvmrc`) and pnpm 12.
 
 ```sh
 pnpm install
-pnpm dev          # http://localhost:4321 — the template tool is at /template-tool/
+pnpm dev          # http://localhost:4321
 ```
 
-## Scripts
-
-All scripts run from the repository root through Turborepo.
-
-| Command | What it does |
-| --- | --- |
-| `pnpm dev` | Start the site in development mode |
-| `pnpm build` | Compile messages and build the static site to `apps/web/dist` |
-| `pnpm lint` | Lint and check formatting with Biome (`pnpm lint:fix` to fix) |
-| `pnpm format` | Format all files with Biome |
-| `pnpm typecheck` | Type-check every package (`astro check` for the site) |
-| `pnpm test` | Unit tests with Vitest |
-| `pnpm test:e2e` | Playwright smoke tests on Chromium, Firefox and WebKit |
-
-The first time you run e2e tests, install the browsers:
-`pnpm --filter @mochifile/web exec playwright install`.
-
-## Repository map
-
-```
-apps/web/                  Astro site (static output) with React islands
-packages/tool-kit/         The Tool contract, worker wrapper and file helpers
-packages/ui/               Shared React components and design tokens
-packages/i18n/             Locales and Paraglide messages (en, pt)
-packages/tools/_template/  Copy this to create a new tool
-docs/                      Architecture, ADRs and contributor guides
-.github/                   CI, CodeQL, issue and PR templates
-```
-
-Read [docs/architecture.md](docs/architecture.md) for how it fits together and
-[docs/adr/](docs/adr/) for the decisions behind it.
+Before you push, run `pnpm lint && pnpm typecheck && pnpm test && pnpm build`, and
+`pnpm test:e2e` if you touched pages or a tool's UI (the first run needs
+`pnpm --filter @mochifile/web exec playwright install`). All commands are in
+[AGENTS.md](AGENTS.md#commands).
 
 ## Contributing
 
-Contributions are welcome — especially new tools and translations. Start with
-[CONTRIBUTING.md](CONTRIBUTING.md) and
-[docs/contributing/adding-a-tool.md](docs/contributing/adding-a-tool.md). AI coding agents
-follow [AGENTS.md](AGENTS.md).
+New tools, translations, fixes and docs are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md),
+and please follow the [Code of Conduct](CODE_OF_CONDUCT.md). Have a tool in mind? Open a
+[tool proposal](https://github.com/mochifile/mochifile/issues/new?template=new-tool.yml) before
+you write code.
 
-Please report security issues privately: see [SECURITY.md](SECURITY.md).
+Found a security issue? Please do not open a public issue: write to
+**security@mochifile.com** ([SECURITY.md](SECURITY.md)).
 
 ## License
 
-[GNU Affero General Public License v3.0](LICENSE). "Mochifile" and its logo are the project's
-brand; see [ADR 0002](docs/adr/0002-product-name-and-brand-usage.md).
+[GNU Affero General Public License v3.0](LICENSE). The name and logo identify the official
+project: forks are welcome, but must not present themselves as the official Mochifile
+([ADR 0002](docs/adr/0002-product-name-and-brand-usage.md)).
