@@ -104,15 +104,9 @@ export const isWebp = (bytes: Buffer) =>
 export async function waitForEngine(page: Page): Promise<void> {
   await page.locator('[data-engine]').hover()
   await page.locator('[data-engine="ready"]').waitFor({ timeout: 30_000 })
-}
-
-/**
- * Records every http(s) request from now on. Downloads of results use blob: URLs, not http.
- * The page's own lazy images that are shown (the footer wordmark) are loaded first: they arrive
- * whenever scrolling brings them near, which has nothing to do with the files being processed,
- * and on a long page that can happen mid-test. Hidden ones stay unloaded, as for visitors.
- */
-export async function recordRequests(page: Page): Promise<string[]> {
+  // The page's own lazy images that are shown (the footer wordmark) load whenever scrolling
+  // brings them near, which on a long page can be mid-test: load them now, so a later
+  // recordRequests() sees only what the tool does. Hidden ones stay unloaded, as for visitors.
   await page.evaluate(async () => {
     const lazy = [...document.querySelectorAll<HTMLImageElement>('img[loading="lazy"]')].filter(
       (img) => img.checkVisibility(),
@@ -120,6 +114,10 @@ export async function recordRequests(page: Page): Promise<string[]> {
     for (const img of lazy) img.loading = 'eager'
     await Promise.all(lazy.map((img) => img.decode()))
   })
+}
+
+/** Records every http(s) request from now on. Downloads of results use blob: URLs, not http. */
+export function recordRequests(page: Page): string[] {
   const urls: string[] = []
   page.on('request', (request) => {
     if (/^https?:/.test(request.url())) urls.push(request.url())
