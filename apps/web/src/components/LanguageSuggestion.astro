@@ -6,8 +6,10 @@
  * shows at most one: the visitor's highest-ranked supported language, when it differs from the
  * page's. It never shows again in a browser once the visitor dismisses it or uses the
  * language switcher. Fixed overlay: it moves nothing on the page. On phones it sits at the top,
- * over the header and title, so it never covers a tool's file picker on first view; on wider
- * screens at the bottom. Both edges keep clear of the iOS safe areas.
+ * right below the header (whose menu button and language links stay reachable) and over the
+ * title, so it never covers a tool's file picker on first view; on wider screens at the bottom.
+ * Both edges keep clear of the iOS safe areas. While keyboard focus is in the page content, or
+ * the phone menu is open, it steps out of view (global.css, ADR 0023).
  */
 import { type Locale, locales, localeTags } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
@@ -29,7 +31,7 @@ const others = locales.filter((target) => target !== locale)
       data-language-suggestion={localeTags[target]}
       lang={localeTags[target]}
       aria-label={m.language_suggestion_label({}, { locale: target })}
-      class="fixed inset-x-4 top-[calc(var(--space-4)+env(safe-area-inset-top))] z-50 mx-auto flex max-w-reading-max flex-wrap items-center gap-3 rounded-lg border-chip border-ink bg-surface-card p-4 text-ink sm:top-auto sm:bottom-[calc(var(--space-4)+env(safe-area-inset-bottom))]"
+      class="fixed inset-x-4 top-[calc(var(--site-header-height)+var(--space-2)+env(safe-area-inset-top))] z-50 mx-auto flex max-w-reading-max flex-wrap items-center gap-3 rounded-lg border-chip border-ink bg-surface-card p-4 text-ink sm:top-auto sm:bottom-[calc(var(--space-4)+env(safe-area-inset-bottom))]"
     >
       <p class="w-full font-medium">{m.language_suggestion_text({}, { locale: target })}</p>
       {/*
