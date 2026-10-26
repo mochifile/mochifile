@@ -6,8 +6,8 @@ steps:
 faq:
   - question: "Is 1 MB the same as 1,000 KB?"
     answer: >-
-      Here, yes: 1 MB is 1,000,000 bytes. Sites that count 1 MB as 1,048,576 bytes accept the
-      result too, since it is always smaller.
+      Here, yes: 1 MB is 1,000,000 bytes. The result also fits sites that count 1 MB as
+      1,048,576 bytes, since that limit is bigger.
   - question: "Which formats can I add, and which do I get back?"
     answer: >-
       You can add JPG, PNG and WebP images; HEIC, AVIF and camera RAW files are not accepted
@@ -15,14 +15,13 @@ faq:
       fits in it, and a PNG that cannot fit is saved as JPG.
   - question: "Can I compress photos from a professional camera?"
     answer: >-
-      Yes, if they are JPG, PNG or WebP files of up to 50 MB. Images over 100 megapixels cannot
-      be opened, and in some browsers' private or anti-tracking modes the limit is 24
-      megapixels. Photos over 16 megapixels are made smaller in pixels while they are
-      compressed, so they fit in your device's memory.
+      Yes, if they are JPG, PNG or WebP files of up to 50 MB and 100 megapixels (24 megapixels
+      in some private windows and privacy-focused browsers). Photos over 16 megapixels come
+      out smaller in pixels, so they fit in your device's memory.
 ---
 
-Many portals, booking sites and email services accept photos only up to 1 MB, while phones
-often take photos of 3 to 10 MB. This page starts at 1 MB: add your photos and download copies
+Many portals, booking sites and email services accept photos only up to 1 MB, while phone
+photos are often several megabytes. This page starts at 1 MB: add your photos and download copies
 of 1 MB or less.
 
 ## How the photo gets to 1 MB
@@ -37,8 +36,8 @@ camera model are removed from the results.
 
 ## Tips for 1 MB
 
-- **Want to print the photo later?** Keep the original too. 1 MB is great for screens and
-  uploads, but printing large needs the full-size file.
+- **Want to print the photo later?** Keep the original too. 1 MB works for screens and
+  uploads, but large prints need the full-size file.
 - **Large PNG images** that cannot fit as PNG are saved as JPG, and the result tells you. If
   the image has transparent areas, choose WebP to keep them.
 - **Need even smaller?** Pick 500 KB or type another size under "Other size".
