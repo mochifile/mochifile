@@ -99,8 +99,15 @@ for (const c of cases) {
   })
 }
 
-test('the home page links to variant pages', async ({ page }) => {
+// The home page lists the size variants of its "Start here" tool only (home-page.spec.ts); every
+// other variant is one step further, on its tool's page, which the home page links to.
+test('the home page leads to variant pages through their tool', async ({ page }) => {
   await page.goto('/')
+  await page
+    .getByRole('main')
+    .getByRole('link', { name: /^Template tool/ })
+    .click()
+  await expect(page).toHaveURL('/template-tool/')
   await expect(page.getByRole('link', { name: 'Template tool: lower case' })).toHaveAttribute(
     'href',
     '/template-tool-lowercase/',

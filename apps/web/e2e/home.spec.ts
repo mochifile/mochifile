@@ -5,11 +5,11 @@ import { expect, projectContextOptions, test } from './fixtures.ts'
 const SITE = 'https://mochifile.com'
 
 const pages = [
-  { path: '/', lang: 'en', heading: 'File tools that just work', canonical: `${SITE}/` },
+  { path: '/', lang: 'en', heading: 'Your files, the right size.', canonical: `${SITE}/` },
   {
     path: '/pt/',
     lang: 'pt',
-    heading: 'Ferramentas de arquivos que simplesmente funcionam',
+    heading: 'Seus arquivos do tamanho certo.',
     canonical: `${SITE}/pt/`,
   },
 ]
@@ -20,7 +20,8 @@ for (const { path, lang, heading, canonical } of pages) {
       const response = await page.goto(path)
       expect(response?.status()).toBe(200)
       await expect(page.locator('html')).toHaveAttribute('lang', lang)
-      await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading)
+      // The accessible name leaves out the decorative measure line inside the heading.
+      await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(heading)
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonical)
 
       const alternates = await page

@@ -57,3 +57,44 @@ for (const PHONE of PHONES) {
     ).toEqual([])
   })
 }
+
+/** The home page's primary action, "Compress a photo", in both languages. */
+for (const PHONE of PHONES) {
+  test(`the home page's primary action is fully visible on first view (${PHONE.width}×${PHONE.height})`, async ({
+    testBrowser,
+  }) => {
+    const failures: string[] = []
+    for (const [path, locale] of [
+      ['/', 'en-US'],
+      ['/pt/', 'pt-BR'],
+    ] as const) {
+      const context = await testBrowser.newContext({
+        ...projectContextOptions(),
+        viewport: PHONE,
+        locale,
+      })
+      try {
+        const page = await context.newPage()
+        await page.goto(path)
+        const action = page.locator('[data-primary-action]')
+        await expect(action).toHaveCount(1)
+        await page.evaluate(() => document.fonts.ready)
+        const box = await action.boundingBox()
+        if (!box) throw new Error(`${path}: no box`)
+        const bottom = Math.ceil(box.y + box.height)
+        const hit = await page.evaluate(
+          ({ x, y }) => Boolean(document.elementFromPoint(x, y)?.closest('[data-primary-action]')),
+          { x: box.x + box.width / 2, y: box.y + box.height / 2 },
+        )
+        if (box.y < 0 || bottom > PHONE.height || box.x < 0 || !hit) {
+          failures.push(`${path}: top ${Math.floor(box.y)}, bottom ${bottom}, reachable ${hit}`)
+        }
+      } finally {
+        await context.close()
+      }
+    }
+    expect(failures, `home action not fully on screen at ${PHONE.width}×${PHONE.height}`).toEqual(
+      [],
+    )
+  })
+}
