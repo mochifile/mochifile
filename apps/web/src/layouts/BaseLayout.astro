@@ -1,9 +1,8 @@
 ---
 import { Font } from 'astro:assets'
-import { type Locale, localePath, localeTags } from '@mochifile/i18n'
-import { m } from '@mochifile/i18n/messages'
+import { type Locale, localeTags } from '@mochifile/i18n'
 import LanguageSuggestion from '../components/LanguageSuggestion.astro'
-import Logo from '../components/Logo.astro'
+import SiteFooter from '../components/SiteFooter.astro'
 import SiteHeader from '../components/SiteHeader.astro'
 import { buildAlternates } from '../lib/seo'
 import '../styles/global.css'
@@ -61,23 +60,6 @@ const alternates = buildAlternates(paths, site)
     <main id="content" tabindex="-1" class="mx-auto w-full max-w-content-max flex-1 px-4 pt-4 pb-16 outline-none sm:pt-6">
       <slot />
     </main>
-    <footer class="rounded-t-2xl bg-surface-inverse type-body-sm text-ink-on-inverse-muted">
-      <div class="mx-auto flex max-w-content-max flex-col gap-2 px-6 py-10">
-        {/* The margin keeps the logo's clear space above the text. */}
-        <div class="mb-6">
-          <Logo href={localePath(locale)} ground="on-dark" />
-        </div>
-        <p>{m.footer_privacy_note({}, { locale })}</p>
-        <p>
-          <a class="rounded-sm text-ink-on-inverse underline focus-ring" href="https://github.com/mochifile/mochifile">
-            {m.footer_open_source({}, { locale })}
-          </a>
-          ·
-          <a class="rounded-sm text-ink-on-inverse underline focus-ring" href="/third-party-licenses.txt">
-            {m.footer_licenses({}, { locale })}
-          </a>
-        </p>
-      </div>
-    </footer>
+    <SiteFooter locale={locale} paths={paths} />
   </body>
 </html>

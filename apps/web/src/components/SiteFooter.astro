@@ -1,0 +1,129 @@
+---
+/**
+ * The site footer: the logo and the privacy note, one group of links per tool category, a
+ * "Mochifile" group and a last line with the licenses and the other language.
+ *
+ * The tool groups come from the registry, so a tool appears here when it is published and
+ * never before. Nothing else is listed until it exists: About, Help, the legal pages and the
+ * contact addresses are added by the PRs that publish them (design-system proposal v1.1).
+ *
+ * Under 600 px the groups stack in one column, so long Portuguese titles and 200% zoom never
+ * squeeze them; from 600 px they sit in two columns, from 1280 px in up to four.
+ */
+import { type Locale, localeNames, localePath, locales, localeTags } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import { footerToolGroups } from '../lib/footer.ts'
+import { tools } from '../lib/tools.ts'
+import Logo from './Logo.astro'
+
+interface Props {
+  locale: Locale
+  /** Path of this page in every locale. */
+  paths: Record<Locale, string>
+}
+
+const { locale, paths } = Astro.props
+// One literal class per category: Tailwind only generates classes it can read in the source.
+const categories = {
+  image: { label: m.category_image({}, { locale }), dot: 'bg-mango' },
+  media: { label: m.category_media({}, { locale }), dot: 'bg-ube' },
+  pdf: { label: m.category_pdf({}, { locale }), dot: 'bg-strawberry' },
+}
+const groups = [
+  ...footerToolGroups(tools, locale).map(({ category, links }) => ({
+    id: `footer-group-${category}`,
+    ...categories[category],
+    links: links.map((link) => ({ ...link, current: link.href === paths[locale] })),
+  })),
+  {
+    id: 'footer-group-mochifile',
+    label: m.footer_group_mochifile({}, { locale }),
+    dot: 'bg-matcha',
+    links: [
+      {
+        href: 'https://github.com/mochifile/mochifile',
+        title: m.footer_source_code({}, { locale }),
+        current: false,
+      },
+    ],
+  },
+]
+const otherLocales = locales.filter((target) => target !== locale)
+const linkClass =
+  'inline-flex min-h-target-min max-w-full items-center rounded-sm py-1 font-medium wrap-break-word text-ink-on-inverse-muted hover:text-ink-on-inverse hover:underline focus-ring'
+---
+
+<footer class="rounded-2xl-squish-a rounded-b-none bg-surface-inverse type-body-sm text-ink-on-inverse-muted">
+  <div class="mx-auto flex max-w-content-max flex-col gap-10 px-4 pt-10 pb-6 sm:pt-14">
+    <div class="grid gap-8 lg:grid-cols-3">
+      <div class="flex flex-col gap-2">
+        {/* The margin keeps the logo's clear space above the text. */}
+        <div class="mb-6">
+          <Logo href={localePath(locale)} ground="on-dark" />
+        </div>
+        <p class="max-w-reading-max">{m.footer_privacy_note({}, { locale })}</p>
+      </div>
+      <nav
+        aria-label={m.nav_footer({}, { locale })}
+        class="grid gap-x-4 gap-y-8 sm:grid-cols-2 lg:col-span-2 xl:grid-cols-4"
+      >
+        {
+          groups.map((group) => (
+            <div class="flex min-w-0 flex-col gap-1">
+              <p id={group.id} class="flex items-center gap-2 type-label-lg text-ink-on-inverse">
+                <span aria-hidden="true" class:list={['size-3 shrink-0 rounded-pill', group.dot]} />
+                {group.label}
+              </p>
+              <ul aria-labelledby={group.id} class="flex flex-col">
+                {group.links.map((link) => (
+                  <li>
+                    <a href={link.href} aria-current={link.current ? 'page' : undefined} class={linkClass}>
+                      {link.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </nav>
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 border-t border-surface-inverse-raised pt-5">
+      <div class="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1 font-semibold">
+        <p>{m.footer_open_source({}, { locale })}</p>
+        <a class={linkClass} href="/third-party-licenses.txt">{m.footer_licenses({}, { locale })}</a>
+      </div>
+      {/*
+        The other language, as in the header (ADR 0007): a plain link to this page's alternate,
+        named in its own language. A single link needs no landmark of its own.
+      */}
+      {
+        otherLocales.map((target) => (
+          <a
+            href={paths[target]}
+            hreflang={localeTags[target]}
+            lang={localeTags[target]}
+            data-language-switch
+            class="press inline-flex min-h-target-min items-center gap-2 rounded-pill border-chip border-ink-on-inverse-muted px-4 font-semibold text-ink-on-inverse focus-ring"
+          >
+            {/* Line icon on the 24px grid, 2px stroke (README › Iconography). */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              class="size-button-icon"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3 12h18" />
+              <path d="M12 3c3 3 3 15 0 18-3-3-3-15 0-18" />
+            </svg>
+            {localeNames[target]}
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</footer>
