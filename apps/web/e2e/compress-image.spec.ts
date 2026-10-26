@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { gzipSync } from 'node:zlib'
 import AxeBuilder from '@axe-core/playwright'
 import type { Download, Page } from '@playwright/test'
-import { expect, test } from './fixtures.ts'
+import { expect, projectContextOptions, test } from './fixtures.ts'
 import {
   bytesContain,
   isJpeg,
@@ -189,6 +189,56 @@ test('cancel stops the photos that have not finished', async ({ page }) => {
   await page.getByRole('button', { name: 'Cancel' }).click()
   await expect(page.locator('li[data-status="cancelled"]').first()).toBeVisible()
   await expect(page.locator('li[data-status="queued"], li[data-status="working"]')).toHaveCount(0)
+
+  // Focus moves to "Continue", and the batch says what is left.
+  const carryOn = page.getByRole('button', { name: 'Continue compressing' })
+  await expect(carryOn).toBeFocused()
+  await expect(page.getByText(/^Cancelled\. Ready: \d of 4 photos; the others/)).toBeVisible()
+
+  // A file can be taken out of the list; focus moves to the next one's button.
+  await page
+    .locator('li[data-status="cancelled"]')
+    .first()
+    .getByRole('button', { name: /^Remove p\d\.jpg$/ })
+    .click()
+  await expect(rows(page)).toHaveCount(3)
+  await expect(page.locator(':focus')).toHaveAttribute('data-remove', /\d+/)
+
+  // The others continue, with the settings they were added with.
+  await carryOn.click()
+  await expect(page.locator('li[data-status="done"]')).toHaveCount(3, { timeout: 90_000 })
+  await expect(page.getByText(/^All photos are ready: .+ → .+ in total\.$/)).toBeVisible()
+})
+
+test('says when the compressor did not load, and tries again when asked', async ({
+  testBrowser,
+}) => {
+  test.setTimeout(120_000)
+  // Its own context: the blocked downloads log console errors, which the default page fixture
+  // counts as failures. Routing on the context also covers the worker's requests.
+  const context = await testBrowser.newContext(projectContextOptions())
+  try {
+    await context.route('**/*.wasm', (route) => route.abort())
+    const page = await context.newPage()
+    await page.goto('/compress-image/')
+    await page.locator('[data-engine]').hover()
+    await page.locator('[data-engine="failed"]').waitFor({ timeout: 30_000 })
+    const message = page.getByRole('alert').filter({ hasText: "The compressor didn't load" })
+    await expect(message).toBeVisible()
+
+    // A photo added meanwhile waits instead of failing.
+    await add(page, await photo('flowers'))
+    await expect(rows(page).first()).toHaveAttribute('data-status', 'queued')
+    await page.locator('[data-engine="failed"]').waitFor({ timeout: 30_000 })
+
+    await context.unroute('**/*.wasm')
+    await page.getByRole('button', { name: 'Try again' }).click()
+    await expect(rows(page).first()).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
+    await expect(message).toBeHidden()
+    await expect(fileInput(page)).toBeFocused()
+  } finally {
+    await context.close()
+  }
 })
 
 test('a custom size can be typed and is validated', async ({ page }) => {
