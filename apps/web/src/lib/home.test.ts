@@ -1,4 +1,7 @@
+import { locales } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
 import {
+  DESCRIPTION_MAX,
   defineToolManifest,
   type ToolCategory,
   type ToolLocaleMeta,
@@ -151,5 +154,17 @@ describe('allToolsInBrowser', () => {
     expect(allToolsInBrowser([])).toBe(false)
     const server = { ...template, manifest: { ...template.manifest, runtime: 'server' as const } }
     expect(allToolsInBrowser([template, server])).toBe(false)
+  })
+})
+
+describe('home page metadata', () => {
+  // The same limit as every tool page's description (tool-kit manifest contract), so search
+  // results show it whole.
+  it('keeps the meta description within the description limit in every locale', () => {
+    for (const locale of locales) {
+      const description = m.home_description({}, { locale })
+      expect(description.length, locale).toBeGreaterThan(0)
+      expect(description.length, locale).toBeLessThanOrEqual(DESCRIPTION_MAX)
+    }
   })
 })
