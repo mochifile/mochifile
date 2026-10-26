@@ -5,16 +5,25 @@ import { expect, projectContextOptions, test } from './fixtures.ts'
 const SITE = 'https://mochifile.com'
 
 const pages = [
-  { path: '/', lang: 'en', heading: 'Your files, the right size.', canonical: `${SITE}/` },
+  {
+    path: '/',
+    lang: 'en',
+    heading: 'Your files, the right size.',
+    canonical: `${SITE}/`,
+    description:
+      'Compress JPG, PNG and WebP images to the file size you need. Free and private, right in your browser. Your photos never leave your device.',
+  },
   {
     path: '/pt/',
     lang: 'pt',
     heading: 'Seus arquivos do tamanho certo.',
     canonical: `${SITE}/pt/`,
+    description:
+      'Comprima imagens JPG, PNG e WebP para o tamanho que você precisa. Grátis, privado e direto no navegador. Suas fotos não saem do seu aparelho.',
   },
 ]
 
-for (const { path, lang, heading, canonical } of pages) {
+for (const { path, lang, heading, canonical, description } of pages) {
   test.describe(`home ${path}`, () => {
     test('renders in its language with canonical and hreflang alternates', async ({ page }) => {
       const response = await page.goto(path)
@@ -23,6 +32,12 @@ for (const { path, lang, heading, canonical } of pages) {
       // The accessible name leaves out the decorative measure line inside the heading.
       await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(heading)
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonical)
+      // Describes what the site does today: only image compression is published.
+      await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', description)
+      await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+        'content',
+        description,
+      )
 
       const alternates = await page
         .locator('link[rel="alternate"][hreflang]')
