@@ -65,8 +65,10 @@ Throughout, replace `compress-image` with your tool id (lowercase kebab-case).
    `@mochifile/ui` and semantic Tailwind tokens; no inline styles.
 
    **Write the page copy** in `content/<locale>/index.md` and `content/<locale>/<variant>.md`
-   for every locale: start with `##` headings; cover how it works, privacy, tips and a short
-   FAQ. Plain, friendly sentences; no keyword stuffing.
+   for every locale: start with `##` headings; cover how it works, privacy and tips. Put the
+   steps and a short FAQ in the frontmatter (see the template's files); the page shows them
+   itself. Plain, friendly sentences; no keyword stuffing; answers say only what the tool
+   verifiably does.
 
 8. **Leave `src/worker.ts` as is** (only the import names change if you renamed them).
 

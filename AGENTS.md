@@ -91,7 +91,8 @@ published to npm (for example for the private cloud repo), it will first need a 
    test; do not add other site-wide scripts.
 6. **i18n:** every UI string (labels, buttons, errors, notices) goes through Paraglide messages
    in every locale. Long-form page copy (intro, how it works, tips, FAQ) is Markdown in
-   `packages/tools/<dir>/content/<locale>/<key>.md`, also in every locale (ADR 0018). English
+   `packages/tools/<dir>/content/<locale>/<key>.md`, also in every locale (ADR 0018); its
+   steps and FAQ are frontmatter. English
    lives at `/`, other locales at `/<locale>/`. Never redirect by browser language (a dismissible suggestion banner is fine, ADR 0019). Every page
    emits canonical + `hreflang` alternates (including `x-default`). Build paths with
    `localePath()`; they always end with `/`.
