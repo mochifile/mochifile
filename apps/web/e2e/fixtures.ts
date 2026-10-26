@@ -12,22 +12,14 @@ export function projectContextOptions(): BrowserContextOptions {
 
 export const test = base.extend<{ pageErrors: string[]; testBrowser: Browser }>({
   /**
-   * The browser a test should use. In Firefox, a freshly launched one per test, closed
-   * afterwards: in CI, a Firefox instance that had already hosted many tests made about 7–17%
-   * of later navigations hang (on any page, waiting for load or domcontentloaded), while
-   * freshly launched ones never did (issue #10). Other engines share one browser per worker.
+   * The browser a test should use: the worker's shared one. Tests that open many contexts take
+   * it from here rather than from `browser`, which keeps one place to change if a test ever
+   * needs its own browser again. A fresh Firefox per test was once used against the navigation
+   * hangs of issue #10, but it did not stop them (they come from the COOP header, see
+   * playwright.config.ts) and cost a browser launch per test.
    */
-  testBrowser: async ({ browser, browserName, playwright }, use) => {
-    if (browserName !== 'firefox') {
-      await use(browser)
-      return
-    }
-    const fresh = await playwright.firefox.launch()
-    try {
-      await use(fresh)
-    } finally {
-      await fresh.close()
-    }
+  testBrowser: async ({ browser }, use) => {
+    await use(browser)
   },
 
   /** Every test's context (and so `page`) comes from `testBrowser`, with the project's device. */

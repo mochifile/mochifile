@@ -166,7 +166,9 @@ test('sends security headers', async ({ request }) => {
   expect(csp).toContain("frame-ancestors 'none'")
   expect(headers['x-content-type-options']).toBe('nosniff')
   expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin')
-  // Cross-origin isolation must not be enabled globally (ADR 0011).
+  // Cross-origin isolation must not be enabled globally (ADR 0011). The opener policy stays
+  // because it is the one header Firefox does not apply in these tests (see playwright.config.ts).
+  expect(headers['cross-origin-opener-policy']).toBe('same-origin-allow-popups')
   expect(headers['cross-origin-embedder-policy']).toBeUndefined()
 })
 
