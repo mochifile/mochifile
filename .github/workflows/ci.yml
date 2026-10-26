@@ -60,9 +60,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Twice the install hung in apt for the whole 20 minutes, on a download from the runner's
-      # Ubuntu mirror (once with no test run at all); in 16 of 90 recent jobs it took 8-20 min
-      # instead of ~25 s. apt gives up on a stalled connection and retries it, and the step has
+      # Once the install hung in apt for the whole 20 minutes, on a download from the runner's
+      # Ubuntu mirror, with no test run at all; in 16 of 90 recent jobs it took 8-20 min instead
+      # of ~25 s. apt gives up on a stalled connection and retries it, and the step has
       # its own limit so a stall costs 8 minutes, not the job.
       - name: Make apt retry stalled downloads
         run: |
