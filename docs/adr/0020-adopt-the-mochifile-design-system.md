@@ -69,7 +69,7 @@ from it.
   - under 600 px the size chips sit in a four-column grid ("Other size" takes two cells), so
     they always take two rows whatever the system's text rendering. From 600 px they wrap
     freely, as the SizeChip README says.
-- **Logo (final v1, 2026-10-04).** The brand book's logo is drawn as vectors and never set in
+- **Logo (final v1, 2026-10-04; the header and footer wordmark was replaced by ADR 0024).** The brand book's logo is drawn as vectors and never set in
   a font. Header and footer use the horizontal lockup inline (`Logo.astro`, drawing from
   `apps/web/src/assets/logo/`): in the header the letters follow the text
   colour (`ink`, which matches the light file in the light theme and the on-dark file in the
