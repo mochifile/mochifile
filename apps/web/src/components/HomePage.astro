@@ -167,7 +167,14 @@ const chipClass =
             </span>
           </span>
         </h1>
-        <p class="max-w-reading-max type-body sm:type-body-lg">{m.home_lead({}, { locale })}</p>
+        {/*
+          Under 600 px a short lead, as in the phone design: two lines with room to spare in any
+          font. The long one ended its last line with one short word at 360 px, so a fallback
+          face that drew it a hair wider or narrower than Figtree changed the line count, and
+          the card below moved by a line when the font arrived (a layout shift seen on Linux).
+        */}
+        <p class="type-body sm:hidden">{m.home_lead_phone({}, { locale })}</p>
+        <p class="max-w-reading-max type-body-lg max-sm:hidden">{m.home_lead({}, { locale })}</p>
       </div>
       {/* The wordmark's drops (decorative), only where there is room beside the text. */}
       <svg aria-hidden="true" data-decoration viewBox="0 0 46 52" class="absolute top-1/4 right-1/6 hidden w-10 fill-strawberry stroke-ink-on-block lg:block">
