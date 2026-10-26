@@ -69,9 +69,11 @@ async function openHome(
     ...projectContextOptions(),
     viewport: { width: options.width, height: options.height ?? 900 },
     locale: c.browserLocale,
-    colorScheme: options.colorScheme ?? 'light',
   })
   const page = await context.newPage()
+  // On the page, not the context: in CI, Firefox ignored the context's `colorScheme` and drew
+  // the light theme (site-footer.spec.ts sets it the same way).
+  await page.emulateMedia({ colorScheme: options.colorScheme ?? 'light' })
   await page.goto(c.path)
   await page.evaluate(() => document.fonts.ready)
   return { context, page }
