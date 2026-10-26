@@ -67,7 +67,10 @@ jobs:
       # fallback as on our visitors' phones; the layout-shift test depends on it (ADR 0021).
       - name: Install Roboto
         run: sudo apt-get install --yes --no-install-recommends fonts-roboto
+      # Shorter than the job's timeout, so a stuck run still reaches the upload below with
+      # whatever report and traces exist, instead of the whole job being cancelled.
       - name: Run smoke tests
+        timeout-minutes: 15
         run: pnpm test:e2e -- --project=${{ matrix.browser }}
       # Also uploaded when the job passes, so traces of flaky (retried) tests are kept.
       # test-results/ holds traces only for failed attempts, so it is empty on a clean run.
