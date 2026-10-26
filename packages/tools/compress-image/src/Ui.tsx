@@ -10,11 +10,12 @@ import {
   type QueueItem,
   ResultRow,
   errorMessage as sharedErrorMessage,
+  summarizeQueue,
   useFileQueue,
   usePrepareOnIntent,
 } from '@mochifile/tool-ui'
 import { Button, Dropzone, Notice, Segmented, SizeChips, Tag } from '@mochifile/ui'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { type CompressImageOptions, manifest } from './manifest.ts'
 import { formatSize, MAX_TARGET, MIN_TARGET, PRESETS, parseTarget, type SizeUnit } from './sizes.ts'
 
@@ -69,10 +70,13 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
     },
     preloadOnIdle: () => shouldPreloadOnIdle(navigator as NavigatorLike),
   })
-  const { items, add, requeue, cancel, clear, done, busy } = useFileQueue<
+  const { items, add, requeue, cancel, remove, clear, done, busy } = useFileQueue<
     CompressImageOptions,
     CompressMeta
   >({
+    // Files wait until the compressor has loaded, so none fails only because it is missing,
+    // and nothing is fetched after a file is chosen.
+    paused: engine !== 'ready',
     maxFiles: manifest.limits.maxFiles,
     validate: (file) => validateFiles([file], manifest),
     run: async (item, context) => {
@@ -96,6 +100,75 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
     clear()
     setTooMany(false)
   }
+
+  // Focus goes where the person can carry on, never to <body>: to "Continue" after a cancel
+  // (launch specification › accessibility), to the next file's remove button after a removal,
+  // and to "Choose photos" (the dropzone's file input) once the compressor loads after
+  // "Try again".
+  const [focusTarget, setFocusTarget] = useState<string | null>(null)
+  useEffect(() => {
+    if (focusTarget === null) return
+    const target = rootRef.current?.querySelector<HTMLElement>(focusTarget)
+    if (!target) return
+    target.focus()
+    setFocusTarget(null)
+  })
+
+  const cancelAll = () => {
+    cancel()
+    setFocusTarget('[data-continue]')
+  }
+
+  const removeFile = (id: number) => {
+    const index = items.findIndex((item) => item.id === id)
+    const neighbour = items[index + 1] ?? items[index - 1]
+    remove(id)
+    setFocusTarget(neighbour ? `[data-remove="${neighbour.id}"]` : 'input[type="file"]')
+  }
+
+  // Set by "Try again": the message stays while the compressor loads, then focus moves on.
+  const [retried, setRetried] = useState(false)
+  const retryEngine = () => {
+    setRetried(true)
+    prepare()
+  }
+  const engineFailed = engine === 'failed' || (retried && engine === 'loading')
+  useEffect(() => {
+    if (retried && engine === 'ready') {
+      setRetried(false)
+      setFocusTarget('input[type="file"]')
+    }
+  }, [retried, engine])
+
+  const summary = summarizeQueue(items)
+  const cancelledIds = items.filter((item) => item.status === 'cancelled').map((item) => item.id)
+  // One file's row already says it all; a batch also gets counts, then one summary.
+  const summaryText =
+    summary.total < 2
+      ? ''
+      : summary.pending > 0
+        ? m.compress_image_progress_count(
+            { done: String(summary.done), total: String(summary.total) },
+            { locale },
+          )
+        : summary.cancelled > 0
+          ? m.compress_image_summary_cancelled(
+              { done: String(summary.done), total: String(summary.total) },
+              { locale },
+            )
+          : summary.failed > 0
+            ? m.compress_image_summary_mixed(
+                { done: String(summary.done), total: String(summary.total) },
+                { locale },
+              )
+            : m.compress_image_summary_done(
+                {
+                  before: formatSize(summary.bytesBefore, locale),
+                  after: formatSize(summary.bytesAfter, locale),
+                },
+                { locale },
+              )
+
   const stale =
     targetBytes !== undefined &&
     items.some(
@@ -280,6 +353,25 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
               </Notice>
             </div>
           )}
+          {/*
+            All that is known is that the compressor did not load, so that is all it says
+            (design-system proposal v1.1 › discrepancies): no guess about the connection or the
+            browser. Files added meanwhile wait, and adding files also tries again.
+          */}
+          {engineFailed && (
+            <div className="flex flex-col gap-3">
+              <div role="alert">
+                <Notice tone="danger">{m.compress_image_engine_failed({}, { locale })}</Notice>
+              </div>
+              <Button
+                variant="secondary"
+                className="w-full sm:w-auto sm:self-start"
+                onClick={retryEngine}
+              >
+                {m.compress_image_engine_retry({}, { locale })}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -288,10 +380,23 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
           aria-label={m.compress_image_list_label({}, { locale })}
           className="flex flex-col gap-4"
         >
+          {/*
+            Announced politely. Always in the page, since a live region added together with its
+            text may not be read; empty, it is visually hidden rather than removed.
+          */}
+          <p role="status" className="type-body-strong empty:sr-only">
+            {summaryText}
+          </p>
           <div className="flex flex-wrap gap-3">
             {busy && (
-              <Button variant="secondary" onClick={cancel}>
+              <Button variant="secondary" onClick={cancelAll}>
                 {m.compress_image_cancel({}, { locale })}
+              </Button>
+            )}
+            {!busy && cancelledIds.length > 0 && (
+              // Continues with the settings the files were added with.
+              <Button data-continue onClick={() => requeue(new Set(cancelledIds))}>
+                {m.compress_image_continue({}, { locale })}
               </Button>
             )}
             {!busy && stale && (
@@ -336,7 +441,10 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                   download: m.compress_image_download({}, { locale }),
                   downloadNamed: (name) => m.compress_image_download_named({ name }, { locale }),
                   progressLabel: (name) => m.compress_image_progress_label({ name }, { locale }),
+                  remove: m.compress_image_remove({}, { locale }),
+                  removeNamed: (name) => m.compress_image_remove_named({ name }, { locale }),
                 }}
+                onRemove={() => removeFile(item.id)}
                 formatBytes={(bytes) => formatSize(bytes, locale)}
                 sizeSummary={(before, after) =>
                   m.compress_image_sizes(
