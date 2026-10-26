@@ -1,5 +1,6 @@
 import type { BrowserContextOptions, Page } from '@playwright/test'
 import { expect, projectContextOptions, test } from './fixtures.ts'
+import { photo, waitForEngine } from './images.ts'
 import { readLayoutShifts, recordLayoutShifts } from './layout-shifts.ts'
 import { PHONES } from './tool-pages.ts'
 
@@ -247,15 +248,17 @@ for (const colorScheme of ['light', 'dark'] as const) {
         if (viewport.width < 1024) {
           await trigger(page).click()
           await expect(menu(page)).toBeVisible()
-          expect((await new AxeBuilder({ page }).include('header').analyze()).violations).toEqual(
-            [],
-          )
+          // The whole page, open: the rest of the document is out of view, not merely covered.
+          expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
           // The menu is drawn on the page ground of the active theme.
           const [ground, body] = await page.evaluate(() => [
             getComputedStyle(document.querySelector('[data-site-menu]') as Element).backgroundColor,
             getComputedStyle(document.body).backgroundColor,
           ])
           expect(ground).toBe(body)
+          await page.keyboard.press('Escape')
+          await expect(page.locator('main')).toBeVisible()
+          expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
         }
         expect(errors).toEqual([])
       } finally {
@@ -264,6 +267,195 @@ for (const colorScheme of ['light', 'dark'] as const) {
     }
   })
 }
+
+test('while the menu is open, assistive technology gets the menu and nothing hidden', async ({
+  page,
+  browserName,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/compress-image/')
+  const heading = page.getByRole('heading', { level: 1 })
+  await expect(heading).toBeVisible()
+
+  await trigger(page).click()
+  const tree = await page.locator('body').ariaSnapshot()
+  expect(tree).toContain('navigation "Menu"')
+  expect(tree).toContain(`list "Tools"`)
+  expect(tree).toContain(`link "${TOOL}`)
+  expect(tree).toContain('button "Menu"')
+  // The page beneath is out of the accessibility tree, like the content behind a dialog.
+  expect(tree).not.toContain('heading')
+  expect(tree).not.toContain('contentinfo')
+  await expect(heading).toBeHidden()
+  if (browserName === 'chromium') {
+    // The browser's own tree, as screen readers get it: the button reports the open menu.
+    const cdp = await page.context().newCDPSession(page)
+    const { nodes } = (await cdp.send('Accessibility.getFullAXTree')) as {
+      nodes: {
+        ignored: boolean
+        role?: { value: string }
+        name?: { value: string }
+        properties?: { name: string; value: { value: unknown } }[]
+      }[]
+    }
+    const exposed = nodes.filter((node) => !node.ignored)
+    const button = exposed.find((n) => n.role?.value === 'button' && n.name?.value === 'Menu')
+    expect(button?.properties?.find((p) => p.name === 'expanded')?.value.value).toBe(true)
+    expect(exposed.some((n) => n.role?.value === 'main')).toBe(false)
+    expect(exposed.some((n) => n.role?.value === 'navigation' && n.name?.value === 'Menu')).toBe(
+      true,
+    )
+  }
+
+  // Closing gives the whole document back.
+  await page.keyboard.press('Escape')
+  await expect(heading).toBeVisible()
+  const after = await page.locator('body').ariaSnapshot()
+  expect(after).toContain('heading')
+  expect(after).toContain('contentinfo')
+  expect(after).not.toContain('navigation "Menu"')
+})
+
+test('crossing 1024 px never leaves focus on a hidden element', async ({ page, browserName }) => {
+  const TAB = tabKey(browserName)
+  const cases: { name: string; from: number; to: number; focus: () => Promise<void> }[] = [
+    {
+      name: 'a menu item',
+      from: 1023,
+      to: 1024,
+      focus: async () => {
+        await trigger(page).focus()
+        await page.keyboard.press('Enter')
+        await page.keyboard.press(TAB)
+        expect(await focused(page)).toMatchObject({ where: 'menu' })
+      },
+    },
+    { name: 'the menu button', from: 1023, to: 1024, focus: () => trigger(page).focus() },
+    {
+      name: 'a header tool link',
+      from: 1024,
+      to: 1023,
+      focus: () =>
+        page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: TOOL }).focus(),
+    },
+  ]
+  for (const { name, from, to, focus } of cases) {
+    await page.setViewportSize({ width: from, height: 800 })
+    await page.goto('/')
+    await focus()
+    await page.setViewportSize({ width: to, height: 800 })
+    // The browser drops focus from an element that stops being rendered (focus fixup).
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.checkVisibility() ?? true), {
+        message: name,
+      })
+      .toBe(true)
+    // And the next Tab lands on something visible.
+    await page.keyboard.press(TAB)
+    expect(await focused(page), name).toMatchObject({ shown: true })
+  }
+})
+
+/**
+ * Pointer dismissal. The open menu fills the screen below the header, so a press on its blank
+ * part stays inside it: closing there would let a touch's follow-up click land on the page
+ * that reappears beneath (seen with a content-high menu: the file picker opened). The menu
+ * closes from the button or from a press on the header outside it.
+ */
+for (const input of ['mouse', 'touch'] as const) {
+  test(`${input}: presses never reach the page beneath the menu; the button and the header close it`, async ({
+    testBrowser,
+  }) => {
+    const { context, page, errors } = await phoneContext(testBrowser, {
+      viewport: { width: 390, height: 844 },
+      locale: 'pt-BR',
+      hasTouch: input === 'touch',
+    })
+    const press = (x: number, y: number) =>
+      input === 'touch' ? page.touchscreen.tap(x, y) : page.mouse.click(x, y)
+    const centre = async (locator: ReturnType<Page['locator']>) => {
+      const box = await locator.boundingBox()
+      if (!box) throw new Error('no box')
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+    }
+    try {
+      await page.goto('/compress-image/')
+      await expect(suggestion(page)).toBeVisible()
+      let chooser = false
+      page.on('filechooser', () => {
+        chooser = true
+      })
+      // Where "Choose photos" is: blank while the menu is open.
+      const action = await centre(page.locator('[data-primary-action]'))
+
+      await trigger(page).click()
+      await expect(menu(page)).toBeVisible()
+      await press(action.x, action.y)
+      await page.waitForTimeout(300)
+      expect(await isOpen(page)).toBe(true)
+      expect(chooser).toBe(false)
+
+      // The button closes it.
+      const button = await centre(trigger(page))
+      await press(button.x, button.y)
+      await expect(menu(page)).toBeHidden()
+      await expect(page.locator('main')).toBeVisible()
+      expect(chooser).toBe(false)
+
+      // So does a press on the header outside the menu (between the logo and the language).
+      await trigger(page).click()
+      await expect(menu(page)).toBeVisible()
+      const logo = await page
+        .getByRole('banner')
+        .getByRole('link', { name: 'Mochifile' })
+        .boundingBox()
+      const language = await page
+        .getByRole('navigation', { name: 'Language' })
+        .getByRole('link', { name: 'Português' })
+        .boundingBox()
+      if (!logo || !language) throw new Error('missing boxes')
+      await press((logo.x + logo.width + language.x) / 2, button.y)
+      await expect(menu(page)).toBeHidden()
+      await page.waitForTimeout(300)
+      expect(chooser).toBe(false)
+      expect(new URL(page.url()).pathname).toBe('/compress-image/')
+
+      // The suggestion is back, still below the header; focus is on nothing hidden.
+      await expect(suggestion(page)).toBeVisible()
+      const header = await page.locator('header > div').first().boundingBox()
+      const box = await suggestion(page).boundingBox()
+      if (!header || !box) throw new Error('missing boxes')
+      expect(box.y).toBeGreaterThanOrEqual(header.y + header.height)
+      expect(await focused(page)).toMatchObject({ shown: true })
+      expect(errors).toEqual([])
+    } finally {
+      await context.close()
+    }
+  })
+}
+
+test('photos keep compressing while the menu is open, and download afterwards', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/compress-image-to-50kb/')
+  await waitForEngine(page)
+  await page.locator('input[type="file"]').setInputFiles([await photo('flowers')])
+  await trigger(page).click()
+  await expect(menu(page)).toBeVisible()
+  // Finishes behind the open menu.
+  const row = page.locator('li[data-status]').first()
+  await expect(row).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
+  expect(await isOpen(page)).toBe(true)
+
+  await page.keyboard.press('Escape')
+  const download = page.waitForEvent('download')
+  await row.getByRole('link', { name: /^Download/ }).click()
+  const file = await download
+  expect(file.suggestedFilename()).toBe('flowers-50kb.jpg')
+  const { size } = await import('node:fs/promises').then(async (fs) => fs.stat(await file.path()))
+  expect(size).toBeLessThanOrEqual(50_000)
+})
 
 test('the menu works with JavaScript disabled', async ({ testBrowser }) => {
   const { context, page } = await phoneContext(testBrowser, {
