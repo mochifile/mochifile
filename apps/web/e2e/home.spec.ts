@@ -108,8 +108,8 @@ for (const path of ['/', '/pt/comprimir-imagem-para-50kb/']) {
   })
 }
 
-/** The "o" is 72 of the horizontal logo's 126 units: its clear space is 0.57 × the height. */
-const CLEAR_SPACE = 72 / 126
+/** The wordmark's "o" is 0.715 of its height (122 of 171 px in the master): that is its clear space. */
+const CLEAR_SPACE = 0.715
 
 for (const viewport of [
   { width: 360, height: 800 },

@@ -1,17 +1,27 @@
 ---
-import LogoOnLight from '../assets/logo/mochifile-logo-horizontal.svg'
-import LogoOnDark from '../assets/logo/mochifile-logo-horizontal-on-dark.svg'
+import dark368 from '../assets/logo/mochifile-wordmark-dark-368.png'
+import dark552 from '../assets/logo/mochifile-wordmark-dark-552.png'
+import light368 from '../assets/logo/mochifile-wordmark-light-368.png'
+import light552 from '../assets/logo/mochifile-wordmark-light-552.png'
 
 /**
- * The Mochifile logo (final v1, docs/design-system README › Logo): the horizontal lockup from
- * docs/design-system/assets/Logos, drawn as vectors, never set in a font. Inline SVG, so it
- * costs no request. On light grounds the letters follow the text colour (ink in the light and
- * dark themes, matching the light and on-dark files); `on-dark` is the on-dark file as drawn,
- * for the ink footer. The symbol and the i-dots keep their fixed colours in every theme.
+ * The Mochifile wordmark (ADR 0024): the approved lowercase lettering, a raster used as it is,
+ * never redrawn or set in a font. The masters are in docs/design-system/assets/Logos; these are
+ * their 368 and 552 px copies (a 184px logo at 2x and 3x), so a visitor downloads 12 KB, not
+ * the 59 KB master. The names say the colour scheme the lettering is shown in: `light` is ink
+ * for light grounds, `dark` is cream for dark ones. The i-dots keep their colours in both.
  *
- * The link's accessible name is "Mochifile"; the drawing is hidden from assistive technology.
- * Width is `w-logo-phone` (120px) under 600px and `w-logo` (200px) from 600px, above the 96px
- * minimum; callers keep the clear space (the "o"'s height, 0.57 × the logo's height) around it.
+ * On page grounds (`light`, the default) both files are in the page and global.css shows the
+ * one that matches the theme with the selectors the tokens use (system preference, or a forced
+ * `data-theme`), so no script runs. Both are lazy, so the browser never fetches the hidden one.
+ * The footer is an ink block in every theme (`on-dark`), so it only has the cream file.
+ *
+ * The link's accessible name is "Mochifile"; the images are decorative and hidden from
+ * assistive technology, so the name is announced once. Width is `w-logo-phone` (120px) under
+ * 600px and `w-logo` (184px) from 600px, above the 96px minimum. The "o" is 0.715 of the
+ * wordmark's height: callers keep that much clear space around it. The images carry their
+ * size and global.css pins each one's proportions, so the box is reserved before they load and
+ * never changes when a file of another size arrives.
  */
 
 interface Props {
@@ -21,14 +31,33 @@ interface Props {
 }
 
 const { href, ground = 'light' } = Astro.props
-const Drawing = ground === 'on-dark' ? LogoOnDark : LogoOnLight
+const light = { scheme: 'light', small: light368, large: light552, width: 960, height: 171 }
+const dark = { scheme: 'dark', small: dark368, large: dark552, width: 960, height: 173 }
+const wordmarks = ground === 'on-dark' ? [dark] : [light, dark]
 ---
 
 <a
   href={href}
   aria-label="Mochifile"
   data-logo
-  class="inline-flex w-logo-phone shrink-0 rounded-sm text-ink focus-ring sm:w-logo"
+  data-logo-themed={ground === 'light' ? '' : undefined}
+  class="inline-flex w-logo-phone shrink-0 rounded-sm focus-ring sm:w-logo"
 >
-  <Drawing aria-hidden="true" focusable="false" class="block h-auto w-full" />
+  {
+    wordmarks.map(({ scheme, small, large, width, height }) => (
+      <img
+        src={small.src}
+        srcset={`${small.src} ${small.width}w, ${large.src} ${large.width}w`}
+        sizes="(min-width: 600px) 184px, 120px"
+        alt=""
+        aria-hidden="true"
+        data-wordmark={scheme}
+        width={width}
+        height={height}
+        loading="lazy"
+        decoding="async"
+        class="block h-auto w-full"
+      />
+    ))
+  }
 </a>
