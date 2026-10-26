@@ -10,11 +10,13 @@ type Options = { quality: number }
 
 /** Connects a client to a tool through a real MessageChannel, like a Web Worker would. */
 function connect(process: ProcessFn<Options>, hooks: { prepare?: PrepareFn } = {}) {
-  const channel = new MessageChannel()
-  exposeTool(defineTool(validManifest, process, hooks), channel.port1)
-  const client = createToolClient(validManifest, () =>
-    Object.assign(channel.port2, { terminate: () => channel.port1.close() }),
-  )
+  const tool = defineTool(validManifest, process, hooks)
+  // Each worker gets its own channel, as each `new Worker()` would.
+  const client = createToolClient(validManifest, () => {
+    const channel = new MessageChannel()
+    exposeTool(tool, channel.port1)
+    return Object.assign(channel.port2, { terminate: () => channel.port1.close() })
+  })
   cleanups.push(() => client.dispose())
   return client
 }
@@ -157,5 +159,69 @@ describe('prepare', () => {
     finish()
     await Promise.all([prepared, run])
     expect(order).toEqual(['prepared', 'process'])
+  })
+})
+
+describe('a worker that fails', () => {
+  /** A worker that never answers, like one whose script could not be fetched. */
+  function silentWorkers() {
+    const workers: MessagePort[] = []
+    const client = createToolClient(validManifest, () => {
+      const channel = new MessageChannel()
+      workers.push(channel.port2)
+      return Object.assign(channel.port2, { terminate: () => channel.port2.close() })
+    })
+    cleanups.push(() => client.dispose())
+    return {
+      client,
+      workers,
+      fail: (index: number) => workers[index]?.dispatchEvent(new Event('error')),
+    }
+  }
+
+  it('rejects the preparation and the runs waiting on it, then starts a fresh worker', async () => {
+    const { client, workers, fail } = silentWorkers()
+    const prepared = client.prepare()
+    const run = client.run([png()])
+    fail(0)
+    await expect(prepared).rejects.toMatchObject({ code: 'processing-failed' })
+    await expect(run).rejects.toMatchObject({ code: 'processing-failed' })
+
+    // Trying again creates a new worker instead of reusing the failed one.
+    const retried = client.prepare()
+    expect(workers).toHaveLength(2)
+    fail(1)
+    await expect(retried).rejects.toMatchObject({ code: 'processing-failed' })
+  })
+
+  it('starts a fresh worker after a failed preparation and rejects runs left on the old one', async () => {
+    let attempts = 0
+    let workers = 0
+    const tool = defineTool(validManifest, () => new Promise<never>(() => {}), {
+      prepare: async () => {
+        attempts += 1
+        if (attempts === 1) throw new ToolError('processing-failed', 'codec missing')
+      },
+    })
+    const client = createToolClient(validManifest, () => {
+      workers += 1
+      const channel = new MessageChannel()
+      exposeTool(tool, channel.port1)
+      return Object.assign(channel.port2, { terminate: () => channel.port1.close() })
+    })
+    cleanups.push(() => client.dispose())
+    const prepared = client.prepare()
+    const run = client.run([png()])
+    await expect(prepared).rejects.toMatchObject({ code: 'processing-failed' })
+    await expect(run).rejects.toMatchObject({ code: 'processing-failed' })
+    await expect(client.prepare()).resolves.toBeUndefined()
+    expect(workers).toBe(2)
+  })
+
+  it('rejects calls still running when disposed', async () => {
+    const client = connect(() => new Promise<never>(() => {}))
+    const run = client.run([png()])
+    client.dispose()
+    await expect(run).rejects.toMatchObject({ code: 'aborted' })
   })
 })
