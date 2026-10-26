@@ -24,6 +24,9 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: CI,
+  // A healthy run takes 4-5 min in every engine. Stopping a stuck one here lets Playwright write
+  // its report and traces, which a kill by the CI job's timeout (20 min) never allows.
+  ...(CI ? { globalTimeout: 12 * 60_000 } : {}),
   retries: CI ? 2 : 0,
   ...(CI ? { workers: 1 } : {}),
   // `list` as well, so the job log shows each test and its time while it runs; `github` alone
