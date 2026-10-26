@@ -1,5 +1,6 @@
 export { DownloadIcon } from './DownloadIcon.tsx'
 export { type ErrorMessages, errorMessage, type FileError } from './error-message.ts'
+export { type QueueSummary, summarizeQueue } from './queue-summary.ts'
 export { ResultRow, type ResultRowLabels, type ResultRowProps } from './ResultRow.tsx'
 export {
   type FileQueue,
