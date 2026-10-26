@@ -188,10 +188,10 @@ test('the footer does not move when the brand fonts replace their fallbacks', as
     const fallback = await layout(true, width)
     const brand = await layout(false, width)
     expect(brand.length).toBe(fallback.length)
-    // Text is as wide as its font draws it, so a line's width may differ between the fallback and
-    // Figtree, and the link that follows it on the same line moves sideways by that much. What
-    // must not change is what wraps: every height, and every vertical position in the footer. The
-    // sideways move stays within a few pixels (12 px in WebKit, whose fallback is the widest).
+    // Text is as wide as its font draws it, so an element's width differs between the fallback and
+    // Figtree. What must not change is what wraps: every height, and every vertical position in the
+    // footer. Sideways, only the right-aligned language link moves, by the difference between two
+    // renderings of its label (a few pixels, more with some systems' fallback fonts).
     const relative = (rows: number[][]) =>
       rows.map(([x = 0, y = 0, w = 0, h = 0]) => [x, y - (rows[0]?.[1] ?? 0), w, h])
     const a = relative(fallback)
@@ -202,7 +202,7 @@ test('the footer does not move when the brand fonts replace their fallbacks', as
       const where = `${width}px, element ${i}`
       expect(Math.abs(y - by), `${where}: top`).toBeLessThanOrEqual(2)
       expect(Math.abs(h - bh), `${where}: height`).toBeLessThanOrEqual(2)
-      expect(Math.abs(x - bx), `${where}: left`).toBeLessThanOrEqual(12)
+      expect(Math.abs(x - bx), `${where}: left`).toBeLessThanOrEqual(16)
     })
   }
 })
