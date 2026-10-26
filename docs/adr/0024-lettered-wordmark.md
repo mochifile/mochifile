@@ -1,6 +1,7 @@
 # 0024. The lettered wordmark in the header, footer and READMEs
 
-- **Status:** Accepted
+- **Status:** Proposed in [PR #42](https://github.com/mochifile/mochifile/pull/42); Accepted
+  on merge
 - **Date:** 2026-10-26
 
 ## Context
@@ -12,6 +13,14 @@ only as raster images, one per ground: ink letters for light grounds and cream l
 ones.
 
 ## Decision
+
+This ADR supersedes only the logo usage in [ADR 0020](0020-adopt-the-mochifile-design-system.md)'s
+"Logo (final v1)" decision: the horizontal vector lockup in the header and footer, the 200 px
+width, and the letters following the text colour. ADR 0020 stays as the record of what was
+decided on 2026-10-04. Everything else in it still holds: the design tokens, the symbol, the
+favicons and app icons, the accessible name "Mochifile", the 96 px minimum, the clear space of
+one "o" on every side, and the dots keeping their own colours in every theme.
+
 
 - **Files.** The masters are `mochifile-wordmark-light.png` and `mochifile-wordmark-dark.png`
   in `docs/design-system/assets/Logos/`: lossless 8-bit RGBA, 960 px wide, transparent, trimmed

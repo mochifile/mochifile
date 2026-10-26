@@ -21,7 +21,8 @@ work. You choose a tool, add your files and download the result. No account, no 
 anything, and, because the work happens in your browser, your files stay on your device.
 
 Today there is one tool: [Compress image to a target size](https://mochifile.com/compress-image/).
-It shrinks JPG, PNG and WebP photos to the limit you pick, from 5 KB to 20 MB. The site is in
+It shrinks JPG, PNG and WebP photos to the limit you pick: a preset from 20 KB to 1 MB, or a
+custom size between 5 KB and 20 MB. When a photo cannot get that small, it says so. The site is in
 English and Portuguese.
 
 ## Principles
