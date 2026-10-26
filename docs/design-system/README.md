@@ -6,6 +6,8 @@ This is the single source of truth for how Mochifile looks, sounds and behaves. 
 
 **Status:** v1. Colours, type, spacing, radius, dark theme and core components are settled. The logo is final (v1). The mascot is **provisional** (see *Mascot*).
 
+**Proposed v1.1:** additive, non-normative proposals for the launch redesign live in [`proposals/v1.1/`](proposals/v1.1/README.md). They are not approved, and v1 stays authoritative until they are explicitly accepted.
+
 ## Essence
 
 **The tool is serious, the brand is sweet.** Choosing a file, picking a size and downloading must feel as direct as a good utility: nothing in the way. Personality lives at the edges: waiting, processing, success, error, empty pages.
