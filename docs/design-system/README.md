@@ -104,14 +104,14 @@ Rules: the mascot reacts, it never talks in speech bubbles and never blocks a co
 
 ## Logo
 
-The logo is final (v1). All files are in *Assets › Logos*; never redraw it or set it in a font.
+The logo is final (v1). All files are in *Assets › Logos*; never redraw it or set it in a font. Since ADR 0024 the site and the READMEs show the **lettered wordmark** (below) in place of the v1 drawn wordmark and lockups, which stay in the folder.
 
 - **Symbol:** the mochi-document with eyes: cream body, a folded top-right corner in `ube`, a bold rounded outline in `ink`. Favicon, avatars, app icon, and next to the wordmark.
-- **Wordmark:** "mochifile", drawn as custom monoline letters (round caps and joins, one stroke weight): a squished "o", a soft tail on the "l", and the dots of both i's replaced by squished mochi drops, the first `strawberry`, the second `matcha`. It is not a font: use the SVG.
-- **Lockups:** horizontal (default: header, footer, documents), stacked (square spaces, splash), wordmark alone (where the symbol already appears nearby), symbol alone (favicon, avatars, small spaces).
-- **On dark grounds:** use the `-on-dark` files: the letters become cream, the dots and symbol keep their colours.
+- **Wordmark:** "mochifile", the approved lowercase lettering: heavy rounded letters, with a coral dot on the first i and a green one on the second. It is not a font: use the files `mochifile-wordmark-light.png` (ink letters, for the light colour scheme) and `mochifile-wordmark-dark.png` (cream letters, for the dark one). Their dots are drawn in the artwork and are not the `strawberry` and `matcha` tokens.
+- **Lockups:** the wordmark alone (default: header, footer, READMEs; the heavy lettering carries its own colour, and the symbol is already the favicon and the mascot is on the page), symbol alone (favicon, avatars, small spaces). The v1 horizontal and stacked lockups are kept for history, not used.
+- **On dark grounds:** use the `-dark` wordmark (cream letters; the dots keep their colours). The footer is an ink block in both themes, so it always uses it.
 - **Mono:** one-colour ink versions exist for stamps, embossing and single-colour print only.
-- **Clear space:** at least the height of the "o" on every side. **Minimum size:** horizontal logo 96px wide on screen; below that, use the symbol alone.
+- **Clear space:** at least the height of the "o" on every side (0.715 of the wordmark's height). **Minimum size:** 96px wide on screen; below that, use the symbol alone.
 - **Favicons:** `favicon.svg` (modern browsers), a pixel-drawn 16px PNG and a 32px PNG; app icons (180px, 512px) are the symbol on a `mango` square.
 - **Never:** stretch, recolour the letters with brand colours, swap the dot colours, add effects or outlines, set the name in a font, or place it on busy photos.
 - Always write the name as **Mochifile** in text and **mochifile** only in the logo. Never "Mochi" alone (trademark rule).
