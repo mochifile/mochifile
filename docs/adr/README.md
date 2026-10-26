@@ -24,8 +24,8 @@ a PR. Accepted ADRs are not edited later except for their status; a new ADR supe
 | [0016](0016-image-engine-jsquash-with-native-decoding.md) | Image engine: jSquash codecs with native decoding | Accepted |
 | [0017](0017-size-targeting-algorithm.md) | Size-targeting algorithm | Accepted |
 | [0018](0018-tool-variants-and-markdown-page-copy.md) | Tool variant pages and Markdown page copy | Accepted |
-| [0019](0019-language-suggestion-banner.md) | Language suggestion banner, never a redirect | Accepted (phone placement amended by 0023) |
+| [0019](0019-language-suggestion-banner.md) | Language suggestion banner, never a redirect | Accepted (phone placement amended by 0023 on merge) |
 | [0020](0020-adopt-the-mochifile-design-system.md) | Adopt the Mochifile design system | Accepted |
 | [0021](0021-subset-brand-fonts.md) | Subset the brand fonts and preload only the display face | Accepted |
 | [0022](0022-heic-and-avif-decoding.md) | HEIC and AVIF decoding: native first, WebAssembly fallback | Accepted (legal advice before monetisation) |
-| [0023](0023-phone-menu-with-the-popover-api.md) | Phone menu with the declarative Popover API, and a header-aware language suggestion | Accepted |
+| [0023](0023-phone-menu-with-the-popover-api.md) | Phone menu with the declarative Popover API, and a header-aware language suggestion | Proposed (PR #29); Accepted on merge |

@@ -139,7 +139,10 @@ const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
   </div>
   {/*
     Right after the button in the DOM, so the next Tab enters the menu. With the Popover API it
-    sits in the top layer below the header row; without it, in the page flow.
+    sits in the top layer from the header row down to the bottom of the screen (the browser's
+    `bottom: 0`, kept on purpose): a press on its blank part stays inside it. A menu only as
+    tall as its links closed on a tap below them, and the tap's click then reached the page
+    reappearing beneath (it opened the file picker). Without the API, it sits in the page flow.
   */}
   <nav
     id="site-menu"

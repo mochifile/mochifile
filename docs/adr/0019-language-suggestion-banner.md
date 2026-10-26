@@ -1,6 +1,7 @@
 # 0019. Language suggestion banner, never a redirect
 
 - **Status:** Accepted; phone placement amended by [ADR 0023](0023-phone-menu-with-the-popover-api.md)
+  when [PR #29](https://github.com/mochifile/mochifile/pull/29) is merged
 - **Date:** 2026-10-03
 
 ## Context
