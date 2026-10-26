@@ -10,7 +10,8 @@ const cases = [
     path: '/template-tool/',
     title: 'Template tool',
     description: 'Example tool that changes the case of a text file. Copy it to build a new tool.',
-    about: 'How it works',
+    steps: 'How it works',
+    question: 'Does my file leave my device?',
     privacy: 'Your files are processed right here in your browser.',
     maxSize: 'Maximum file size: 5 MB.',
     noscript: 'This tool needs JavaScript.',
@@ -21,7 +22,8 @@ const cases = [
     title: 'Ferramenta modelo',
     description:
       'Ferramenta de exemplo que muda as letras de um arquivo de texto. Copie-a para criar outra.',
-    about: 'Como funciona',
+    steps: 'Como funciona',
+    question: 'Meu arquivo sai do meu dispositivo?',
     privacy: 'Seus arquivos são processados aqui mesmo, no seu navegador.',
     maxSize: 'Tamanho máximo do arquivo: 5 MB.',
     noscript: 'Esta ferramenta precisa de JavaScript.',
@@ -40,7 +42,8 @@ for (const c of cases) {
       expect(html).toContain(`<meta name="description" content="${c.description}">`)
       expect(html).toMatch(new RegExp(`<h1[^>]*>${c.title}</h1>`))
       expect(html).toContain(c.description)
-      expect(html).toMatch(new RegExp(`<h2[^>]*>${c.about}</h2>`))
+      expect(html).toMatch(new RegExp(`<h2[^>]*>${c.steps}</h2>`))
+      expect(html).toMatch(new RegExp(`<summary[^>]*>\\s*${c.question}`))
       expect(html).toContain(c.privacy)
       expect(html).toContain(c.maxSize)
       // Asserted in the markup: browser automation with JavaScript disabled does not switch the
@@ -64,7 +67,9 @@ for (const c of cases) {
 
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(c.title)
       await expect(page.getByText(c.description)).toBeVisible()
-      await expect(page.getByRole('heading', { level: 2, name: c.about })).toBeVisible()
+      // From 1024 px (the project's desktop viewport) the steps sit in the hero, as a named list.
+      await expect(page.getByRole('list', { name: c.steps })).toBeVisible()
+      await expect(page.getByText(c.question)).toBeVisible()
       await expect(page.getByText(c.privacy)).toBeVisible()
       await expect(page.locator('input[type="file"]')).toHaveCount(0)
       await context.close()
