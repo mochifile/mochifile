@@ -53,3 +53,14 @@ disagree.
 - Adding a locale also means adding a Markdown file for every tool page.
 - The `_template` tool has one demo variant and its copy, so the whole flow is covered by e2e
   tests before any real tool uses it.
+
+## Updates
+
+- **2026-10-26: steps and FAQ as frontmatter.** The tool page lays out two parts of the copy
+  itself: the steps (beside the title from 1024 px, after the tool panel below it) and the
+  FAQ (native `<details>`), following the "Bloco e cartão" direction (design-system proposal
+  v1.1). They move from the Markdown body into its frontmatter, validated by the content
+  collection's schema (`apps/web/src/lib/page-copy.ts`): `steps` (2–4 short lines) and `faq`
+  (questions with plain-text answers). Both are optional, so copy without them still builds.
+  They stay in the same per-page, per-locale file, not in the manifest: they are long-form
+  copy, reviewed as prose. Every answer must describe what the tool really does.

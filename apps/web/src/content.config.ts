@@ -1,11 +1,13 @@
 import { defineCollection } from 'astro:content'
 import { glob } from 'astro/loaders'
+import { pageCopySchema } from './lib/page-copy.ts'
 
 /**
  * Long-form copy of tool pages (intro, how it works, tips, FAQ), written as Markdown next to
  * each tool: `packages/tools/<dir>/content/<locale>/<key>.md`, where `<key>` is `index` for
  * the main page or a variant key (ADR 0018). Rendered to static HTML at build time; none of it
- * reaches the browser as JavaScript. Short UI strings stay in Paraglide messages.
+ * reaches the browser as JavaScript. Short UI strings stay in Paraglide messages. The steps and
+ * the FAQ are frontmatter (`pageCopySchema`), validated here, so a mistake fails the build.
  */
 const toolContent = defineCollection({
   loader: glob({
@@ -15,6 +17,7 @@ const toolContent = defineCollection({
     // The default id would slugify `_template` and lose the leading underscore.
     generateId: ({ entry }) => entry.replace('/content/', '/').replace(/\.md$/, ''),
   }),
+  schema: pageCopySchema,
 })
 
 export const collections = { toolContent }
