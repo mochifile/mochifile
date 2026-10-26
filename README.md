@@ -12,7 +12,8 @@
 </p>
 
 <p align="center">
-  Simple, private file tools that run in your browser.
+  Simple, private file tools<br>
+  that run in your browser.
 </p>
 
 <p align="center">
