@@ -1,9 +1,10 @@
 ---
 import { Font } from 'astro:assets'
-import { type Locale, localeNames, localePath, locales, localeTags } from '@mochifile/i18n'
+import { type Locale, localePath, localeTags } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import LanguageSuggestion from '../components/LanguageSuggestion.astro'
 import Logo from '../components/Logo.astro'
+import SiteHeader from '../components/SiteHeader.astro'
 import { buildAlternates } from '../lib/seo'
 import '../styles/global.css'
 
@@ -53,41 +54,11 @@ const alternates = buildAlternates(paths, site)
     <meta name="color-scheme" content="light dark" />
   </head>
   <body class="flex min-h-dvh flex-col bg-surface-page text-ink antialiased">
-    <header>
-      {/* The gap keeps the logo's clear space (0.57 × its height: 11px, then 19px from 600px). */}
-      <div class="mx-auto flex max-w-content-max items-center justify-between gap-4 px-4 py-2 sm:gap-6">
-        <Logo href={localePath(locale)} />
-        <nav aria-label={m.nav_language({}, { locale })}>
-          <ul class="flex gap-1 type-body-sm font-semibold">
-            {/* Fixed-width cells: see --spacing-language-link. */}
-            {
-              locales.map((target) => (
-                <li>
-                  <a
-                    href={paths[target]}
-                    hreflang={localeTags[target]}
-                    lang={localeTags[target]}
-                    data-language-switch
-                    aria-current={target === locale ? 'true' : undefined}
-                    class:list={[
-                      'press inline-flex min-h-target-min w-language-link items-center justify-center rounded-pill border-chip px-1 focus-ring',
-                      target === locale
-                        ? 'border-ink font-bold'
-                        : 'border-transparent hover:border-border-control',
-                    ]}
-                  >
-                    {localeNames[target]}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </nav>
-      </div>
-    </header>
+    <SiteHeader locale={locale} paths={paths} />
     {/* Pages without alternates (e.g. 404) have nothing to suggest. */}
     {!noindex && <LanguageSuggestion locale={locale} paths={paths} />}
-    <main class="mx-auto w-full max-w-content-max flex-1 px-4 pt-4 pb-16 sm:pt-6">
+    {/* The skip link's target: `tabindex="-1"` moves focus here in every engine without adding a Tab stop. */}
+    <main id="content" tabindex="-1" class="mx-auto w-full max-w-content-max flex-1 px-4 pt-4 pb-16 outline-none sm:pt-6">
       <slot />
     </main>
     <footer class="rounded-t-2xl bg-surface-inverse type-body-sm text-ink-on-inverse-muted">

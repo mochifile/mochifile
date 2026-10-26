@@ -9,6 +9,13 @@
 @source "../../../../packages/tools";
 @source "../../../../packages/tool-ui";
 
+/* Utilities that need the Popover API; without it the phone menu stays in the page flow. */
+@custom-variant with-popover {
+  @supports selector(:popover-open) {
+    @slot;
+  }
+}
+
 /*
  * The brand fonts come from Astro's font API (astro.config.ts), whose variables include
  * metric-matched fallback faces; the design system's families point at them (ADR 0020).
@@ -16,6 +23,32 @@
 :root {
   --family-display: var(--font-fredoka);
   --family-sans: var(--font-figtree);
+  /*
+   * Height of the header row under 1024 px: its tallest items are `target-min`, plus `space-2`
+   * above and below. The phone menu and the phone language suggestion start right below it.
+   */
+  --site-header-height: calc(var(--target-min) + 2 * var(--space-2));
+}
+
+/*
+ * While the phone menu is open (ADR 0023), everything but the header steps out of view. The
+ * menu then reads as a full screen, and the next Tab after its last item cannot land on a link
+ * hidden beneath it (WCAG 2.4.11): hidden content is not focusable. Nothing moves.
+ */
+@media (width < 64rem) {
+  body:has([data-site-menu]:popover-open) > :not(header) {
+    visibility: hidden;
+  }
+}
+
+/*
+ * The language suggestion (ADR 0019, 0023) is an overlay. While keyboard focus is in the page
+ * content it steps aside, so it never hides the focused element (WCAG 2.4.11); it is back as
+ * soon as focus returns to the header or to the suggestion itself, which follows the header in
+ * the Tab order.
+ */
+body:has(main :focus-visible, footer :focus-visible) [data-language-suggestion] {
+  visibility: hidden;
 }
 
 @layer base {
