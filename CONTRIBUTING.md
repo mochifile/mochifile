@@ -26,7 +26,7 @@ By participating you agree to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 3. Create a branch from `main`: `feat/compress-image`, `fix/pt-typo`, `docs/adr-0013`…
 
-See the [README](README.md#scripts) for all scripts.
+See [AGENTS.md](AGENTS.md#commands) for all commands.
 
 ## Making a change
 
