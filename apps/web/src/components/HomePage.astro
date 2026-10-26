@@ -1,7 +1,20 @@
 ---
-import { type Locale, localePath } from '@mochifile/i18n'
+/**
+ * The home page, "Bloco e cartão" direction (design-system proposal v1.1): a mango block with
+ * the headline, a "Start here" card overlapping it, three steps, the published tools and the
+ * privacy band. Static HTML: no script beyond the site-wide language suggestion.
+ *
+ * Every destination comes from the tool registry. The card leads to one tool (START_TOOL_ID)
+ * and its size variants, and disappears if that tool is not published; the tool list shows one
+ * group per category that has a tool, and no group heading while there is only one category.
+ * The privacy claims appear only while every published tool runs in the browser.
+ */
+import type { Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
+import type { ToolCategory } from '@mochifile/tool-kit'
+import Mascot from '../assets/mascot/mascot-idle.svg'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { allToolsInBrowser, homeToolGroups, startCard } from '../lib/home'
 import { samePathInAllLocales } from '../lib/seo'
 import { toolPaths, tools } from '../lib/tools'
 
@@ -10,6 +23,97 @@ interface Props {
 }
 
 const { locale } = Astro.props
+const start = startCard(tools, locale)
+const groups = homeToolGroups(tools)
+const inBrowser = allToolsInBrowser(tools)
+
+// One literal class per category: Tailwind only generates classes it can read in the source.
+const categories = {
+  image: {
+    label: m.category_image({}, { locale }),
+    block: 'bg-mango',
+    tile: 'bg-mango-tint text-mango-ink',
+  },
+  media: {
+    label: m.category_media({}, { locale }),
+    block: 'bg-ube',
+    tile: 'bg-ube-tint text-ube-ink',
+  },
+  pdf: {
+    label: m.category_pdf({}, { locale }),
+    block: 'bg-strawberry',
+    tile: 'bg-strawberry-tint text-strawberry-ink',
+  },
+} as const satisfies Record<ToolCategory, { label: string; block: string; tile: string }>
+
+/**
+ * A short picture of what a tool does, drawn big on its block ("MB → KB"). Decoration only:
+ * hidden from assistive technology, never a measured result. Tools without one show none.
+ */
+const visuals: Partial<Record<string, string>> = {
+  'compress-image': m.home_tool_visual_compress_image({}, { locale }),
+}
+
+// Neighbours vary their squish (design system README › Shape).
+const blockSquish = ['rounded-xl-squish-a', 'rounded-xl-squish-b', 'rounded-xl-squish-c']
+const chipSquish = ['rounded-md-squish-a', 'rounded-md-squish-b', 'rounded-md-squish-c']
+const proofSquish = ['rounded-lg-squish-a', 'rounded-lg-squish-b', 'rounded-lg-squish-c']
+
+const highlights = [
+  ...(inBrowser
+    ? [
+        {
+          label: m.home_highlight_device({}, { locale }),
+          icon: 'M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5z',
+        },
+      ]
+    : []),
+  { label: m.home_highlight_free({}, { locale }), icon: 'M20 6 9 17l-5-5' },
+  { label: m.home_highlight_open_source({}, { locale }), icon: 'm8 7-5 5 5 5M16 7l5 5-5 5' },
+]
+const steps = [
+  {
+    title: m.home_step_1_title({}, { locale }),
+    text: m.home_step_1_text({}, { locale }),
+    tile: 'bg-mango-tint text-mango-ink rounded-md-squish-a',
+  },
+  {
+    title: m.home_step_2_title({}, { locale }),
+    text: m.home_step_2_text({}, { locale }),
+    tile: 'bg-ube-tint text-ube-ink rounded-md-squish-b',
+  },
+  {
+    title: m.home_step_3_title({}, { locale }),
+    text: m.home_step_3_text({}, { locale }),
+    tile: 'bg-matcha-tint text-matcha-ink rounded-md-squish-c',
+  },
+]
+const proofs = [
+  {
+    title: m.home_privacy_device_title({}, { locale }),
+    text: m.home_privacy_device_text({}, { locale }),
+    icon: 'M4 5h16v11H4zM9 20h6M12 16v4',
+  },
+  {
+    title: m.home_privacy_account_title({}, { locale }),
+    text: m.home_privacy_account_text({}, { locale }),
+    icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c1.5-4 14.5-4 16 0M3 3l18 18',
+  },
+  {
+    title: m.home_privacy_code_title({}, { locale }),
+    text: m.home_privacy_code_text({}, { locale }),
+    icon: 'm8 7-5 5 5 5M16 7l5 5-5 5',
+    link: {
+      href: 'https://github.com/mochifile/mochifile',
+      label: m.home_privacy_code_link({}, { locale }),
+    },
+  },
+]
+// Columns follow the number of tools, so one tool fills the row and four never squeeze.
+const toolColumns = (count: number) =>
+  count === 1 ? '' : count === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3'
+const chipClass =
+  'press flex min-h-target-min items-center justify-center border-chip border-border-control bg-surface-card px-1 type-body-sm font-semibold whitespace-nowrap text-ink hover:border-ink focus-ring'
 ---
 
 <BaseLayout
@@ -18,45 +122,247 @@ const { locale } = Astro.props
   description={m.home_description({}, { locale })}
   paths={samePathInAllLocales('/')}
 >
-  {/*
-    Left-aligned: centred lines move sideways when Figtree replaces its fallback, a layout
-    shift (seen on Linux). The home page redesign comes later.
-  */}
-  <section class="flex flex-col gap-4 py-8">
-    <h1 class="type-display-lg sm:type-display-xl">{m.home_heading({}, { locale })}</h1>
-    <p class="max-w-reading-max type-body-lg text-ink-muted">{m.home_lead({}, { locale })}</p>
-  </section>
-  {
-    tools.length > 0 ? (
-      <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {tools.map(({ manifest }) => (
-          <li class="flex h-full flex-col gap-3 rounded-lg border border-line bg-surface-card p-5 has-[a.tool-link:hover]:border-ink">
-            <a href={toolPaths(manifest)[locale]} class="tool-link">
-              <span class="font-semibold">{manifest.meta[locale].title}</span>
-              <span class="mt-1 block type-body-sm text-ink-muted">
-                {manifest.meta[locale].description}
+  <section aria-labelledby="home-heading">
+    {/*
+      The mango block. Its text is left-aligned (centred lines move sideways when Figtree
+      replaces its fallback, a layout shift). Under 1024 px the mascot sits in the flow below
+      the text, so no translation, however long, can run under it; from 1024 px the text is at
+      most `reading-max` wide and the mascot and drops sit in the free space to its right.
+    */}
+    <div class="relative overflow-hidden rounded-2xl-squish-a bg-mango px-5 pt-6 pb-10 text-ink-on-block sm:px-10 sm:pt-10 lg:px-14 lg:pt-14 lg:pb-16">
+      <div class="flex flex-col gap-4 sm:gap-6 lg:mb-10 lg:max-w-reading-max">
+        {/*
+          Under 1024 px only the first shows: one line, whatever the font. From 1024 px they fill
+          fixed columns (sized for the labels), so where each starts never depends on how wide the font draws the
+          one before it (side by side, they moved when Figtree replaced its fallback).
+        */}
+        <ul aria-label={m.home_highlights_label({}, { locale })} class="flex gap-2 lg:grid lg:grid-cols-[4fr_3fr_2fr]">
+          {
+            highlights.map((highlight, index) => (
+              <li class:list={['inline-flex min-h-8 items-center gap-2 rounded-pill border-chip border-ink-on-block px-3 type-caption', index > 0 && 'max-lg:hidden']}>
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0">
+                  <path d={highlight.icon} />
+                </svg>
+                {highlight.label}
+              </li>
+            ))
+          }
+        </ul>
+        <h1 id="home-heading" class="type-title sm:type-display-lg lg:type-display-xl">
+          <span class="block">{m.home_heading_line_1({}, { locale })}</span>{' '}
+          <span class="inline-flex flex-col gap-2">
+            <span>{m.home_heading_line_2({}, { locale })}</span>
+            {/*
+              The measure line: decoration that says "the right size" without words. Hidden from
+              assistive technology; it is not a result or a promise about anyone's file.
+            */}
+            <span aria-hidden="true" data-measure class="flex items-center type-caption font-bold">
+              <svg viewBox="0 0 100 16" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="2.5" class="h-4 min-w-4 flex-1 overflow-visible">
+                <path d="M0 2v12M0 8h96" vector-effect="non-scaling-stroke" />
+              </svg>
+              <span class="rounded-pill border-chip border-ink-on-block bg-surface-card px-3 text-ink">{m.home_measure({}, { locale })}</span>
+              <svg viewBox="0 0 100 16" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="2.5" class="h-4 min-w-4 flex-1 overflow-visible">
+                <path d="M4 8h96M100 2v12" vector-effect="non-scaling-stroke" />
+              </svg>
+            </span>
+          </span>
+        </h1>
+        <p class="max-w-reading-max type-body sm:type-body-lg">{m.home_lead({}, { locale })}</p>
+      </div>
+      {/* The wordmark's drops (decorative), only where there is room beside the text. */}
+      <svg aria-hidden="true" data-decoration viewBox="0 0 46 52" class="absolute top-1/4 right-1/6 hidden w-10 fill-strawberry stroke-ink-on-block lg:block">
+        <path d="M24 3c11 0 19 10 19 23s-8 23-20 23S3 40 3 27 12 3 24 3z" stroke-width="3" />
+      </svg>
+      <svg aria-hidden="true" data-decoration viewBox="0 0 30 34" class="absolute top-1/3 right-16 hidden w-6 fill-matcha stroke-ink-on-block lg:block">
+        <path d="M15 3c7 0 12 6 12 14s-5 14-12 14S3 25 3 17 8 3 15 3z" stroke-width="3" />
+      </svg>
+      {/* The mascot peeks from behind the card below (README › Mascot: idle, on a block). */}
+      <div class="flex justify-end lg:absolute lg:right-14 lg:bottom-8 lg:w-1/6">
+        <Mascot aria-hidden="true" focusable="false" data-decoration class="block h-auto w-1/3 sm:w-1/6 lg:w-full" />
+      </div>
+    </div>
+    {
+      start && (
+        // Overlaps the block by `space-16` at every width. The design reference has 128 px on
+        // desktop and 96 px on phones, which are not tokens (proposal v1.1 › off-scale values);
+        // with the block's bottom padding set to match, the mascot peeks over the card the same.
+        <div data-start-card class="relative -mt-16 flex flex-col gap-6 rounded-xl-squish-a bg-surface-card mx-3 p-5 sm:mx-6 sm:p-8 lg:mx-8 lg:flex-row lg:items-center lg:gap-8">
+          <div class="flex flex-col gap-4 lg:flex-1">
+            <h2 class="type-label-lg sm:type-title-sm">{m.home_start_heading({}, { locale })}</h2>
+            {/* Under 600 px the card goes straight to the button, as in the phone design. */}
+            <p class="flex items-center gap-4 max-sm:hidden">
+              <span aria-hidden="true" class:list={['flex size-icon-tile shrink-0 items-center justify-center rounded-md-squish-a', categories[start.tool.manifest.category].tile]}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6">
+                  <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" />
+                </svg>
               </span>
+              <span class="flex min-w-0 flex-col">
+                <span class="type-body-strong">{start.tool.manifest.meta[locale].title}</span>
+                <span class="type-body-sm text-ink-muted">{start.tool.manifest.meta[locale].tagline}</span>
+              </span>
+            </p>
+            {/* The general page: it starts from the manifest's default target. */}
+            <a
+              href={start.href}
+              data-primary-action
+              class="press inline-flex min-h-target-primary items-center justify-center gap-2 rounded-pill bg-action px-5 text-center type-label-lg text-action-ink focus-ring sm:self-start sm:px-8"
+            >
+              {m.home_start_action({}, { locale })}
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
             </a>
-            {/* Variant pages (e.g. a target size) as shortcuts, also giving crawlers a path. */}
-            {manifest.variants && manifest.variants.length > 0 && (
-              <ul class="mt-auto flex flex-wrap gap-2 type-body-sm" aria-label={manifest.meta[locale].title}>
-                {manifest.variants.map((variant) => (
-                  <li>
+          </div>
+          {
+            start.featured.length + start.others.length > 0 && (
+              <nav aria-labelledby="home-sizes" class="flex flex-col gap-3 sm:rounded-lg-squish-a sm:bg-surface-sunken sm:p-6 lg:flex-1">
+                <h3 id="home-sizes" class="type-body-sm font-semibold text-ink-muted sm:type-label-lg sm:text-ink">
+                  {start.featured.length > 0 ? m.home_sizes_heading({}, { locale }) : (start.tool.manifest.relatedPagesLabel?.[locale] ?? m.tool_more_pages_heading({}, { locale }))}
+                </h3>
+                {/*
+                  Equal columns: which chip lands where never depends on how wide a font draws
+                  the labels, so nothing moves when the brand font arrives. Each link is named
+                  by its page's title ("Compress an image to 50 KB"), which contains the label.
+                */}
+                {start.featured.length > 0 && (
+                  <ul class="grid grid-cols-3 gap-2" data-featured-sizes>
+                    {start.featured.map((size, index) => (
+                      <li>
+                        <a href={size.href} aria-label={size.title} class:list={[chipClass, chipSquish[index % chipSquish.length]]}>
+                          {size.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {start.featured.length > 0 && (
+                  <p class="type-caption text-ink-muted">{m.home_sizes_note({}, { locale })}</p>
+                )}
+                {start.featured.length > 0 && start.others.length > 0 && (
+                  <p id="home-other-sizes" class="mt-1 type-body-sm font-semibold">
+                    {start.tool.manifest.relatedPagesLabel?.[locale] ?? m.tool_more_pages_heading({}, { locale })}
+                  </p>
+                )}
+                {start.others.length > 0 && (
+                  <ul
+                    class="grid grid-cols-3 gap-2"
+                    data-other-sizes
+                    {...(start.featured.length > 0 ? { 'aria-labelledby': 'home-other-sizes' } : {})}
+                  >
+                    {start.others.map((size) => (
+                      <li>
+                        <a
+                          href={size.href}
+                          aria-label={size.title}
+                          class="flex min-h-target-min items-center justify-center rounded-sm type-body-sm font-semibold whitespace-nowrap underline hover:no-underline focus-ring"
+                        >
+                          {size.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </nav>
+            )
+          }
+        </div>
+      )
+    }
+    <ol aria-label={m.home_steps_label({}, { locale })} class="mx-3 mt-8 grid gap-4 sm:mx-6 lg:mx-8 lg:grid-cols-3">
+      {
+        steps.map((step, index) => (
+          <li class="flex items-center gap-3">
+            <span aria-hidden="true" class:list={['flex size-target-min shrink-0 items-center justify-center type-label-lg', step.tile]}>{index + 1}</span>
+            {/*
+              Title and text on their own lines: run together, the text after the bold title
+              moved when Figtree replaced its fallback.
+            */}
+            <span class="flex flex-col">
+              <strong class="font-bold">{step.title}</strong> <span>{step.text}</span>
+            </span>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section aria-labelledby="home-tools" class="mt-16 flex flex-col gap-6">
+    <h2 id="home-tools" class="type-title-sm sm:type-title">{m.home_tools_heading({}, { locale })}</h2>
+    {groups.length === 0 && <p class="text-ink-muted">{m.home_coming_soon({}, { locale })}</p>}
+    {
+      groups.map((group) => {
+        const category = categories[group.category]
+        // A group heading only helps when there is more than one group.
+        const labelled = groups.length > 1
+        return (
+          <div class="flex flex-col gap-4">
+            {labelled && (
+              <h3 id={`home-tools-${group.category}`} class="flex items-center gap-2 type-label-lg">
+                <span aria-hidden="true" class:list={['size-3 shrink-0 rounded-pill', category.block]} />
+                {category.label}
+              </h3>
+            )}
+            <ul
+              class:list={['grid gap-4', toolColumns(group.tools.length)]}
+              data-tool-group={group.category}
+              {...(labelled ? { 'aria-labelledby': `home-tools-${group.category}` } : {})}
+            >
+              {group.tools.map(({ manifest }, index) => {
+                const visual = visuals[manifest.id]
+                return (
+                  <li class="flex">
                     <a
-                      href={localePath(locale, variant.meta[locale].slug)}
-                      class="inline-flex min-h-target-min items-center rounded-pill border border-border-control px-3 hover:border-ink hover:underline"
+                      href={toolPaths(manifest)[locale]}
+                      class:list={['group/tool press flex min-h-tool-card-min w-full flex-col justify-between gap-6 p-6 text-ink-on-block focus-ring sm:p-8', category.block, blockSquish[index % blockSquish.length]]}
                     >
-                      {variant.meta[locale].title}
+                      <span class="flex items-start justify-between gap-3">
+                        <span aria-hidden="true" class="type-title-sm sm:type-title">{visual}</span>
+                        <span aria-hidden="true" class="flex size-target-min shrink-0 items-center justify-center rounded-pill border-strong border-ink-on-block">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="size-5">
+                            <path d="M5 12h14M13 6l6 6-6 6" />
+                          </svg>
+                        </span>
+                      </span>
+                      <span class="flex flex-col gap-1">
+                        <span class="type-label-lg group-hover/tool:underline sm:type-title-sm">{manifest.meta[locale].title}</span>
+                        <span class="type-body-sm">{manifest.meta[locale].tagline}</span>
+                      </span>
                     </a>
                   </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <p class="text-ink-muted">{m.home_coming_soon({}, { locale })}</p>
+                )
+              })}
+            </ul>
+          </div>
+        )
+      })
+    }
+  </section>
+
+  {
+    inBrowser && (
+      <section aria-labelledby="home-privacy" class="mt-16 grid gap-8 rounded-2xl-squish-b bg-surface-inverse px-5 py-8 text-ink-on-inverse sm:p-10 lg:grid-cols-2 lg:items-center lg:p-14">
+        <div class="flex flex-col gap-4">
+          <p class="type-caption text-ink-on-inverse-muted">{m.home_privacy_eyebrow({}, { locale })}</p>
+          <h2 id="home-privacy" class="type-title sm:type-display-lg">{m.home_privacy_heading({}, { locale })}</h2>
+          <p class="text-ink-on-inverse-muted">{m.tool_privacy_browser({}, { locale })}</p>
+        </div>
+        <ul class="grid gap-3">
+          {proofs.map((proof, index) => (
+            <li class:list={['flex flex-col gap-1 bg-surface-inverse-raised p-5', proofSquish[index % proofSquish.length]]}>
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-1 size-6">
+                <path d={proof.icon} />
+              </svg>
+              <strong class="type-body-strong">{proof.title}</strong>
+              <span class="type-body-sm text-ink-on-inverse-muted">{proof.text}</span>
+              {proof.link && (
+                <a href={proof.link.href} class="inline-flex min-h-target-min items-center self-start rounded-sm type-body-sm font-bold underline hover:no-underline focus-ring">
+                  {proof.link.label}
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
     )
   }
 </BaseLayout>
