@@ -11,7 +11,7 @@ const cases = [
     path: '/template-tool-lowercase/',
     lang: 'en',
     title: 'Template tool: lower case',
-    copyHeading: 'How it works',
+    copyHeading: 'About this variant',
     breadcrumbs: ['Home', 'Template tool', 'Template tool: lower case'],
     lowerLabel: 'lower case',
     alternates: [
@@ -25,7 +25,7 @@ const cases = [
     path: '/pt/ferramenta-modelo-minusculas/',
     lang: 'pt',
     title: 'Ferramenta modelo: minúsculas',
-    copyHeading: 'Como funciona',
+    copyHeading: 'Sobre esta variante',
     breadcrumbs: ['Início', 'Ferramenta modelo', 'Ferramenta modelo: minúsculas'],
     lowerLabel: 'minúsculas',
     alternates: [

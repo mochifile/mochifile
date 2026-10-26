@@ -28,6 +28,16 @@ const categoryBlock = {
 const entry = await getEntry('toolContent', contentId(page, locale))
 if (!entry) throw new Error(`Missing content ${contentId(page, locale)}`)
 const { Content } = await render(entry)
+const { steps = [], faq = [] } = entry.data
+// Neighbours vary their squish (design system README › Shape); the step cards also vary
+// their tint, as in the phone design.
+const stepCards = [
+  'bg-mango-tint text-mango-ink rounded-lg-squish-a',
+  'bg-ube-tint text-ube-ink rounded-lg-squish-b',
+  'bg-matcha-tint text-matcha-ink rounded-lg-squish-c',
+]
+const stepSquish = ['rounded-md-squish-a', 'rounded-md-squish-b', 'rounded-md-squish-c']
+const faqSquish = ['rounded-lg-squish-a', 'rounded-lg-squish-b', 'rounded-lg-squish-c']
 
 const breadcrumbs = [
   { name: m.breadcrumb_home({}, { locale }), path: localePath(locale) },
@@ -52,8 +62,14 @@ const jsonLd = serializeJsonLd(
 
 <BaseLayout locale={locale} title={`${meta.title} — Mochifile`} description={meta.description} paths={paths}>
   <script is:inline type="application/ld+json" set:html={jsonLd} />
-  {/* Category hero block; the tool panel below overlaps its bottom edge. */}
-  <div class:list={['rounded-2xl-squish-a px-5 pt-4 pb-16 text-ink-on-block sm:px-10 sm:pt-8 sm:pb-20', categoryBlock[manifest.category]]}>
+  {/*
+    Category hero block ("Bloco e cartão", design-system proposal v1.1); the tool panel below
+    overlaps its bottom edge. From 1024 px the steps sit beside the title; below that they
+    follow the tool panel, so the panel's primary action stays above the fold on phones.
+  */}
+  <div class:list={['rounded-2xl-squish-a px-5 pt-4 pb-16 text-ink-on-block sm:px-10 sm:pt-8 lg:flex lg:items-start lg:gap-10 lg:px-14 lg:pt-10', categoryBlock[manifest.category]]}>
+  {/* From 1024 px the panel overlaps the block further (`space-16`); this keeps the gap above it. */}
+  <div class="min-w-0 lg:mb-10 lg:flex-1">
   <nav aria-label={m.breadcrumb_label({}, { locale })} class="mb-2 type-caption">
     {/*
       On phones only the parent level shows (the logo already links home), on one line, a long
@@ -89,6 +105,21 @@ const jsonLd = serializeJsonLd(
   */}
   <p class="mt-2 min-h-14 max-w-reading-max type-body sm:min-h-0 sm:type-body-lg">{meta.tagline}</p>
   </div>
+  {
+    steps.length > 0 && (
+      <ol aria-label={m.tool_steps_heading({}, { locale })} data-hero-steps class="hidden lg:mt-10 lg:flex lg:w-1/3 lg:shrink-0 lg:flex-col lg:gap-3">
+        {steps.map((step, index) => (
+          <li class="flex items-center gap-3 type-body-strong">
+            <span aria-hidden="true" class:list={['flex size-10 shrink-0 items-center justify-center border-strong border-ink-on-block type-label-lg', stepSquish[index % stepSquish.length]]}>
+              {index + 1}
+            </span>
+            {step}
+          </li>
+        ))}
+      </ol>
+    )
+  }
+  </div>
   {/*
     client:only: the tool UI is useless without JavaScript, and server-rendering it would show a
     file input that silently ignores files picked before hydration finishes.
@@ -98,8 +129,10 @@ const jsonLd = serializeJsonLd(
     screen width), so the text below does not jump when the client-only widget appears
     (layout shift, a Core Web Vital). Content added later, such as results, may
     still grow the page: that follows a user action and does not count as a shift.
+    It keeps the full width under 1024 px, where tool-reserve was measured; from 1024 px it is
+    inset from the block's edges, as in the design.
   */}
-  <div class="tool-reserve relative mx-auto -mt-10 rounded-xl-squish-a bg-surface-card p-5 sm:-mt-14 sm:p-8">
+  <div class="tool-reserve relative -mt-10 rounded-xl-squish-a bg-surface-card p-5 sm:p-8 lg:mx-8 lg:-mt-16">
     <ToolIsland
       client:only="react"
       dir={tool.dir}
@@ -111,35 +144,78 @@ const jsonLd = serializeJsonLd(
       <p class="text-center">{m.tool_requires_js({}, { locale })}</p>
     </noscript>
   </div>
-  <article class="page-copy mt-16">
-    {/* The page's description leads the long-form copy, keeping the hero short on phones. */}
-    <p class="type-body-lg">{meta.description}</p>
-    <Content />
-  </article>
-  <section class="mt-16 flex max-w-reading-max flex-col gap-2 rounded-lg-squish-b bg-ube-tint p-6 text-ube-ink" aria-labelledby="tool-facts">
-    <h2 id="tool-facts" class="type-label-lg sm:type-title-sm">{m.tool_facts_heading({}, { locale })}</h2>
-    {manifest.runtime === 'browser' && <p>{m.tool_privacy_browser({}, { locale })}</p>}
-    <p>{m.tool_max_file_size({ maxSize }, { locale })}</p>
-  </section>
   {
-    siblings.length > 0 && (
-      <nav class="mt-16" aria-labelledby="tool-more-pages">
-        <h2 id="tool-more-pages" class="mb-3 type-label-lg sm:type-title-sm">
-          {manifest.relatedPagesLabel?.[locale] ?? m.tool_more_pages_heading({}, { locale })}
-        </h2>
-        <ul class="flex flex-wrap gap-2">
-          {siblings.map((other) => (
-            <li>
-              <a
-                href={other.paths[locale]}
-                class="press inline-flex min-h-target-min items-center rounded-pill border-chip border-border-control bg-surface-card px-4 type-body-sm font-semibold hover:border-ink focus-ring"
-              >
-                {other.meta[locale].title}
-              </a>
+    steps.length > 0 && (
+      <section aria-labelledby="tool-steps" class="mt-16 flex flex-col gap-4 lg:hidden">
+        <h2 id="tool-steps" class="type-title-sm sm:type-title">{m.tool_steps_heading({}, { locale })}</h2>
+        <ol class="flex flex-col gap-3">
+          {steps.map((step, index) => (
+            <li class:list={['flex items-center gap-4 px-5 py-4 type-body-strong', stepCards[index % stepCards.length]]}>
+              <span aria-hidden="true" class="type-title-sm text-ink">{index + 1}</span>
+              {step}
             </li>
           ))}
-        </ul>
-      </nav>
+        </ol>
+      </section>
     )
   }
+  {/* From 1024 px: the copy and its FAQ on the left, the tool's other pages and facts beside it. */}
+  <div class="mt-16 grid gap-16 lg:grid-cols-3 lg:gap-14 lg:px-8">
+    <article class="page-copy lg:col-span-2">
+      {/* The page's description leads the long-form copy, keeping the hero short on phones. */}
+      <p class="type-body-lg">{meta.description}</p>
+      <Content />
+      {
+        faq.length > 0 && (
+          <section aria-labelledby="tool-faq" class="flex flex-col gap-3">
+            <h2 id="tool-faq">{m.tool_faq_heading({}, { locale })}</h2>
+            {/*
+              Native <details>: no script, and the answers stay in the HTML for search engines
+              and in-page search. The chevron turns without animation (proposal v1.1: no
+              chevron motion in v1).
+            */}
+            {faq.map((item, index) => (
+              <details class:list={['group bg-surface-card', faqSquish[index % faqSquish.length]]}>
+                <summary class:list={['flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 type-body-strong focus-ring sm:px-6 [&::-webkit-details-marker]:hidden', faqSquish[index % faqSquish.length]]}>
+                  {item.question}
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0 group-open:rotate-180">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </summary>
+                <p class="px-5 pb-5 text-ink-muted sm:px-6">{item.answer}</p>
+              </details>
+            ))}
+          </section>
+        )
+      }
+    </article>
+    <div class="flex flex-col gap-10">
+      {
+        siblings.length > 0 && (
+          <nav aria-labelledby="tool-more-pages">
+            <h2 id="tool-more-pages" class="mb-3 type-label-lg sm:type-title-sm">
+              {manifest.relatedPagesLabel?.[locale] ?? m.tool_more_pages_heading({}, { locale })}
+            </h2>
+            <ul class="flex flex-wrap gap-2">
+              {siblings.map((other) => (
+                <li>
+                  <a
+                    href={other.paths[locale]}
+                    class="press inline-flex min-h-target-min items-center rounded-pill border-chip border-border-control bg-surface-card px-4 py-2 type-body-sm font-semibold hover:border-ink focus-ring"
+                  >
+                    {other.meta[locale].title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
+      }
+      <section class="flex flex-col gap-2 rounded-lg-squish-b bg-ube-tint p-6 text-ube-ink" aria-labelledby="tool-facts">
+        <h2 id="tool-facts" class="type-label-lg sm:type-title-sm">{m.tool_facts_heading({}, { locale })}</h2>
+        {manifest.runtime === 'browser' && <p>{m.tool_privacy_browser({}, { locale })}</p>}
+        <p>{m.tool_max_file_size({ maxSize }, { locale })}</p>
+      </section>
+    </div>
+  </div>
 </BaseLayout>

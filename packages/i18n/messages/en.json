@@ -54,6 +54,8 @@
   "tool_max_file_size": "Maximum file size: {maxSize}.",
   "tool_requires_js": "This tool needs JavaScript. Please enable it in your browser to continue.",
   "tool_more_pages_heading": "Popular options",
+  "tool_steps_heading": "How it works",
+  "tool_faq_heading": "Frequently asked questions",
   "breadcrumb_label": "Breadcrumb",
   "breadcrumb_home": "Home",
   "footer_licenses": "Open-source licenses",
