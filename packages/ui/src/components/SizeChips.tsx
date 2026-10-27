@@ -30,6 +30,11 @@ export interface SizeChipsProps<T extends string> {
   phoneColumns?: boolean
   disabled?: boolean
   className?: string
+  /**
+   * Classes added to the legend, e.g. `max-sm:sr-only` where a row label already names the
+   * group on screen. The legend always stays, so the group keeps its name.
+   */
+  legendClassName?: string
 }
 
 const selected = {
@@ -55,13 +60,14 @@ export function SizeChips<T extends string>({
   phoneColumns = false,
   disabled,
   className,
+  legendClassName,
 }: SizeChipsProps<T>) {
   const name = useId()
   // Neighbours get different corner patterns so the row does not look stamped.
   const squish = ['rounded-md-squish-a', 'rounded-md-squish-b', 'rounded-md-squish-c'] as const
   return (
     <fieldset className={className} disabled={disabled}>
-      <legend className={stepLegendClasses}>{legend}</legend>
+      <legend className={cn(stepLegendClasses, legendClassName)}>{legend}</legend>
       <div
         className={
           phoneColumns ? 'grid grid-cols-4 gap-2 sm:flex sm:flex-wrap' : 'flex flex-wrap gap-2'

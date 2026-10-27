@@ -14,6 +14,11 @@ export interface SegmentedProps<T extends string> {
   onChange: (value: T) => void
   disabled?: boolean
   className?: string
+  /**
+   * Classes added to the legend, e.g. `max-sm:sr-only` where a row label already names the
+   * group on screen. The legend always stays, so the group keeps its name.
+   */
+  legendClassName?: string
 }
 
 /**
@@ -28,13 +33,14 @@ export function Segmented<T extends string>({
   onChange,
   disabled,
   className,
+  legendClassName,
 }: SegmentedProps<T>) {
   const name = useId()
   const hintId = useId()
   const hint = options.find((option) => option.value === value)?.hint
   return (
     <fieldset className={className} disabled={disabled} aria-describedby={hintId}>
-      <legend className={stepLegendClasses}>{legend}</legend>
+      <legend className={cn(stepLegendClasses, legendClassName)}>{legend}</legend>
       <div className="flex gap-1 rounded-md bg-surface-page p-1">
         {options.map((option) => (
           <label
