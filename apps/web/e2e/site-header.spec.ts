@@ -738,3 +738,34 @@ for (const colorScheme of ['light', 'dark'] as const) {
     }
   })
 }
+
+/**
+ * The first block's distance from the header: 8 px from 1024 px, as in every desktop artboard
+ * (Main, Workspace, NotFound, About, Help); 16 px on phones and 24 px from 600 px.
+ */
+for (const path of ['/', '/compress-image/']) {
+  test(`the content starts under the header at the designed distance (${path})`, async ({
+    page,
+  }) => {
+    for (const [width, gap] of [
+      [360, 16],
+      [600, 24],
+      [1023, 24],
+      [1024, 8],
+      [1440, 8],
+    ] as const) {
+      await page.setViewportSize({ width, height: 800 })
+      await page.goto(path)
+      const measured = await page.evaluate(() => {
+        const header = document.querySelector('body > header')
+        // The first child with a box (a tool page starts with its JSON-LD script).
+        const first = [...document.querySelectorAll('main#content > *')].find(
+          (el) => el.getBoundingClientRect().height > 0,
+        )
+        if (!header || !first) throw new Error('no header or content')
+        return first.getBoundingClientRect().top - header.getBoundingClientRect().bottom
+      })
+      expect(measured, `${width} px`).toBeCloseTo(gap, 0)
+    }
+  })
+}
