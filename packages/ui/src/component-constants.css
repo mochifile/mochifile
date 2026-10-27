@@ -13,15 +13,19 @@
   /* ToolCard README: "min height 124px". */
   --spacing-tool-card-min: 124px;
   /*
-   * Width of each header language link, so its position never depends on how wide a font
-   * draws the name (the right-aligned links moved 3 px when Figtree replaced the fallback).
-   * A measured layout value, not a design token: the widest label, "Português" in bold, is
-   * 91 px. Fits beside the logo at 360 px. Re-measure when adding a language.
+   * Widths of the header language pill, so its position never depends on how wide a font
+   * draws the label (the right-aligned links moved 3 px when Figtree replaced the fallback).
+   * Measured layout values, not design tokens: the pill's natural width in Figtree, rounded up.
+   * Under 1024 px the code, "EN" 71.5 px and "PT" 69 px; from 1024 px the name, "English"
+   * 109 px and "Português" 130 px, each with its own width so neither gets a wider pill than
+   * the artboard's. Re-measure when adding a language.
    */
-  --spacing-language-link: 96px;
+  --spacing-language-link-phone: 72px;
+  --spacing-language-link-en: 112px;
+  --spacing-language-link-pt: 132px;
   /*
    * Header and footer wordmark widths, above the brand book's 96px minimum (README › Logo):
-   * 120px fits beside the language links at 360px. From 600px the wordmark is 184px wide, 32.8px
+   * 120px fits beside the language pill and the menu button at 320px. From 600px the wordmark is 184px wide, 32.8px
    * tall, as tall as the 200px lockup it replaced (ADR 0024), and its clear space, the height
    * of the "o" (0.715 of the wordmark's height, 23.5px), fits the header's 24px gap and the
    * footer's 24px margin.
