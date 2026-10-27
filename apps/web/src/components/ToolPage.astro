@@ -125,24 +125,28 @@ const jsonLd = serializeJsonLd(
     file input that silently ignores files picked before hydration finishes.
   */}
   {/*
-    The tool panel reserves the usual height of a tool's controls (tool-reserve, measured per
+    An outer box reserves the usual height of a tool's controls (tool-reserve, measured per
     screen width), so the text below does not jump when the client-only widget appears
-    (layout shift, a Core Web Vital). Content added later, such as results, may
-    still grow the page: that follows a user action and does not count as a shift.
-    It keeps the full width under 1024 px, where tool-reserve was measured; from 1024 px it is
-    inset from the block's edges, as in the design.
+    (layout shift, a Core Web Vital). The card inside it fills the reserve only until the tool
+    renders (tool-card), then is as tall as the tool, as in the ToolPanel artboard: a short
+    panel leaves page background under the card, not a blank band inside it. Content added
+    later, such as results, may still grow the page: that follows a user action and does not
+    count as a shift. It keeps the full width under 1024 px, where tool-reserve was measured;
+    from 1024 px it is inset from the block's edges, as in the design.
   */}
-  <div class="tool-reserve relative -mt-10 rounded-xl-squish-a bg-surface-card p-5 sm:p-8 lg:mx-8 lg:-mt-16">
-    <ToolIsland
-      client:only="react"
-      dir={tool.dir}
-      locale={locale}
-      {...variant ? { initialOptions: variant.options } : {}}
-    >
-    </ToolIsland>
-    <noscript>
-      <p class="text-center">{m.tool_requires_js({}, { locale })}</p>
-    </noscript>
+  <div class="tool-reserve relative -mt-10 lg:mx-8 lg:-mt-16">
+    <div data-tool-card class="tool-card rounded-xl-squish-a bg-surface-card p-5 sm:p-8">
+      <ToolIsland
+        client:only="react"
+        dir={tool.dir}
+        locale={locale}
+        {...variant ? { initialOptions: variant.options } : {}}
+      >
+      </ToolIsland>
+      <noscript>
+        <p class="text-center">{m.tool_requires_js({}, { locale })}</p>
+      </noscript>
+    </div>
   </div>
   {
     steps.length > 0 && (

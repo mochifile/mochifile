@@ -159,3 +159,16 @@
     }
   }
 }
+
+/*
+ * The visible tool card inside `tool-reserve` (apps/web ToolPage). Until its client-only tool
+ * renders, the island is empty and the card fills the reserve: a blank card where the tool will
+ * appear. Then the card is as tall as the tool (ToolPanel artboard), so the reserve's slack is
+ * page background under the card, not a blank band inside it. Nothing below moves either way.
+ * Without `:has()` the card is as tall as the tool from the start, still without a shift.
+ */
+@utility tool-card {
+  &:has(> astro-island:empty) {
+    min-height: inherit;
+  }
+}
