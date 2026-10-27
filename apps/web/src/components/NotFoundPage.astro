@@ -71,8 +71,12 @@ const toolLinks = tools.map(({ manifest }) => ({
           <h1 id="not-found-heading" class="type-title text-balance sm:type-display-lg lg:type-display-xl">{m.not_found_heading({}, { locale })}</h1>
           <p class="max-w-reading-max type-body sm:type-body-lg">{m.not_found_text({}, { locale })}</p>
         </div>
-        {/* README › Mascot: error, on a block, with text that says what to do. */}
-        <Mascot aria-hidden="true" focusable="false" data-decoration class="block h-auto w-1/3 shrink-0 sm:w-1/6 lg:mr-10" />
+        {/*
+          README › Mascot: error, on a block, with text that says what to do. Under 1024 px it is
+          drawn 8 px higher than its box (a transform, so nothing else moves): at 320 and 600 px
+          the card's edge otherwise cut the tip of its mouth.
+        */}
+        <Mascot aria-hidden="true" focusable="false" data-decoration class="block h-auto w-1/3 shrink-0 max-lg:-translate-y-2 sm:w-1/6 lg:mr-10" />
       </div>
     </div>
     {/*
