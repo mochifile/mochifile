@@ -11,6 +11,8 @@ import {
   FileTile,
   ImageIcon,
   isBlockTone,
+  OptionList,
+  OptionRow,
   preloadZip,
   type QueueItem,
   ResultRow,
@@ -259,103 +261,132 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
       {/* Phones: one column. Desktop: options on the left, the dropzone in the wider column. */}
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-5 lg:items-start lg:gap-8">
         <div className="flex flex-col gap-5 lg:col-span-2">
-          <div className="flex flex-col gap-3">
-            <SizeChips
-              legend={m.compress_image_target_legend({}, { locale })}
-              value={targetChoice}
-              onChange={setTargetChoice}
-              // Image tools use the mango block (design system README › Colour).
-              block="mango"
-              phoneColumns
-              options={[
-                ...PRESETS.map((p) => ({
-                  value: p.key as string,
-                  label: formatSize(p.bytes, locale),
-                })),
-                {
-                  value: 'custom',
-                  label: m.compress_image_target_custom({}, { locale }),
-                  wide: true,
-                },
-              ]}
-            />
-            {targetChoice === 'custom' && (
-              <div className="flex flex-wrap items-end gap-3">
-                <label className="flex flex-col gap-1">
-                  <span className="type-body-sm font-semibold">
-                    {m.compress_image_custom_label({}, { locale })}
-                  </span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={customText}
-                    onChange={(event) => setCustomText(event.currentTarget.value)}
-                    aria-invalid={custom?.ok === false && customText !== ''}
-                    aria-describedby="compress-image-custom-error"
-                    size={6}
-                    className="min-h-target-min rounded-md border-chip border-border-control bg-surface-page px-3 focus-ring"
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="type-body-sm font-semibold">
-                    {m.compress_image_custom_unit_label({}, { locale })}
-                  </span>
-                  <select
-                    value={customUnit}
-                    onChange={(event) => setCustomUnit(event.currentTarget.value as SizeUnit)}
-                    className="min-h-target-min rounded-md border-chip border-border-control bg-surface-page px-3 focus-ring"
-                  >
-                    <option value="kb">KB</option>
-                    <option value="mb">MB</option>
-                  </select>
-                </label>
-                <p
-                  id="compress-image-custom-error"
-                  className="basis-full type-body-sm font-semibold text-danger"
-                >
-                  {custom?.ok === false && customText !== ''
-                    ? custom.reason === 'invalid'
-                      ? m.compress_image_custom_error_invalid({}, { locale })
-                      : m.compress_image_custom_error_range(
-                          {
-                            min: formatSize(MIN_TARGET, locale),
-                            max: formatSize(MAX_TARGET, locale),
-                          },
-                          { locale },
-                        )
-                    : ''}
-                </p>
+          {/*
+            Under 600 px the options are a compact list ("Maximum size · 50 KB · Change") that
+            opens each one in place, so "Choose photos" stays high on the screen (launch
+            specification › tool page); from 600 px they show as before.
+          */}
+          <OptionList className="sm:gap-5">
+            <OptionRow
+              label={m.compress_image_custom_label({}, { locale })}
+              value={
+                preset
+                  ? formatSize(preset.bytes, locale)
+                  : targetBytes !== undefined
+                    ? formatSize(targetBytes, locale)
+                    : m.compress_image_target_custom({}, { locale })
+              }
+              change={m.compress_image_change({}, { locale })}
+            >
+              <div className="flex flex-col gap-3">
+                <SizeChips
+                  legend={m.compress_image_target_legend({}, { locale })}
+                  legendClassName="max-sm:sr-only"
+                  value={targetChoice}
+                  onChange={setTargetChoice}
+                  // Image tools use the mango block (design system README › Colour).
+                  block="mango"
+                  options={[
+                    ...PRESETS.map((p) => ({
+                      value: p.key as string,
+                      label: formatSize(p.bytes, locale),
+                    })),
+                    {
+                      value: 'custom',
+                      label: m.compress_image_target_custom({}, { locale }),
+                    },
+                  ]}
+                />
+                {targetChoice === 'custom' && (
+                  <div className="flex flex-wrap items-end gap-3">
+                    <label className="flex flex-col gap-1">
+                      <span className="type-body-sm font-semibold">
+                        {m.compress_image_custom_label({}, { locale })}
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={customText}
+                        onChange={(event) => setCustomText(event.currentTarget.value)}
+                        aria-invalid={custom?.ok === false && customText !== ''}
+                        aria-describedby="compress-image-custom-error"
+                        size={6}
+                        className="min-h-target-min rounded-md border-chip border-border-control bg-surface-page px-3 focus-ring"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="type-body-sm font-semibold">
+                        {m.compress_image_custom_unit_label({}, { locale })}
+                      </span>
+                      <select
+                        value={customUnit}
+                        onChange={(event) => setCustomUnit(event.currentTarget.value as SizeUnit)}
+                        className="min-h-target-min rounded-md border-chip border-border-control bg-surface-page px-3 focus-ring"
+                      >
+                        <option value="kb">KB</option>
+                        <option value="mb">MB</option>
+                      </select>
+                    </label>
+                    <p
+                      id="compress-image-custom-error"
+                      className="basis-full type-body-sm font-semibold text-danger"
+                    >
+                      {custom?.ok === false && customText !== ''
+                        ? custom.reason === 'invalid'
+                          ? m.compress_image_custom_error_invalid({}, { locale })
+                          : m.compress_image_custom_error_range(
+                              {
+                                min: formatSize(MIN_TARGET, locale),
+                                max: formatSize(MAX_TARGET, locale),
+                              },
+                              { locale },
+                            )
+                        : ''}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <Segmented
-              legend={m.compress_image_format_legend({}, { locale })}
-              value={format}
-              onChange={setFormat}
-              options={[
-                {
-                  value: 'original',
-                  label: m.compress_image_format_original({}, { locale }),
-                  hint: m.compress_image_format_original_hint({}, { locale }),
-                },
-                {
-                  value: 'jpeg',
-                  label: m.compress_image_format_jpeg({}, { locale }),
-                  hint: m.compress_image_format_jpeg_hint({}, { locale }),
-                },
-                {
-                  value: 'webp',
-                  label: m.compress_image_format_webp({}, { locale }),
-                  hint: m.compress_image_format_webp_hint({}, { locale }),
-                },
-              ]}
-            />
-            {hasWebp && format !== 'jpeg' && (
-              <Notice tone="warning">{m.compress_image_webp_hint({}, { locale })}</Notice>
-            )}
-          </div>
+            </OptionRow>
+            <OptionRow
+              label={m.compress_image_format_row({}, { locale })}
+              value={
+                format === 'jpeg'
+                  ? m.compress_image_format_jpeg({}, { locale })
+                  : format === 'webp'
+                    ? m.compress_image_format_webp({}, { locale })
+                    : m.compress_image_format_original({}, { locale })
+              }
+              change={m.compress_image_change({}, { locale })}
+            >
+              <Segmented
+                legend={m.compress_image_format_legend({}, { locale })}
+                legendClassName="max-sm:sr-only"
+                value={format}
+                onChange={setFormat}
+                options={[
+                  {
+                    value: 'original',
+                    label: m.compress_image_format_original({}, { locale }),
+                    hint: m.compress_image_format_original_hint({}, { locale }),
+                  },
+                  {
+                    value: 'jpeg',
+                    label: m.compress_image_format_jpeg({}, { locale }),
+                    hint: m.compress_image_format_jpeg_hint({}, { locale }),
+                  },
+                  {
+                    value: 'webp',
+                    label: m.compress_image_format_webp({}, { locale }),
+                    hint: m.compress_image_format_webp_hint({}, { locale }),
+                  },
+                ]}
+              />
+            </OptionRow>
+          </OptionList>
+          {/* Outside the row, so it shows even while the format row is closed on a phone. */}
+          {hasWebp && format !== 'jpeg' && (
+            <Notice tone="warning">{m.compress_image_webp_hint({}, { locale })}</Notice>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 lg:col-span-3">
