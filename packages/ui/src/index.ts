@@ -19,5 +19,6 @@ export {
   type ChoiceOption,
   SizeChips,
   type SizeChipsProps,
+  StepHeading,
   stepLegendClasses,
 } from './components/SizeChips.tsx'
