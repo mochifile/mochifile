@@ -64,5 +64,11 @@
   "language_suggestion_label": "Sugestão de idioma",
   "language_suggestion_text": "Ver esta página em português?",
   "language_suggestion_action": "Ver em português",
-  "language_suggestion_dismiss": "Agora não"
+  "language_suggestion_dismiss": "Agora não",
+  "not_found_title": "Página não encontrada — Mochifile",
+  "not_found_description": "Esta página não existe.",
+  "not_found_heading": "Não encontramos esta página",
+  "not_found_text": "O endereço pode ter um erro de digitação, ou a página mudou de lugar. Comece de novo pela página inicial.",
+  "not_found_home": "Ir para a página inicial",
+  "not_found_tools_heading": "Ou vá direto para uma ferramenta"
 }

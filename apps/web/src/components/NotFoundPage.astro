@@ -1,0 +1,79 @@
+---
+/**
+ * The 404 page, one per locale: `404.html` and `pt/404.html`. Cloudflare serves the nearest
+ * `404.html` up the path with status 404 (`not_found_handling: "404-page"`, ADR 0013), so an
+ * unknown address under `/pt/` gets this page in Portuguese and any other one gets English.
+ * The same file answers at every unknown depth, so every link and asset here is root-relative.
+ *
+ * Not indexable and without alternates: it has no canonical address, and no language
+ * suggestion (ADR 0019). The language links go to each locale's home page. Static HTML, no
+ * script; the tool links come from the registry.
+ */
+import { type Locale, localePath } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import Mascot from '../assets/mascot/mascot-error.svg'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { samePathInAllLocales } from '../lib/seo'
+import { toolPaths, tools } from '../lib/tools'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+const toolLinks = tools.map(({ manifest }) => ({
+  href: toolPaths(manifest)[locale],
+  title: manifest.meta[locale].title,
+  tagline: manifest.meta[locale].tagline,
+}))
+---
+
+<BaseLayout
+  locale={locale}
+  title={m.not_found_title({}, { locale })}
+  description={m.not_found_description({}, { locale })}
+  paths={samePathInAllLocales('/')}
+  noindex
+>
+  <section aria-labelledby="not-found-heading">
+    {/*
+      A mango block, as on the home page; the mascot always sits on a block (README › Mascot:
+      error, with text that says what to do). Under 600 px it sits above the heading, from
+      600 px beside the text.
+    */}
+    <div class="flex flex-col gap-6 rounded-2xl-squish-a bg-mango px-5 pt-6 pb-10 text-ink-on-block sm:flex-row sm:items-center sm:gap-10 sm:p-10 lg:p-14">
+      <Mascot aria-hidden="true" focusable="false" data-decoration class="block h-auto w-1/3 shrink-0 sm:order-last sm:w-1/4 lg:w-1/6" />
+      <div class="flex min-w-0 flex-1 flex-col gap-4 sm:gap-6 lg:max-w-reading-max">
+        <h1 id="not-found-heading" class="type-title sm:type-display-lg">{m.not_found_heading({}, { locale })}</h1>
+        <p class="type-body-lg">{m.not_found_text({}, { locale })}</p>
+        <a
+          href={localePath(locale)}
+          data-primary-action
+          class="press inline-flex min-h-target-primary items-center justify-center gap-2 rounded-pill bg-action px-5 text-center type-label-lg text-action-ink focus-ring sm:self-start sm:px-8"
+        >
+          {m.not_found_home({}, { locale })}
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+  {
+    toolLinks.length > 0 && (
+      <section aria-labelledby="not-found-tools" class="mt-16 flex flex-col gap-4">
+        <h2 id="not-found-tools" class="type-title-sm sm:type-title">{m.not_found_tools_heading({}, { locale })}</h2>
+        <ul class="flex flex-col rounded-lg-squish-a bg-surface-card p-2 lg:max-w-reading-max">
+          {toolLinks.map((link) => (
+            <li>
+              <a href={link.href} class="group/link flex min-h-target-primary flex-col justify-center rounded-sm px-3 py-2 focus-ring">
+                <span class="font-bold group-hover/link:underline">{link.title}</span>
+                <span class="type-body-sm text-ink-muted">{link.tagline}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</BaseLayout>
