@@ -94,22 +94,83 @@
 }
 
 /*
- * Height reserved for the tool panel (padding included) before its client-only tool renders,
- * so the page below does not shift (layout shift fix, see apps/web ToolPage). A measured
- * layout height, not a design token. Tallest compress-image panel, English and Portuguese, with
- * the privacy line at its foot (ToolPanel artboard): 542 px at 320 px wide, 494 px at 360 px,
- * 468 px at 390 px (options as a compact list); 643 px at 600–1023 px; 490 px at 1024 px and
- * 468 px at 1440 px. Each value below adds a margin for text that renders wider on other
- * systems. Checked at 360 and 390 px by apps/web/e2e/layout-shift.spec.ts; recalibrate whenever
- * the panel changes.
+ * Height reserved for the tool panel before its client-only tool renders, so the page below
+ * does not shift (layout shift fix, see apps/web ToolPage). A measured layout height, not a
+ * design token: at each width, the tallest compress-image panel in that language, plus the
+ * `space-2` the box keeps under the card. The panel only gets shorter as the screen widens
+ * (its text wraps less), so the reserve steps down where the measured panel does.
+ *
+ * Measured on every tool page from 320 to 1440 px in 2 px steps, in Chromium and WebKit, with
+ * the brand fonts and with the text face's fallback (the tool may render before Figtree
+ * arrives; WebKit's fallback wraps a line earlier near some steps); each step waits 8 px of
+ * width past the last width that needed it, and rounds up. Portuguese text wraps later than
+ * English, so it has its own steps. apps/web/e2e/tool-page-layout.spec.ts fails if a panel
+ * outgrows the reserve or leaves more than a line of slack under it: recalibrate whenever the
+ * panel or its copy changes, or a language is added.
  */
 @utility tool-reserve {
-  min-height: 544px;
+  min-height: var(--tool-reserve);
+  /* English, and any other language until it is measured. */
+  --tool-reserve: 529px;
+  @media (width >= 348px) {
+    --tool-reserve: 503px;
+  }
+  @media (width >= 380px) {
+    --tool-reserve: 455px;
+  }
+  @media (width >= 474px) {
+    --tool-reserve: 433px;
+  }
+  @media (width >= 516px) {
+    --tool-reserve: 411px;
+  }
   @media (width >= 600px) {
-    min-height: 680px;
+    --tool-reserve: 652px;
+  }
+  @media (width >= 694px) {
+    --tool-reserve: 600px;
+  }
+  @media (width >= 920px) {
+    --tool-reserve: 578px;
   }
   @media (width >= 64rem) {
-    min-height: 528px;
+    --tool-reserve: 477px;
+  }
+  &:lang(pt) {
+    --tool-reserve: 578px;
+    @media (width >= 334px) {
+      --tool-reserve: 551px;
+    }
+    @media (width >= 352px) {
+      --tool-reserve: 529px;
+    }
+    @media (width >= 362px) {
+      --tool-reserve: 503px;
+    }
+    @media (width >= 398px) {
+      --tool-reserve: 477px;
+    }
+    @media (width >= 430px) {
+      --tool-reserve: 455px;
+    }
+    @media (width >= 452px) {
+      --tool-reserve: 433px;
+    }
+    @media (width >= 578px) {
+      --tool-reserve: 411px;
+    }
+    @media (width >= 600px) {
+      --tool-reserve: 652px;
+    }
+    @media (width >= 728px) {
+      --tool-reserve: 600px;
+    }
+    @media (width >= 64rem) {
+      --tool-reserve: 499px;
+    }
+    @media (width >= 1100px) {
+      --tool-reserve: 477px;
+    }
   }
 }
 
@@ -162,13 +223,14 @@
 
 /*
  * The visible tool card inside `tool-reserve` (apps/web ToolPage). Until its client-only tool
- * renders, the island is empty and the card fills the reserve: a blank card where the tool will
- * appear. Then the card is as tall as the tool (ToolPanel artboard), so the reserve's slack is
- * page background under the card, not a blank band inside it. Nothing below moves either way.
- * Without `:has()` the card is as tall as the tool from the start, still without a shift.
+ * renders, the island is empty and the card fills the reserve but for the `space-2` under it:
+ * a blank card where the tool will appear. Then the card is as tall as the tool (ToolPanel
+ * artboard), so the space under it is that `space-2` plus the next section's margin, and
+ * nothing below moves. Without `:has()` the card is as tall as the tool from the start, still
+ * without a shift.
  */
 @utility tool-card {
   &:has(> astro-island:empty) {
-    min-height: inherit;
+    min-height: calc(var(--tool-reserve) - var(--space-2));
   }
 }

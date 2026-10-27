@@ -128,16 +128,16 @@ const jsonLd = serializeJsonLd(
     file input that silently ignores files picked before hydration finishes.
   */}
   {/*
-    An outer box reserves the usual height of a tool's controls (tool-reserve, measured per
-    screen width), so the text below does not jump when the client-only widget appears
-    (layout shift, a Core Web Vital). The card inside it fills the reserve only until the tool
-    renders (tool-card), then is as tall as the tool, as in the ToolPanel artboard: a short
-    panel leaves page background under the card, not a blank band inside it. Content added
-    later, such as results, may still grow the page: that follows a user action and does not
-    count as a shift. It keeps the full width under 1024 px, where tool-reserve was measured;
-    from 1024 px it is inset from the block's edges, as in the design.
+    An outer box reserves the tool's height at each screen width (tool-reserve, measured), so
+    the text below does not jump when the client-only widget appears (layout shift, a Core Web
+    Vital). The card inside it fills the reserve only until the tool renders (tool-card), then
+    is as tall as the tool, as in the ToolPanel artboard. Under the card the box keeps
+    `space-2`, and the next section adds `space-10` (`space-14` from 1024 px): the artboards'
+    48 px (64 px on desktop) in every state. Content added later, such as results, may still
+    grow the page: that follows a user action and does not count as a shift. It keeps the
+    full width under 1024 px; from 1024 px it is inset from the block's edges, as in the design.
   */}
-  <div class="tool-reserve relative -mt-10 lg:mx-8 lg:-mt-16">
+  <div class="tool-reserve relative -mt-10 pb-2 lg:mx-8 lg:-mt-16">
     <div data-tool-card class="tool-card rounded-xl-squish-a bg-surface-card p-5 sm:p-8">
       <ToolIsland
         client:only="react"
@@ -153,7 +153,7 @@ const jsonLd = serializeJsonLd(
   </div>
   {
     steps.length > 0 && (
-      <section aria-labelledby="tool-steps" class="mt-16 flex flex-col gap-4 lg:hidden">
+      <section aria-labelledby="tool-steps" class="mt-10 flex flex-col gap-4 lg:hidden">
         <h2 id="tool-steps" class="type-title-sm sm:type-title">{m.tool_steps_heading({}, { locale })}</h2>
         <ol class="flex flex-col gap-3">
           {steps.map((step, index) => (
@@ -166,8 +166,12 @@ const jsonLd = serializeJsonLd(
       </section>
     )
   }
-  {/* From 1024 px: the copy and its FAQ on the left, the tool's other pages and facts beside it. */}
-  <div class="mt-16 grid gap-16 lg:grid-cols-3 lg:gap-14 lg:px-8">
+  {/*
+    From 1024 px: the copy and its FAQ on the left, the tool's other pages and facts beside it.
+    It follows the tool panel from 1024 px (and below, on a tool without steps), the steps
+    section otherwise.
+  */}
+  <div class:list={['grid gap-16 lg:mt-14 lg:grid-cols-3 lg:gap-14 lg:px-8', steps.length > 0 ? 'mt-16' : 'mt-10']}>
     <article class="page-copy lg:col-span-2">
       {/* The page's description leads the long-form copy, keeping the hero short on phones. */}
       <p class="type-body-lg">{meta.description}</p>
