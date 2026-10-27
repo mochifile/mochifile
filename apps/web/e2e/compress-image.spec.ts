@@ -52,6 +52,26 @@ async function downloadResult(page: Page, index = 0) {
   return { name: file.suggestedFilename(), bytes: await downloadBytes(file) }
 }
 
+/**
+ * The privacy line closes the tool panel in every state (ToolPanel artboard): the promise in
+ * bold, after the options, the dropzone and any results.
+ */
+async function expectPrivacyLineLast(page: Page, lead: string) {
+  const line = page.locator('p').filter({ has: page.locator('strong', { hasText: lead }) })
+  await expect(line).toBeVisible()
+  const placement = await line.evaluate((el) => ({
+    last: el.parentElement?.lastElementChild === el,
+    afterRows: [...document.querySelectorAll('li[data-status]')].every((row) =>
+      Boolean(row.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ),
+    afterDropzone: Boolean(
+      (document.querySelector('input[type="file"]')?.compareDocumentPosition(el) ?? 0) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ),
+  }))
+  expect(placement).toEqual({ last: true, afterRows: true, afterDropzone: true })
+}
+
 test.describe('compress image to 50 KB', () => {
   test('preselects 50 KB, compresses under it and sends nothing anywhere', async ({ page }) => {
     await page.goto('/compress-image-to-50kb/')
@@ -70,6 +90,7 @@ test.describe('compress image to 50 KB', () => {
     // One photo: the banner says the result, the row lists the facts.
     await expect(page.getByText('Ready! It fits your 50 KB limit.')).toBeVisible()
     await expect(rows(page).first()).toContainText('Fits 50 KB')
+    await expectPrivacyLineLast(page, 'Your photos never leave your device.')
     expect(requests).toEqual([])
 
     // "Compress another" clears the list and returns to "Choose photos".
@@ -90,12 +111,14 @@ test.describe('compress image to 50 KB', () => {
     await expect(
       page.getByRole('heading', { level: 2, name: '3. Escolha suas fotos' }),
     ).toBeVisible()
+    await expectPrivacyLineLast(page, 'Suas fotos nunca saem do seu dispositivo.')
     await waitForEngine(page)
     await add(page, await photo('flowers'))
     const result = await downloadResult(page)
     expect(result.bytes.length).toBeLessThanOrEqual(50_000)
     await expect(page.getByText('Pronto! Cabe no seu limite de 50 KB.')).toBeVisible()
     await expect(rows(page).first()).toContainText('Cabe em 50 KB')
+    await expectPrivacyLineLast(page, 'Suas fotos nunca saem do seu dispositivo.')
   })
 })
 
