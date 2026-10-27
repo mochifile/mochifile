@@ -1,6 +1,7 @@
 import { Button, buttonClasses, cn, Mascot, Notice, ProgressBar } from '@mochifile/ui'
 import type { ReactNode } from 'react'
 import { DownloadIcon } from './DownloadIcon.tsx'
+import { FileName } from './FileName.tsx'
 import type { QueueItem } from './use-file-queue.ts'
 
 /** Text supplied by each tool through its locale's Paraglide messages. */
@@ -28,11 +29,23 @@ export interface ResultRowProps<Settings, Meta> {
   resultActions?: ReactNode
   /** Takes the file out of the list; shows a remove button in every state. */
   onRemove?: () => void
+  /** The file's icon tile (`FileTile`), shown at the start of the row. */
+  icon?: ReactNode
+  /**
+   * Whether the mascot squishes beside a file being processed. Off when a `BatchStatus` above
+   * the list already shows it: at most one mascot per region (README › Mascot).
+   */
+  mascot?: boolean
 }
 
 const RESULT_SQUISH = ['rounded-lg-squish-a', 'rounded-lg-squish-b', 'rounded-lg-squish-c'] as const
 
-/** The shared file status, progress, result and download row used by batch tools. */
+/**
+ * The shared file row of batch tools: icon, name (one line, the extension always visible),
+ * size, status or progress, then the result, its details and actions. A file that failed gets
+ * a danger outline as well as its message; one that cannot reach the target (an attention,
+ * not an error) gets an attention message only.
+ */
 export function ResultRow<Settings, Meta>({
   item,
   index,
@@ -44,11 +57,24 @@ export function ResultRow<Settings, Meta>({
   resultDetails,
   resultActions,
   onRemove,
+  icon,
+  mascot = true,
 }: ResultRowProps<Settings, Meta>) {
+  const done = item.status === 'done' && item.result !== undefined
+  const unreachable = item.error?.code === 'target-unreachable'
+  const failed = item.status === 'error' && !unreachable
+  const statusText =
+    item.status === 'queued'
+      ? labels.waiting
+      : item.status === 'working'
+        ? stageMessage(item.stage)
+        : item.status === 'cancelled'
+          ? labels.cancelled
+          : undefined
   const removeButton = onRemove && labels.remove && (
     <Button
       variant="secondary"
-      className="w-full sm:w-auto"
+      className="ms-auto"
       aria-label={labels.removeNamed?.(item.file.name) ?? labels.remove}
       data-remove={item.id}
       onClick={onRemove}
@@ -59,61 +85,66 @@ export function ResultRow<Settings, Meta>({
   return (
     <li
       className={cn(
-        'flex flex-col gap-3 bg-surface-page p-4 sm:p-5',
+        'flex gap-3 bg-surface-page p-4 sm:gap-4 sm:p-5',
         RESULT_SQUISH[index % RESULT_SQUISH.length],
-        item.status === 'done' && 'motion-safe:animate-ready',
+        failed && 'border-chip border-danger',
+        done && 'motion-safe:animate-ready',
       )}
       data-status={item.status}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span className="min-w-0 break-all type-body-strong">{item.file.name}</span>
-        <span className={item.result ? 'type-title-sm text-ink' : 'type-body-sm text-ink-muted'}>
-          {item.result
-            ? sizeSummary(item.file.size, item.result.blob.size)
-            : formatBytes(item.file.size)}
-        </span>
-      </div>
-      <div aria-live="polite" className="flex flex-col gap-3">
-        {item.status === 'queued' && (
-          <span className="type-body-sm text-ink-muted">{labels.waiting}</span>
-        )}
-        {item.status === 'working' && (
-          <div className="flex items-center gap-3">
-            <Mascot state="squish" className="w-14" />
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <span className="type-body-sm">{stageMessage(item.stage)}</span>
-              <ProgressBar value={item.progress} label={labels.progressLabel(item.file.name)} />
-            </div>
-          </div>
-        )}
-        {item.status === 'cancelled' && (
-          <span className="type-body-sm text-ink-muted">{labels.cancelled}</span>
-        )}
-        {item.status === 'error' && (
-          <div role="alert">
-            <Notice tone="danger">{errorMessage(item)}</Notice>
-          </div>
-        )}
-        {item.status === 'done' && item.result && resultDetails}
-      </div>
-      {item.status === 'done' && item.result && (
-        <div className="flex flex-wrap gap-3">
-          <a
-            href={item.result.url}
-            download={item.result.name}
-            aria-label={labels.downloadNamed(item.result.name)}
-            className={buttonClasses('primary', 'w-full sm:w-auto')}
+      {icon}
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
+          <FileName name={item.file.name} className="type-body-strong sm:flex-1" />
+          <span
+            className={cn(
+              'shrink-0',
+              item.result ? 'type-title-sm text-ink' : 'type-body-sm text-ink-muted',
+            )}
           >
-            <DownloadIcon />
-            {labels.download}
-          </a>
-          {resultActions}
-          {removeButton}
+            {item.result
+              ? sizeSummary(item.file.size, item.result.blob.size)
+              : formatBytes(item.file.size)}
+          </span>
         </div>
-      )}
-      {!(item.status === 'done' && item.result) && removeButton && (
-        <div className="flex flex-wrap gap-3">{removeButton}</div>
-      )}
+        <div aria-live="polite" className="flex flex-col gap-3 empty:hidden">
+          {statusText !== undefined && item.status !== 'working' && (
+            <span className="type-body-sm text-ink-muted">{statusText}</span>
+          )}
+          {item.status === 'working' && (
+            <div className="flex items-center gap-3">
+              {mascot && <Mascot state="squish" className="w-14" />}
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <span className="type-body-sm">{statusText}</span>
+                <ProgressBar value={item.progress} label={labels.progressLabel(item.file.name)} />
+              </div>
+            </div>
+          )}
+          {item.status === 'error' && (
+            <div role="alert">
+              <Notice tone={unreachable ? 'warning' : 'danger'}>{errorMessage(item)}</Notice>
+            </div>
+          )}
+          {done && resultDetails}
+        </div>
+        {(done || removeButton) && (
+          <div className="flex flex-wrap items-center gap-3">
+            {done && item.result && (
+              <a
+                href={item.result.url}
+                download={item.result.name}
+                aria-label={labels.downloadNamed(item.result.name)}
+                className={buttonClasses('primary', 'w-full sm:w-auto')}
+              >
+                <DownloadIcon />
+                {labels.download}
+              </a>
+            )}
+            {done && resultActions}
+            {removeButton}
+          </div>
+        )}
+      </div>
     </li>
   )
 }

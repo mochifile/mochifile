@@ -80,4 +80,47 @@ describe('ResultRow', () => {
     fireEvent.click(button)
     expect(onRemove).toHaveBeenCalledOnce()
   })
+
+  it('outlines a failed file in danger, and shows an unreachable target as an attention', () => {
+    const view = row({
+      ...base,
+      status: 'error',
+      error: { code: 'invalid-file', details: undefined },
+    })
+    const li = () => view.container.querySelector('li')
+    expect(li()?.className).toContain('border-danger')
+    expect(screen.getByRole('alert').firstElementChild?.className).toContain('bg-danger-tint')
+    view.rerender(
+      <ul>
+        <ResultRow
+          {...props}
+          item={{
+            ...base,
+            status: 'error',
+            error: { code: 'target-unreachable', details: { smallestBytes: 61_000 } },
+          }}
+        />
+      </ul>,
+    )
+    expect(li()?.className).not.toContain('border-danger')
+    expect(screen.getByRole('alert').firstElementChild?.className).toContain('bg-warning-tint')
+  })
+
+  it('leaves the mascot to a batch status when asked, and shows the icon tile', () => {
+    const view = row({ ...base, status: 'working', progress: 0.2 })
+    expect(view.container.querySelectorAll('svg')).toHaveLength(1)
+    view.rerender(
+      <ul>
+        <ResultRow
+          {...props}
+          item={{ ...base, status: 'working', progress: 0.2 }}
+          mascot={false}
+          icon={<span data-testid="tile" />}
+        />
+      </ul>,
+    )
+    expect(view.container.querySelector('svg')).toBeNull()
+    expect(screen.getByTestId('tile')).toBeDefined()
+    expect(screen.getByText('photo.jpg', { selector: '.sr-only' })).toBeDefined()
+  })
 })
