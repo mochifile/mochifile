@@ -34,6 +34,11 @@ const pillWidth: Record<Locale, string> = {
   en: 'lg:w-language-link-en',
   pt: 'lg:w-language-link-pt',
 }
+/** The pill's accessible name: the action, in this page's language ("Switch to Portuguese"). */
+const switchTo: Record<Locale, () => string> = {
+  en: () => m.nav_switch_to_en({}, { locale }),
+  pt: () => m.nav_switch_to_pt({}, { locale }),
+}
 const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
 ---
 
@@ -85,16 +90,16 @@ const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
       {/*
         The other language, as one pill with a globe (SiteHeader artboard; ADR 0007): a plain
         link to this page's alternate, so no menu and no script. Under 1024 px it shows the
-        language's code, "EN", beside the menu button; from 1024 px its name, "English". Its
-        accessible name is the name at every width, read in that language (`lang`). The pill has
-        a fixed width, so the font swap never moves it.
+        language's code, "EN", beside the menu button; from 1024 px its name, "English", each
+        in that language (`lang`). Its accessible name is the action, in this page's language:
+        "Mudar para inglês". The pill has a fixed width, so the font swap never moves it.
       */}
       {
         otherLocales.map((target) => (
           <a
             href={paths[target]}
             hreflang={localeTags[target]}
-            lang={localeTags[target]}
+            aria-label={switchTo[target]()}
             data-language-switch
             class:list={[
               'press inline-flex min-h-target-min w-language-link-phone items-center justify-center gap-2 rounded-pill border-chip border-border-control px-3 text-ink hover:border-ink focus-ring lg:px-4',
@@ -116,10 +121,12 @@ const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
               <path d="M12 3c3 3 3 15 0 18-3-3-3-15 0-18" />
             </svg>
             {/* Locale ids are two-letter language codes ("en", "pt"). */}
-            <span aria-hidden="true" class="type-caption font-bold lg:hidden">
+            <span lang={localeTags[target]} class="type-caption font-bold lg:hidden">
               {target.toUpperCase()}
             </span>
-            <span class="type-body-sm font-semibold max-lg:sr-only">{localeNames[target]}</span>
+            <span lang={localeTags[target]} class="type-body-sm font-semibold max-lg:hidden">
+              {localeNames[target]}
+            </span>
           </a>
         ))
       }
