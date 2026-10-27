@@ -150,61 +150,126 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
 
   const summary = summarizeQueue(items)
   const cancelledIds = items.filter((item) => item.status === 'cancelled').map((item) => item.id)
-  // One file's row already says it all; a batch also gets counts, then one summary.
-  const summaryText =
-    summary.total < 2
-      ? ''
-      : summary.pending > 0
-        ? m.compress_image_progress_count(
-            { done: String(summary.done), total: String(summary.total) },
-            { locale },
-          )
-        : summary.cancelled > 0
-          ? m.compress_image_summary_cancelled(
-              { done: String(summary.done), total: String(summary.total) },
-              { locale },
-            )
-          : summary.failed > 0
-            ? m.compress_image_summary_mixed(
-                { done: String(summary.done), total: String(summary.total) },
-                { locale },
-              )
-            : m.compress_image_summary_done(
-                {
-                  before: formatSize(summary.bytesBefore, locale),
-                  after: formatSize(summary.bytesAfter, locale),
-                },
-                { locale },
-              )
-
-  // The batch area: preparing, then working, then one banner for a finished batch (proposal
-  // v1.1 › Result banner, for two or more photos; one photo's row says it all).
+  // The list's state above its rows (proposal v1.1 › Result banner): preparing, then working
+  // with counts for a batch, then one banner when it is finished. A single photo gets a banner
+  // for its result; while it works, fails or is cancelled its row says it all.
   const batch = summary.total > 1
+  const only = summary.total === 1 ? items[0] : undefined
+  const onlyResult = only?.status === 'done' ? only.result : undefined
   const preparing = summary.pending > 0 && engine === 'loading'
   const batchTone: BatchStatusTone =
     preparing || (busy && batch && engine === 'ready')
       ? 'working'
-      : busy || !batch
+      : busy
         ? 'plain'
-        : summary.cancelled > 0
-          ? 'cancelled'
-          : summary.failed > 0
-            ? 'attention'
-            : 'ready'
-  const countText = m.compress_image_progress_count(
-    { done: String(summary.done), total: String(summary.total) },
-    { locale },
-  )
-  const batchTitle =
-    batchTone !== 'working'
-      ? summaryText
-      : preparing
-        ? m.compress_image_preparing({}, { locale })
-        : m.compress_image_status_encoding({}, { locale })
-  const batchDetail = batchTone === 'working' && batch ? countText : ''
+        : !batch
+          ? onlyResult
+            ? 'ready'
+            : 'plain'
+          : summary.cancelled > 0
+            ? 'cancelled'
+            : summary.failed > 0
+              ? 'attention'
+              : 'ready'
+  const rest = summary.total - summary.done
+  const sizes = (before: number, after: number) =>
+    m.compress_image_sizes(
+      { before: formatSize(before, locale), after: formatSize(after, locale) },
+      { locale },
+    )
+  const [batchTitle, batchDetail] = ((): [string, string] => {
+    if (batchTone === 'working') {
+      const count = batch
+        ? m.compress_image_progress_count(
+            { done: String(summary.done), total: String(summary.total) },
+            { locale },
+          )
+        : ''
+      return preparing
+        ? [m.compress_image_preparing({}, { locale }), count]
+        : [m.compress_image_working_title({}, { locale }), count]
+    }
+    if (batchTone === 'ready' && only && onlyResult) {
+      const { meta } = onlyResult
+      const target = formatSize(only.settings.targetBytes, locale)
+      if (meta.outcome === 'already-under') {
+        return [
+          m.compress_image_already_under_title({ target }, { locale }),
+          m.compress_image_already_under_detail(
+            {
+              before: formatSize(only.file.size, locale),
+              after: formatSize(onlyResult.blob.size, locale),
+            },
+            { locale },
+          ),
+        ]
+      }
+      return [
+        m.compress_image_result_under({ target }, { locale }),
+        meta.converted
+          ? m.compress_image_result_sizes_converted(
+              {
+                before: formatSize(only.file.size, locale),
+                after: formatSize(onlyResult.blob.size, locale),
+                format: FORMAT_LABEL[meta.format],
+              },
+              { locale },
+            )
+          : sizes(only.file.size, onlyResult.blob.size),
+      ]
+    }
+    if (batchTone === 'ready') {
+      // One target for the whole batch says "fit 50 KB"; mixed targets, only that it is done.
+      const targets = new Set(done.map((item) => item.settings.targetBytes))
+      const [target] = targets
+      const count = String(summary.total)
+      return [
+        targets.size === 1 && target !== undefined
+          ? m.compress_image_batch_ready({ count, target: formatSize(target, locale) }, { locale })
+          : m.compress_image_batch_ready_any({ count }, { locale }),
+        m.compress_image_batch_total(
+          {
+            before: formatSize(summary.bytesBefore, locale),
+            after: formatSize(summary.bytesAfter, locale),
+          },
+          { locale },
+        ),
+      ]
+    }
+    // Portuguese plural rules count 0 as "one", so "none ready" has sentences of its own.
+    if (batchTone === 'attention') {
+      return summary.done === 0
+        ? [
+            m.compress_image_batch_none({}, { locale }),
+            m.compress_image_batch_none_detail({}, { locale }),
+          ]
+        : [
+            m.compress_image_batch_mixed(
+              { done: summary.done, total: String(summary.total) },
+              { locale },
+            ),
+            m.compress_image_batch_mixed_detail({ rest }, { locale }),
+          ]
+    }
+    if (batchTone === 'cancelled') {
+      return [
+        m.compress_image_batch_cancelled({}, { locale }),
+        summary.done === 0
+          ? m.compress_image_cancelled_none({}, { locale })
+          : `${m.compress_image_cancelled_done({ count: summary.done }, { locale })} ${m.compress_image_cancelled_rest({ count: rest }, { locale })}`,
+      ]
+    }
+    return ['', '']
+  })()
   // Full width on phones inside the tool panel, as every button there (Button README).
   const batchButton = 'w-full sm:w-auto'
   const batchSecondary = isBlockTone(batchTone) ? 'secondary-on-block' : 'secondary'
+  // "Compress more" clears the finished list and returns to "Choose photos" (launch
+  // specification › accessibility); while photos are processed, "Clear list" stops them.
+  const compressMore = () => {
+    clearFiles()
+    setFocusTarget('input[type="file"]')
+  }
 
   const stale =
     targetBytes !== undefined &&
@@ -282,6 +347,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                 <SizeChips
                   legend={m.compress_image_target_legend({}, { locale })}
                   legendClassName="max-sm:sr-only"
+                  headingLevel={2}
                   value={targetChoice}
                   onChange={setTargetChoice}
                   // Image tools use the mango block (design system README › Colour).
@@ -361,6 +427,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
               <Segmented
                 legend={m.compress_image_format_legend({}, { locale })}
                 legendClassName="max-sm:sr-only"
+                headingLevel={2}
                 value={format}
                 onChange={setFormat}
                 options={[
@@ -396,6 +463,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
             accept={manifest.accepts.join(',')}
             disabled={targetBytes === undefined}
             stepLabel={m.compress_image_drop_step({}, { locale })}
+            stepHeadingLevel={2}
             label={m.compress_image_drop_label({}, { locale })}
             hint={m.compress_image_drop_hint(
               {
@@ -499,9 +567,17 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                     {m.compress_image_download_all({}, { locale })}
                   </Button>
                 )}
-                <Button variant={batchSecondary} className={batchButton} onClick={clearFiles}>
-                  {m.compress_image_clear({}, { locale })}
-                </Button>
+                {busy ? (
+                  <Button variant={batchSecondary} className={batchButton} onClick={clearFiles}>
+                    {m.compress_image_clear({}, { locale })}
+                  </Button>
+                ) : (
+                  <Button variant={batchSecondary} className={batchButton} onClick={compressMore}>
+                    {batch
+                      ? m.compress_image_compress_more({}, { locale })
+                      : m.compress_image_compress_another({}, { locale })}
+                  </Button>
+                )}
               </>
             }
           />
@@ -573,24 +649,19 @@ function ResultDetails({
 }) {
   const { meta } = result
   const size = (width: number, height: number) => `${width} × ${height}`
+  const target = formatSize(item.settings.targetBytes, locale)
+  // Short facts as tags, one plain note for what needs a sentence (launch specification › 1.8).
+  // The resize note does not say why: the 16 MP memory cap also shrinks photos that fit.
   return (
     <>
-      {meta.outcome === 'already-under' ? (
-        <Notice tone="success">
-          {m.compress_image_already_under(
-            { target: formatSize(item.settings.targetBytes, locale) },
-            { locale },
-          )}
-        </Notice>
-      ) : (
-        <Notice tone="success">
-          {m.compress_image_result_under(
-            { target: formatSize(item.settings.targetBytes, locale) },
-            { locale },
-          )}
-        </Notice>
-      )}
       <ul className="flex flex-wrap gap-2">
+        <li>
+          {meta.outcome === 'already-under' ? (
+            <Tag tone="info">{m.compress_image_tag_already_under({ target }, { locale })}</Tag>
+          ) : (
+            <Tag tone="success">{m.compress_image_tag_fits({ target }, { locale })}</Tag>
+          )}
+        </li>
         <li>
           <Tag tone="success">{m.compress_image_tag_metadata({}, { locale })}</Tag>
         </li>
@@ -603,18 +674,26 @@ function ResultDetails({
         )}
         {meta.resized && (
           <li>
-            <Tag tone="warning">
-              {m.compress_image_resized(
-                {
-                  from: size(meta.originalWidth, meta.originalHeight),
-                  to: size(meta.width, meta.height),
-                },
-                { locale },
-              )}
-            </Tag>
+            <Tag tone="warning">{m.compress_image_tag_resized({}, { locale })}</Tag>
           </li>
         )}
       </ul>
+      {meta.outcome === 'already-under' && (
+        <p className="type-body-sm text-ink-muted">
+          {m.compress_image_already_under_note({}, { locale })}
+        </p>
+      )}
+      {meta.resized && (
+        <p className="type-body-sm text-ink-muted">
+          {m.compress_image_resized(
+            {
+              from: size(meta.originalWidth, meta.originalHeight),
+              to: size(meta.width, meta.height),
+            },
+            { locale },
+          )}
+        </p>
+      )}
       {meta.flattenedTransparency && (
         <Notice tone="warning">{m.compress_image_flattened({}, { locale })}</Notice>
       )}
