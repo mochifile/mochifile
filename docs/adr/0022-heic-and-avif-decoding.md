@@ -114,3 +114,41 @@ touches one engine module and this ADR.
 - Access Advance software statement (2016): https://www.prnewswire.com/news-releases/hevc-advance-announces-royalty-free-hevc-software-300367212.html
 - Access Advance acquires the Via LA HEVC/VVC programme (2025): https://accessadvance.com/2025/12/15/access-advance-and-via-licensing-alliance-announce-hevc-vvc-program-acquisition/
 - FSF on combining AGPLv3 with GPLv3-family licences: https://www.fsf.org/bulletin/2021/fall/the-fundamentals-of-the-agplv3
+
+## Updates
+
+- **2026-10-27: the WebAssembly limit is 25 MP, and what a conversion costs in memory.**
+  - **The problem.** The limit was 24 MP (`WASM_MAX_PIXELS`). iPhone 15 and 16 save their default
+    photos at **5712 × 4284 = 24,470,208 pixels**, 2% over, so the people this tool is for
+    (iPhone photos on Windows and Android, where only WebAssembly reads HEIC) got "too large"
+    for an ordinary photo. A real 24.47 MP HEIC was refused by the code on `main`; 12 MP passed.
+    Evidence for the dimensions is secondary (no iPhone 15/16 file was available): Apple
+    developer forum threads list `{4032x3024, 5712x4284}` as the 24 MP capture of an iPhone 16
+    Pro Max and `{4032x3024, 8064x6048}` as the 12 and 48 MP sizes of an iPhone 15 Pro, and a
+    posted iPhone 15 photo is 5712 × 4284. A file from an iPhone 15 or newer would confirm it.
+  - **Memory, measured.** HEIC files of 12.2, 24.5, 36, 48.8 and 100 MP were written with
+    Apple's encoder from the iPhone fixture (upscaled, with the Display P3 profile; upscaled
+    content decodes faster than a native photo, but memory depends on the dimensions) and
+    converted with the production code. Desktop, Apple M5, macOS:
+
+    | Conversion to JPG, extra memory over an idle browser (sum of all its processes) | 12.2 MP | 24.5 MP | 48.8 MP | 100 MP |
+    | --- | --- | --- | --- | --- |
+    | Chromium 153, WebAssembly | +0.55 GB | +0.87 GB | +1.46 GB | +2.5 GB |
+    | WebKit 26.6, WebAssembly | +0.73 GB | +1.05 GB | +1.63 GB | +3.0 GB |
+    | WebKit 26.6, native decoding (as Safari on an iPhone) | +0.65 GB | +0.96 GB | +1.68 GB | +2.6 GB |
+
+    That is about 250 MB plus 25 bytes per pixel (29 for PNG), with the native path no lighter
+    than WebAssembly. Decoding alone with libheif peaks near 150 MB plus 10 bytes per pixel
+    (6 in the WebAssembly heap, which never shrinks, and 4 for the pixels in JavaScript). Time
+    for 12 / 24.5 / 48.8 MP: JPG 2.7 / 4.1 / 7.2 s, PNG 5.9 / 14 / 35 s in Chromium. A batch
+    does not leak: in Node, 8 photos of 12 MP in a row grew by about 60 MB at the second file and
+    then by only what the kept outputs hold (5 MB per JPG). **These are desktop numbers. No phone
+    was measured**, and the memory that a phone's browser allows a page is not documented, so no
+    limit above 25 MP is justified yet.
+  - **Decision.** `WASM_MAX_PIXELS` becomes 25 MP: the smallest round number that admits
+    24.47 MP. Everything above is unchanged, and the engine's 100 MP input limit stays.
+  - **Not done, and why.** Letting go of the libheif instance after each decode did not lower
+    the peak (the garbage collector did not return it in time). Ending the worker returned the
+    memory in Chromium (24.5 MP: 1.13 to 0.41 GB) and did not in WebKit within 3 seconds, which
+    may be the measure (resident size) and not the browser.
+

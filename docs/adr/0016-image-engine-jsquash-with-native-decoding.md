@@ -155,3 +155,7 @@ reproducing the notices, which the site will publish with the first tool that sh
   - **Licences.** The notices add libheif 1.23.2 and libde265 1.0.15 (LGPL-3.0, with exact
     source links) and libavif 1.0.1 and libaom 3.7.0 (BSD-2-Clause and the AOMedia Patent
     License). The texts these packages don't ship are kept in `apps/web/integrations/notices/`.
+- **2026-10-27: the 24 MP WebAssembly limit is now 25 MP** (iPhone 15 and 16 photos are 24.47 MP;
+  measurements and reasons in [ADR 0022](0022-heic-and-avif-decoding.md)). The mentions of
+  24 MP above describe the limit when they were written.
+
