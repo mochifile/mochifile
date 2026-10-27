@@ -351,120 +351,85 @@ for (const colorScheme of ['light', 'dark'] as const) {
 }
 
 /**
- * The tool card is as tall as the tool (ToolPanel artboard): the height reserved against layout
- * shift (`tool-reserve`) is on a box around it, so a short tool leaves page background under
- * the card, never a blank band inside it. Every tool page, both languages, every width.
+ * The widths to check the tool reserve at, read from the page's own stylesheets: both sides of
+ * every width where the reserve changes (each `width >=` condition on `.tool-reserve`), and a
+ * width every 16 px. Within a step the panel only gets shorter as the screen widens (its text
+ * wraps less, and the tool has no breakpoint besides the site's 600 and 1024 px, which are
+ * steps too), so a step's first width needs the most room and its last leaves the most space.
  */
-test('the tool card ends with the tool, inside a box that keeps the reserve', async ({
-  testBrowser,
-  request,
-}) => {
-  test.setTimeout(240_000)
-  const paths = await toolPaths(request)
-  const failures: string[] = []
-  for (const width of WIDTHS) {
-    const context = await testBrowser.newContext({
-      ...projectContextOptions(),
-      viewport: { width, height: 900 },
-    })
-    try {
-      const page = await context.newPage()
-      for (const path of paths) {
-        await page.goto(path)
-        await page.locator('[data-tool-card] input[type="file"]').waitFor({ state: 'attached' })
-        await page.evaluate(() => document.fonts.ready)
-        const { band, reserve, box } = await page.evaluate(() => {
-          const card = document.querySelector('[data-tool-card]')
-          const tool = card?.querySelector('astro-island > *')
-          const outer = card?.parentElement
-          if (!card || !tool || !outer) throw new Error('no tool card')
-          const padding = Number.parseFloat(getComputedStyle(card).paddingBottom)
-          return {
-            band:
-              card.getBoundingClientRect().bottom - padding - tool.getBoundingClientRect().bottom,
-            reserve: Number.parseFloat(getComputedStyle(outer).minHeight),
-            box: outer.getBoundingClientRect().height,
+async function reserveWidths(page: Page) {
+  const steps = await page.evaluate(() => {
+    const found = new Set<number>()
+    const visit = (rules: CSSRuleList, media: string[]) => {
+      for (const rule of rules) {
+        const conditions = rule instanceof CSSMediaRule ? [...media, rule.conditionText] : media
+        if (rule instanceof CSSStyleRule && rule.selectorText.includes('.tool-reserve')) {
+          for (const condition of conditions) {
+            const match = /width\s*>=\s*([\d.]+)(px|rem)|min-width:\s*([\d.]+)(px|rem)/.exec(
+              condition,
+            )
+            const value = Number(match?.[1] ?? match?.[3])
+            if (value) found.add((match?.[2] ?? match?.[4]) === 'rem' ? value * 16 : value)
           }
-        })
-        if (Math.abs(band) > 1) failures.push(`${path} at ${width}px: ${band.toFixed(1)} px band`)
-        if (!(reserve > 0) || box < reserve - 0.5) {
-          failures.push(`${path} at ${width}px: box ${box.toFixed(1)} px, reserve ${reserve}`)
         }
+        if ('cssRules' in rule) visit((rule as CSSGroupingRule).cssRules, conditions)
       }
-    } finally {
-      await context.close()
     }
-  }
-  expect(failures).toEqual([])
-})
+    for (const sheet of document.styleSheets) visit(sheet.cssRules, [])
+    return [...found]
+  })
+  // The reserve has steps besides the two site breakpoints (else this check proves nothing).
+  expect(steps.length).toBeGreaterThan(2)
+  const widths = new Set<number>([320, 1440])
+  for (let width = 320; width <= 1440; width += 16) widths.add(width)
+  for (const step of steps) for (const width of [step - 1, step]) widths.add(width)
+  return [...widths].filter((width) => width >= 320 && width <= 1440).sort((a, b) => a - b)
+}
 
-/** Before the tool's JavaScript runs, the card fills the reserve: the tool will appear there. */
-test('the tool card fills the reserve until the tool renders', async ({ testBrowser }) => {
-  test.setTimeout(120_000)
-  const failures: string[] = []
-  for (const width of WIDTHS) {
-    for (const path of ['/compress-image/', '/pt/comprimir-imagem-para-50kb/']) {
-      const context = await testBrowser.newContext({
-        ...projectContextOptions(),
-        viewport: { width, height: 900 },
-      })
-      try {
-        let release = () => {}
-        const held = new Promise<void>((resolve) => {
-          release = resolve
-        })
-        await context.route('**/_astro/*.js', async (route) => {
-          await held
-          await route.continue()
-        })
-        const page = await context.newPage()
-        await page.goto(path, { waitUntil: 'domcontentloaded' })
-        const measure = () =>
-          page.evaluate(() => {
-            const card = document.querySelector('[data-tool-card]')
-            const outer = card?.parentElement
-            if (!card || !outer) throw new Error('no tool card')
-            return {
-              card: card.getBoundingClientRect().height,
-              box: outer.getBoundingClientRect().height,
-              under: Number.parseFloat(getComputedStyle(outer).paddingBottom),
-            }
-          })
-        const before = await measure()
-        // The card fills the reserve but for the space the box keeps under it.
-        if (Math.abs(before.card + before.under - before.box) > 0.5) {
-          failures.push(`${path} at ${width}px: card ${before.card} px, reserve ${before.box} px`)
-        }
-        release()
-        await page.locator('[data-tool-card] input[type="file"]').waitFor({ state: 'attached' })
-        // The tool fits the reserve: the box, and so everything below it, has not moved.
-        const after = await measure()
-        if (Math.abs(after.box - before.box) > 0.5) {
-          failures.push(`${path} at ${width}px: the box went from ${before.box} to ${after.box} px`)
-        }
-      } finally {
-        await context.close()
-      }
+/** The tool card, the box that reserves its height, and what follows them, at the current width. */
+function measureCard(page: Page) {
+  return page.evaluate(() => {
+    const card = document.querySelector('[data-tool-card]')
+    const box = card?.parentElement
+    let next = box?.nextElementSibling
+    while (next && next.getBoundingClientRect().height === 0) next = next.nextElementSibling
+    if (!card || !box || !next) throw new Error('no tool card')
+    const tool = card.querySelector('astro-island > *')
+    const space = Number.parseFloat(getComputedStyle(box).paddingBottom)
+    const cardBox = card.getBoundingClientRect()
+    return {
+      card: cardBox.height,
+      box: box.getBoundingClientRect().height,
+      space,
+      reserve: Number.parseFloat(getComputedStyle(box).minHeight),
+      // Blank band between the tool and the card's bottom padding (none: the card hugs it).
+      band: tool
+        ? cardBox.bottom -
+          Number.parseFloat(getComputedStyle(card).paddingBottom) -
+          tool.getBoundingClientRect().bottom
+        : null,
+      under: next.getBoundingClientRect().top - cardBox.bottom,
     }
-  }
-  expect(failures).toEqual([])
-})
+  })
+}
 
 /**
- * The reserve follows the tool closely at every width: the tool never outgrows it (nothing
- * below moves when the tool renders), and under the card there is the artboards' space,
- * 48 px under 1024 px and 64 px from 1024 px, plus at most a line of slack where the panel's
- * text wraps differently between pages. With the brand fonts, and with the text face's
- * fallback, which the tool may render with before that face arrives (the display face is
- * preloaded). Every tool page, 320–1440 px every 4 px (8 px with the fallback).
+ * The reserve fits the tool at every width (ToolPanel and Workspace artboards): the card is as
+ * tall as the tool, the tool never needs more than the box reserves (nothing below moves when
+ * it renders), and under the card there is the artboards' space, 48 px under 1024 px and 64 px
+ * from 1024 px, plus at most a line where the panel's text wraps differently between pages.
+ * Also with the text face's fallback, which the tool may render with before that face arrives
+ * (the display face is preloaded). Every tool page; layout follows CSS alone (no script reads
+ * the width), so one load per page and a resize per width are enough.
  */
 for (const fonts of ['brand', 'fallback'] as const) {
   test(`the reserve fits the tool at every width (${fonts} fonts)`, async ({
     testBrowser,
     request,
   }) => {
-    test.setTimeout(300_000)
+    test.setTimeout(240_000)
     const paths = await toolPaths(request)
+    expect(paths.length).toBeGreaterThan(0)
     const failures: string[] = []
     for (const path of paths) {
       const context = await testBrowser.newContext({
@@ -474,8 +439,6 @@ for (const fonts of ['brand', 'fallback'] as const) {
       try {
         const page = await context.newPage()
         if (fonts === 'fallback') {
-          // The display face is preloaded (BaseLayout), so it is in place for the first paint;
-          // the others can arrive after the tool renders.
           const html = await (await page.request.get(path)).text()
           const preloaded = new Set(
             [...html.matchAll(/<link rel="preload" href="([^"]+\.woff2)"/g)].map((m) => m[1]),
@@ -489,32 +452,23 @@ for (const fonts of ['brand', 'fallback'] as const) {
         await page.goto(path)
         await page.locator('[data-tool-card] input[type="file"]').waitFor({ state: 'attached' })
         if (fonts === 'brand') await page.evaluate(() => document.fonts.ready)
-        // Every 4 px with the brand fonts; every 8 px is enough to catch the fallback's line breaks.
-        for (let width = 320; width <= 1440; width += fonts === 'brand' ? 4 : 8) {
+        for (const width of await reserveWidths(page)) {
           await page.setViewportSize({ width, height: 900 })
-          // Layout follows CSS alone (no script reads the width), so reading it after the
-          // resize gives the new layout.
-          const { tool, reserve, under } = await page.evaluate(() => {
-            const card = document.querySelector('[data-tool-card]')
-            const outer = card?.parentElement
-            let next = outer?.nextElementSibling
-            while (next && next.getBoundingClientRect().height === 0) next = next.nextElementSibling
-            if (!card || !outer || !next) throw new Error('no tool card')
-            return {
-              tool:
-                card.getBoundingClientRect().height +
-                Number.parseFloat(getComputedStyle(outer).paddingBottom),
-              reserve: Number.parseFloat(getComputedStyle(outer).minHeight),
-              under: next.getBoundingClientRect().top - card.getBoundingClientRect().bottom,
-            }
-          })
+          const m = await measureCard(page)
+          const tool = m.card + m.space
           const designed = width >= DESKTOP ? 64 : 48
-          if (tool > reserve + 0.5) {
+          if (tool > m.reserve + 0.5) {
             failures.push(
-              `${path} at ${width}px: the tool needs ${tool} px, the reserve is ${reserve}`,
+              `${path} at ${width}px: the tool needs ${tool} px, the reserve is ${m.reserve}`,
             )
-          } else if (fonts === 'brand' && (under < designed - 0.5 || under > designed + 56)) {
-            failures.push(`${path} at ${width}px: ${under.toFixed(1)} px under the card`)
+          } else if (fonts === 'brand') {
+            if (m.band !== null && Math.abs(m.band) > 1)
+              failures.push(`${path} at ${width}px: ${m.band.toFixed(1)} px band in the card`)
+            if (m.box < m.reserve - 0.5)
+              failures.push(`${path} at ${width}px: box ${m.box} px, reserve ${m.reserve}`)
+            if (m.under < designed - 0.5 || m.under > designed + 56) {
+              failures.push(`${path} at ${width}px: ${m.under.toFixed(1)} px under the card`)
+            }
           }
         }
       } finally {
@@ -524,3 +478,51 @@ for (const fonts of ['brand', 'fallback'] as const) {
     expect(failures).toEqual([])
   })
 }
+
+/**
+ * Before the tool's JavaScript runs, the card fills the reserve but for the space the box keeps
+ * under it, at every width (in each language's table); then the tool renders and the box, and
+ * so everything below it, stays where it was.
+ */
+test('the tool card fills the reserve until the tool renders', async ({ testBrowser }) => {
+  test.setTimeout(120_000)
+  const failures: string[] = []
+  for (const path of ['/compress-image/', '/pt/comprimir-imagem-para-50kb/']) {
+    const context = await testBrowser.newContext({
+      ...projectContextOptions(),
+      viewport: { width: 320, height: 900 },
+    })
+    try {
+      let release = () => {}
+      const held = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      await context.route('**/_astro/*.js', async (route) => {
+        await held
+        await route.continue()
+      })
+      const page = await context.newPage()
+      await page.goto(path, { waitUntil: 'domcontentloaded' })
+      for (const width of await reserveWidths(page)) {
+        await page.setViewportSize({ width, height: 900 })
+        const m = await measureCard(page)
+        if (Math.abs(m.card + m.space - m.box) > 0.5 || Math.abs(m.box - m.reserve) > 0.5) {
+          failures.push(
+            `${path} at ${width}px: card ${m.card} px, box ${m.box} px, reserve ${m.reserve}`,
+          )
+        }
+      }
+      await page.setViewportSize({ width: 390, height: 844 })
+      const before = await measureCard(page)
+      release()
+      await page.locator('[data-tool-card] input[type="file"]').waitFor({ state: 'attached' })
+      const after = await measureCard(page)
+      if (Math.abs(after.box - before.box) > 0.5) {
+        failures.push(`${path}: the box went from ${before.box} to ${after.box} px`)
+      }
+    } finally {
+      await context.close()
+    }
+  }
+  expect(failures).toEqual([])
+})
