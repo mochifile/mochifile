@@ -67,15 +67,17 @@ const jsonLd = serializeJsonLd(
     overlaps its bottom edge. From 1024 px the steps sit beside the title; below that they
     follow the tool panel, so the panel's primary action stays above the fold on phones.
   */}
-  <div class:list={['rounded-2xl-squish-a px-5 pt-4 pb-16 text-ink-on-block sm:px-10 sm:pt-8 lg:flex lg:items-start lg:gap-10 lg:px-14 lg:pt-10', categoryBlock[manifest.category]]}>
+  <div class:list={['rounded-2xl-squish-a px-5 pt-1 pb-16 text-ink-on-block sm:px-10 sm:pt-5 lg:flex lg:items-start lg:gap-10 lg:px-14 lg:pt-10', categoryBlock[manifest.category]]}>
   {/* From 1024 px the panel overlaps the block further (`space-16`); this keeps the gap above it. */}
   <div class="min-w-0 lg:mb-10 lg:flex-1">
-  <nav aria-label={m.breadcrumb_label({}, { locale })} class="mb-2 type-caption">
+  <nav aria-label={m.breadcrumb_label({}, { locale })} class="type-caption lg:mb-4">
     {/*
       On phones only the parent level shows (the logo already links home), on one line, a long
       name cut with "…"; the other crumbs and full names stay for screen readers. Wrapping or
       neighbours of varying width would depend on the font, and the hero must keep its layout
-      when the brand font replaces the fallback, or the page would shift.
+      when the brand font replaces the fallback, or the page would shift. Links are 44 px
+      targets (README › Layout: `target-min`), as in the Workspace artboards; the block's top
+      padding gives back the extra height, so the H1 stays where it was on phones.
     */}
     <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
       {
@@ -88,7 +90,7 @@ const jsonLd = serializeJsonLd(
               {current ? (
                 <span aria-current="page">{item.name}</span>
               ) : (
-                <a href={item.path} class="min-w-0 rounded-sm underline focus-ring max-sm:truncate">{item.name}</a>
+                <a href={item.path} class="min-w-0 rounded-sm py-3 underline focus-ring max-sm:truncate">{item.name}</a>
               )}
             </li>
           )
@@ -97,17 +99,18 @@ const jsonLd = serializeJsonLd(
     </ol>
   </nav>
   {/* Everything except the interactive widget is static HTML, for SEO and no-JS visitors. */}
-  <h1 class="type-title sm:type-display-xl">{meta.title}</h1>
+  {/* Balanced lines, as in the Workspace artboards ("Compress image / to 50 KB"). */}
+  <h1 class="type-title text-balance sm:type-display-xl">{meta.title}</h1>
   {/*
     Two lines are reserved on phones (a tagline has at most 60 characters, so it never needs
     more): the fallback font can wrap it differently from Figtree, and the hero must keep its
     height when the font swaps in, or the tool panel below would shift.
   */}
-  <p class="mt-2 min-h-14 max-w-reading-max type-body sm:min-h-0 sm:type-body-lg">{meta.tagline}</p>
+  <p class="mt-2 min-h-14 max-w-reading-max type-body sm:min-h-0 sm:type-body-lg lg:mt-4">{meta.tagline}</p>
   </div>
   {
     steps.length > 0 && (
-      <ol aria-label={m.tool_steps_heading({}, { locale })} data-hero-steps class="hidden lg:mt-10 lg:flex lg:w-1/3 lg:shrink-0 lg:flex-col lg:gap-3">
+      <ol aria-label={m.tool_steps_heading({}, { locale })} data-hero-steps class="hidden lg:mt-14 lg:flex lg:w-1/3 lg:shrink-0 lg:flex-col lg:gap-3">
         {steps.map((step, index) => (
           <li class="flex items-center gap-3 type-body-strong">
             <span aria-hidden="true" class:list={['flex size-10 shrink-0 items-center justify-center border-strong border-ink-on-block type-label-lg', stepSquish[index % stepSquish.length]]}>
