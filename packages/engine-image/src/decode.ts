@@ -26,8 +26,15 @@ export interface Size {
   height: number
 }
 
-/** Display pixels the WebAssembly path accepts: a full-size decode of 24 MP needs ~200 MB. */
-export const WASM_MAX_PIXELS = 24_000_000
+/**
+ * Display pixels the WebAssembly path accepts. 25 MP, not a round "24": the iPhone 15 and 16 save
+ * their default photos at 5712 × 4284 (24.47 MP), and 24 MP refused the main audience of "HEIC to
+ * JPG", people on Windows and Android with iPhone photos (ADR 0022). Measured on desktop with a
+ * 24.47 MP HEIC, converting to JPG used about 0.9–1.0 GB more than an idle browser in Chromium and
+ * WebKit (25 bytes per pixel, plus 250 MB), against 0.55–0.75 GB at 12 MP. Phones were not
+ * measured; do not raise this without measuring them.
+ */
+export const WASM_MAX_PIXELS = 25_000_000
 /**
  * Below this, `ImageDecoder` is not worth it: in Chromium on an M2 it took 1.8–1.9 s for a
  * 12–42 MP photo against 0.2–0.4 s for `createImageBitmap` (ADR 0016), and below 24 MP the

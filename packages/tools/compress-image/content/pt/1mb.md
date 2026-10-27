@@ -15,7 +15,7 @@ faq:
       formato quando a imagem cabe nele, e um PNG que não cabe é salvo como JPG.
   - question: "Posso comprimir fotos de câmera profissional?"
     answer: >-
-      Sim, se forem arquivos JPG, PNG ou WebP de até 50 MB e 100 megapixels (24 megapixels em
+      Sim, se forem arquivos JPG, PNG ou WebP de até 50 MB e 100 megapixels (25 megapixels em
       algumas janelas anônimas e navegadores focados em privacidade). Fotos com mais de 16
       megapixels saem menores em pixels, para caber na memória do seu aparelho.
 ---
