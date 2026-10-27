@@ -226,6 +226,36 @@ for (const c of LOCALES) {
   })
 }
 
+for (const c of LOCALES) {
+  test(`privacy band ${c.path}: compact rows on phones, cards from 600 px`, async ({
+    testBrowser,
+  }) => {
+    for (const width of [320, 390, 600, 1280]) {
+      const { context, page } = await openHome(testBrowser, c, { width })
+      try {
+        const band = main(page).getByRole('region', { name: c.privacy })
+        const proofs = band.getByRole('listitem')
+        await expect(proofs).toHaveCount(3)
+        // One GitHub link at every width: after the list on phones, in its card from 600 px.
+        const github = band.locator('a[href="https://github.com/mochifile/mochifile"]')
+        await expect(github.filter({ visible: true })).toHaveCount(1)
+        const inCard = await github
+          .filter({ visible: true })
+          .evaluate((link) => Boolean(link.closest('li')))
+        expect(inCard, `${width} px`).toBe(width >= 600)
+        // Phones show each proof's title only (artboard HomeMobile); cards add their text.
+        for (const proof of await proofs.all()) {
+          await expect(proof.locator('strong')).toBeVisible()
+          const text = proof.locator('span')
+          await (width >= 600 ? expect(text).toBeVisible() : expect(text).toBeHidden())
+        }
+      } finally {
+        await context.close()
+      }
+    }
+  })
+}
+
 for (const width of WIDTHS) {
   test(`fits ${width} px without overflow, hidden focusable content or small targets`, async ({
     testBrowser,
@@ -242,6 +272,10 @@ for (const width of WIDTHS) {
           .locator('a, button, [tabindex]:not([tabindex="-1"])')
           .evaluateAll((els) =>
             els.flatMap((el) => {
+              // Not rendered at this width (`display: none`, like the privacy band's GitHub link
+              // for the other layout): it cannot take focus, so it is neither hidden content nor
+              // a target. The privacy band test checks that exactly one of those links shows.
+              if (el.getClientRects().length === 0) return []
               const r = el.getBoundingClientRect()
               const name = el.textContent?.trim()
               if (!el.checkVisibility({ visibilityProperty: true })) return [`${name}: hidden`]
