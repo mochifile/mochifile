@@ -92,9 +92,12 @@ export function Dropzone({
         disabled && 'cursor-not-allowed opacity-50',
       )}
     >
-      {/* The mascot never sits directly on a dark ground: it gets a brand-block disc. */}
-      <span className="hidden rounded-pill bg-mango p-3 lg:block">
-        <Mascot state="idle" className="w-14" />
+      {/*
+        The mascot never sits directly on a dark ground: it stands at the bottom of a squished
+        mango tile (ToolPanel artboard: 104 × 92 px, here 104 × 91).
+      */}
+      <span className="hidden rounded-lg-squish-a bg-mango px-5 pt-6 pb-2 lg:block">
+        <Mascot state="idle" className="w-16" />
       </span>
       {stepLabel ? (
         <span
