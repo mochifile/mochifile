@@ -169,3 +169,38 @@ for (const locale of ['en', 'pt'] as const) {
     }
   }
 }
+
+/**
+ * The error mascot keeps its face clear of the card (NotFound artboard): under 1024 px the
+ * card hides the lower part of its body, never the eyes, brow, cheeks or mouth, and the mascot
+ * never runs under the text above it. In the mascot's 120 × 110 drawing the mouth and cheeks
+ * end at y = 77.75.
+ */
+for (const locale of ['en', 'pt'] as const) {
+  test(`the ${locale} mascot's face stays above the card at every width`, async ({
+    page,
+    pageErrors,
+  }) => {
+    const missing = locale === 'en' ? '/does-not-exist/' : '/pt/nao-existe/'
+    for (const width of [320, 360, 390, 600, 768, 1023, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 })
+      await openMissing(page, pageErrors, missing)
+      await page.evaluate(() => document.fonts.ready)
+      const { face, text } = await page.evaluate(() => {
+        const mascot = document.querySelector('main [data-decoration]')?.getBoundingClientRect()
+        const card = document
+          .querySelector('section[aria-labelledby="not-found-tools"]')
+          ?.getBoundingClientRect()
+        const lead = [...document.querySelectorAll('main p')].at(-1)?.getBoundingClientRect()
+        if (!mascot || !card || !lead) throw new Error('missing elements')
+        const beside = mascot.left >= lead.right
+        return {
+          face: card.top - (mascot.top + (77.75 / 110) * mascot.height),
+          text: beside ? Infinity : mascot.top - lead.bottom,
+        }
+      })
+      expect(face, `${width} px: space between the mouth and the card`).toBeGreaterThanOrEqual(4)
+      expect(text, `${width} px: space between the text and the mascot`).toBeGreaterThanOrEqual(8)
+    }
+  })
+}
