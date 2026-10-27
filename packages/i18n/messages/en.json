@@ -67,8 +67,9 @@
   "language_suggestion_dismiss": "Not now",
   "not_found_title": "Page not found — Mochifile",
   "not_found_description": "This page does not exist.",
-  "not_found_heading": "We can't find this page",
-  "not_found_text": "The address may have a typo, or the page may have moved. Start again from the home page.",
-  "not_found_home": "Go to the home page",
-  "not_found_tools_heading": "Or go straight to a tool"
+  "not_found_label": "Error 404",
+  "not_found_heading": "This page doesn't exist",
+  "not_found_text": "The address may have a typo, or the page may have moved.",
+  "not_found_home": "Back to the home page",
+  "not_found_tools_heading": "What you can do here"
 }

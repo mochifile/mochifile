@@ -67,8 +67,9 @@
   "language_suggestion_dismiss": "Agora não",
   "not_found_title": "Página não encontrada — Mochifile",
   "not_found_description": "Esta página não existe.",
-  "not_found_heading": "Não encontramos esta página",
-  "not_found_text": "O endereço pode ter um erro de digitação, ou a página mudou de lugar. Comece de novo pela página inicial.",
-  "not_found_home": "Ir para a página inicial",
-  "not_found_tools_heading": "Ou vá direto para uma ferramenta"
+  "not_found_label": "Erro 404",
+  "not_found_heading": "Esta página não existe",
+  "not_found_text": "O endereço pode ter um erro de digitação, ou a página mudou de lugar.",
+  "not_found_home": "Voltar para o início",
+  "not_found_tools_heading": "O que dá para fazer aqui"
 }
