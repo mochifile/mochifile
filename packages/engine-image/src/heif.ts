@@ -135,3 +135,31 @@ function associations(b: Uint8Array, ipma: Box, item: number): number[] {
   }
   return []
 }
+
+/**
+ * The primary image's embedded ICC profile: a `colr` property of type `prof` (or `rICC`)
+ * associated with it, as iPhone photos carry (Display P3). Undefined when there is none, or
+ * when the file is too malformed to tell; unlike the header, a missing profile is not an error.
+ * The bytes are untrusted and are validated by whoever parses them.
+ */
+export function readHeifIccProfile(b: Uint8Array): Uint8Array | undefined {
+  const meta = find(b, { start: 0, end: b.length }, 'meta')
+  if (!meta) return undefined
+  const inner = { start: meta.start + 4, end: meta.end } // meta is a full box
+  const pitm = find(b, inner, 'pitm')
+  const iprp = find(b, inner, 'iprp')
+  const ipco = iprp && find(b, iprp, 'ipco')
+  const ipma = iprp && find(b, iprp, 'ipma')
+  if (!pitm || !ipco || !ipma) return undefined
+  const pitmBox = full(b, pitm)
+  const primary = pitmBox.version === 0 ? u16(b, pitmBox.at) : u32(b, pitmBox.at)
+
+  const properties = [...children(b, ipco.start, ipco.end)]
+  for (const index of associations(b, ipma, primary)) {
+    const property = properties[index - 1]
+    if (property?.type !== 'colr') continue
+    const type = fourcc(b, property.start)
+    if (type === 'prof' || type === 'rICC') return b.subarray(property.start + 4, property.end)
+  }
+  return undefined
+}

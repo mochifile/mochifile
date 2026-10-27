@@ -8,6 +8,8 @@
  */
 import { ToolError } from '@mochifile/tool-kit'
 import libheifFactory from 'libheif-js/libheif-wasm/libheif.js'
+import { readHeifIccProfile } from './heif.ts'
+import { convertToSrgb } from './icc.ts'
 
 /** The parts of the libheif Emscripten module used here. */
 interface LibHeif {
@@ -82,6 +84,10 @@ export async function loadHeicDecoder(wasmBinary?: Uint8Array): Promise<HeicDeco
         }
       }
       if (lib.heif_image_handle_is_premultiplied_alpha(handle)) unpremultiply(pixels)
+      // libheif leaves the colours in the file's profile (Display P3 on iPhone photos), and the
+      // outputs are untagged sRGB; the browser's own decoder converts, so this must too.
+      const profile = readHeifIccProfile(bytes)
+      if (profile) convertToSrgb(pixels, profile)
       return new ImageData(pixels, width, height)
     } finally {
       // Free the WebAssembly memory now: a 12 MP photo holds about 50 MB.
