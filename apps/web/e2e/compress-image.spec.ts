@@ -67,19 +67,35 @@ test.describe('compress image to 50 KB', () => {
     expect(result.bytes.length).toBeLessThanOrEqual(50_000)
     expect(isJpeg(result.bytes)).toBe(true)
     expect(bytesContain(result.bytes, SECRET)).toBe(false)
-    await expect(rows(page).first()).toContainText('It fits your 50 KB limit')
+    // One photo: the banner says the result, the row lists the facts.
+    await expect(page.getByText('Ready! It fits your 50 KB limit.')).toBeVisible()
+    await expect(rows(page).first()).toContainText('Fits 50 KB')
     expect(requests).toEqual([])
+
+    // "Compress another" clears the list and returns to "Choose photos".
+    await page.getByRole('button', { name: 'Compress another' }).click()
+    await expect(rows(page)).toHaveCount(0)
+    await expect(fileInput(page)).toBeFocused()
   })
 
   test('works the same in Portuguese', async ({ page }) => {
     await page.goto('/pt/comprimir-imagem-para-50kb/')
     await expect(page.getByRole('radio', { name: '50 KB' })).toBeChecked()
     await expect(page.getByRole('group', { name: '1. Escolha o tamanho máximo' })).toBeVisible()
+    // The panel's steps are sections in the page outline.
+    await expect(
+      page.getByRole('heading', { level: 2, name: '1. Escolha o tamanho máximo' }),
+    ).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: '2. Salvar como' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { level: 2, name: '3. Escolha suas fotos' }),
+    ).toBeVisible()
     await waitForEngine(page)
     await add(page, await photo('flowers'))
     const result = await downloadResult(page)
     expect(result.bytes.length).toBeLessThanOrEqual(50_000)
-    await expect(rows(page).first()).toContainText('Cabe no seu limite de 50 KB')
+    await expect(page.getByText('Pronto! Cabe no seu limite de 50 KB.')).toBeVisible()
+    await expect(rows(page).first()).toContainText('Cabe em 50 KB')
   })
 })
 
@@ -145,7 +161,8 @@ test('a photo already under the limit keeps its image and loses its hidden detai
   await waitForEngine(page)
   const original = await photoWithLocation()
   await add(page, original)
-  await expect(rows(page).first()).toContainText('This photo was already under 1 MB')
+  await expect(page.getByText('This photo was already under 1 MB.')).toBeVisible()
+  await expect(rows(page).first()).toContainText('Already under 1 MB')
   const result = await downloadResult(page)
   expect(result.bytes.length).toBeLessThan(original.buffer.length)
   expect(bytesContain(result.bytes, SECRET)).toBe(false)
@@ -158,7 +175,10 @@ test('a sideways photo is turned upright, and shrinking is explained', async ({ 
   const row = rows(page).first()
   await expect(row).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
   // Displayed size of the original is 798 × 1200: portrait, not landscape.
-  await expect(row).toContainText(/Resized from 798 × 1200 to \d+ × \d+ pixels/)
+  await expect(row).toContainText('Smaller in pixels')
+  await expect(row).toContainText(
+    /We also made the photo smaller: from 798 × 1200 to \d+ × \d+ pixels\./,
+  )
   const [, width, height] = /to (\d+) × (\d+) pixels/.exec((await row.textContent()) ?? '') ?? []
   expect(Number(height)).toBeGreaterThan(Number(width))
 })
@@ -193,7 +213,13 @@ test('cancel stops the photos that have not finished', async ({ page }) => {
   // Focus moves to "Continue", and the batch says what is left.
   const carryOn = page.getByRole('button', { name: 'Continue compressing' })
   await expect(carryOn).toBeFocused()
-  await expect(page.getByText(/^Cancelled\. Ready: \d of 4 photos; the others/)).toBeVisible()
+  await expect(page.getByText('You cancelled.')).toBeVisible()
+  // Depending on how far it got: none ready, or some ready and the others not compressed.
+  await expect(
+    page.getByText(
+      /^(No photo was compressed\.|\d photos? (is|are) ready\. The other (one wasn't|\d weren't) compressed\.)$/,
+    ),
+  ).toBeVisible()
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
 
   // A file can be taken out of the list; focus moves to the next one's button.
@@ -208,7 +234,13 @@ test('cancel stops the photos that have not finished', async ({ page }) => {
   // The others continue, with the settings they were added with.
   await carryOn.click()
   await expect(page.locator('li[data-status="done"]')).toHaveCount(3, { timeout: 90_000 })
-  await expect(page.getByText(/^All photos are ready: .+ → .+ in total\.$/)).toBeVisible()
+  await expect(page.getByText('Ready! All 3 photos fit 20 KB.')).toBeVisible()
+  await expect(page.getByText(/^.+ → .+ in total$/)).toBeVisible()
+
+  // "Compress more" clears the finished batch and returns to "Choose photos".
+  await page.getByRole('button', { name: 'Compress more' }).click()
+  await expect(rows(page)).toHaveCount(0)
+  await expect(fileInput(page)).toBeFocused()
 })
 
 test('says when the compressor did not load, and tries again when asked', async ({
@@ -369,7 +401,7 @@ test('takes a photo pasted with Ctrl+V', async ({ page }) => {
   )
   await expect(rows(page)).toHaveCount(1)
   await expect(rows(page).first()).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
-  await expect(rows(page).first()).toContainText('It fits your 50 KB limit')
+  await expect(page.getByText('Ready! It fits your 50 KB limit.')).toBeVisible()
 })
 
 test.describe('loading', () => {
