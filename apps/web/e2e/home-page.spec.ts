@@ -24,6 +24,7 @@ const LOCALES = [
     others: ['20 KB', '500 KB', '1 MB'],
     groups: ['Image', 'PDF'],
     tools: 'Tools',
+    steps: 'How it works',
     privacy: "Your files don't leave your device.",
   },
   {
@@ -40,6 +41,7 @@ const LOCALES = [
     others: ['20 KB', '500 KB', '1 MB'],
     groups: ['Imagem', 'PDF'],
     tools: 'Ferramentas',
+    steps: 'Como funciona',
     privacy: 'Seus arquivos não saem do seu aparelho.',
   },
 ] as const
@@ -248,6 +250,42 @@ for (const c of LOCALES) {
           await expect(proof.locator('strong')).toBeVisible()
           const text = proof.locator('span')
           await (width >= 600 ? expect(text).toBeVisible() : expect(text).toBeHidden())
+        }
+      } finally {
+        await context.close()
+      }
+    }
+  })
+}
+
+for (const c of LOCALES) {
+  test(`three steps ${c.path}: none on phones, shown from 600 px`, async ({ testBrowser }) => {
+    for (const width of [320, 360, 390, 599, 600, 768, 1024, 1440]) {
+      const { context, page } = await openHome(testBrowser, c, { width })
+      try {
+        const steps = main(page).locator('ol')
+        await expect(steps).toHaveCount(1)
+        const tree = await main(page).ariaSnapshot()
+        if (width < 600) {
+          // Artboard HomeMobile: the card, then the tools. Not rendered, so it takes no space,
+          // holds no focus stop and is out of the accessibility tree.
+          await expect(steps).toBeHidden()
+          expect(await steps.evaluate((el) => el.getClientRects().length), `${width} px`).toBe(0)
+          expect(tree).not.toContain(`list "${c.steps}"`)
+          // The tools section follows the card at the usual section spacing (space-16).
+          const gap = await page.evaluate(() => {
+            const card = document.querySelector('[data-start-card]')?.getBoundingClientRect()
+            const tools = document
+              .querySelector('#home-tools')
+              ?.closest('section')
+              ?.getBoundingClientRect()
+            return card && tools ? Math.round(tools.top - card.bottom) : null
+          })
+          expect(gap, `${width} px`).toBe(64)
+        } else {
+          await expect(main(page).getByRole('list', { name: c.steps })).toBeVisible()
+          await expect(steps.getByRole('listitem')).toHaveCount(3)
+          expect(tree).toContain(`list "${c.steps}"`)
         }
       } finally {
         await context.close()
