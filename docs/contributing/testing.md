@@ -30,3 +30,9 @@ First run: `pnpm --filter @mochifile/web exec playwright install`. Run one engin
 
 GitHub Actions runs lint, typecheck, unit tests and build in one job, and the e2e suite in a
 matrix (one job per engine). CodeQL scans every PR.
+
+The e2e jobs run in Microsoft's Playwright image (`mcr.microsoft.com/playwright`, in
+`.github/workflows/ci.yml`), which carries the three browsers and their system libraries, so
+nothing is installed through `apt` except the Roboto font. The image tag must be the version of
+`@playwright/test`; Renovate updates both in one PR, and a step fails with the tag to use when they
+differ. Locally, `playwright install` (above) is unchanged.
