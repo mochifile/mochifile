@@ -14,6 +14,7 @@ export {
   OptionRow,
   type OptionRowProps,
 } from './OptionList.tsx'
+export { PrivacyNote, type PrivacyNoteProps } from './PrivacyNote.tsx'
 export { type QueueSummary, summarizeQueue } from './queue-summary.ts'
 export { ResultRow, type ResultRowLabels, type ResultRowProps } from './ResultRow.tsx'
 export { StateBlock, type StateBlockProps } from './StateBlock.tsx'

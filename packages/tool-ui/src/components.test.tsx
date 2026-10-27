@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { BatchStatus } from './BatchStatus.tsx'
 import { FileName } from './FileName.tsx'
 import { FileTile, ImageIcon } from './FileTile.tsx'
+import { PrivacyNote } from './PrivacyNote.tsx'
 import { StateBlock } from './StateBlock.tsx'
 
 afterEach(cleanup)
@@ -77,5 +78,26 @@ describe('FileTile', () => {
     )
     expect(container.firstElementChild?.getAttribute('aria-hidden')).toBe('true')
     expect(container.firstElementChild?.className).toContain('bg-mango-tint')
+  })
+})
+
+describe('PrivacyNote', () => {
+  it('puts the promise first, in bold, and keeps the lock out of the accessibility tree', () => {
+    const { container } = render(
+      <PrivacyNote lead="Your photos never leave your device.">
+        Hidden details are removed.
+      </PrivacyNote>,
+    )
+    const note = container.querySelector('p')
+    expect(note?.textContent).toBe(
+      'Your photos never leave your device. Hidden details are removed.',
+    )
+    expect(note?.querySelector('strong')?.textContent).toBe('Your photos never leave your device.')
+    expect(note?.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
+  })
+
+  it('stands alone without a detail', () => {
+    const { container } = render(<PrivacyNote lead="Nothing is uploaded." />)
+    expect(container.querySelector('p')?.textContent).toBe('Nothing is uploaded.')
   })
 })
