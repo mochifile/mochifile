@@ -109,4 +109,21 @@ describe('Dropzone', () => {
       expect(onFiles).not.toHaveBeenCalled()
     })
   })
+
+  it('exposes its step label as a heading when asked, without changing the button name', () => {
+    const { rerender } = render(
+      <Dropzone onFiles={() => {}} stepLabel="3. Choose your photos" label="Choose photos" />,
+    )
+    expect(screen.queryByRole('heading')).toBeNull()
+    rerender(
+      <Dropzone
+        onFiles={() => {}}
+        stepLabel="3. Choose your photos"
+        stepHeadingLevel={2}
+        label="Choose photos"
+      />,
+    )
+    expect(screen.getByRole('heading', { level: 2, name: '3. Choose your photos' })).toBeDefined()
+    expect(screen.getByLabelText('Choose photos')).toBeDefined()
+  })
 })

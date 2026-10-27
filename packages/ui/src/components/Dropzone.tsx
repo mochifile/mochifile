@@ -12,6 +12,11 @@ export interface DropzoneProps {
   disabled?: boolean
   /** Numbered step label, already translated, e.g. "3. Choose your photos". */
   stepLabel?: string
+  /**
+   * Exposes the step label as a heading of this level. It sits inside the `<label>`, where
+   * heading elements are not allowed, so it takes the heading role instead.
+   */
+  stepHeadingLevel?: 2 | 3
   /** Text of the primary button, already translated, e.g. "Choose photos". */
   label: string
   /** Secondary line, already translated, e.g. accepted formats and limits. */
@@ -35,6 +40,7 @@ export function Dropzone({
   multiple,
   disabled,
   stepLabel,
+  stepHeadingLevel,
   label,
   hint,
   pasteHint,
@@ -90,7 +96,14 @@ export function Dropzone({
       <span className="hidden rounded-pill bg-mango p-3 lg:block">
         <Mascot state="idle" className="w-14" />
       </span>
-      {stepLabel ? <span className="type-title-sm text-ink">{stepLabel}</span> : null}
+      {stepLabel ? (
+        <span
+          {...(stepHeadingLevel ? { role: 'heading', 'aria-level': stepHeadingLevel } : {})}
+          className="type-label-lg text-ink sm:type-title-sm"
+        >
+          {stepLabel}
+        </span>
+      ) : null}
       <span
         id={labelId}
         data-primary-action

@@ -35,6 +35,11 @@ export interface SizeChipsProps<T extends string> {
    * group on screen. The legend always stays, so the group keeps its name.
    */
   legendClassName?: string
+  /**
+   * Renders the legend's text as a heading of this level, so the step is also a section in the
+   * page's outline (the fieldset keeps the legend as its name).
+   */
+  headingLevel?: 2 | 3
 }
 
 const selected = {
@@ -43,8 +48,18 @@ const selected = {
   strawberry: 'has-checked:bg-strawberry',
 } as const
 
-/** Shared legend style of the tool panel's numbered steps. */
-export const stepLegendClasses = 'mb-2 type-label-lg text-ink'
+/**
+ * Shared style of the tool panel's numbered steps: `title-sm` from 600 px and one level down,
+ * `label-lg`, under it (README › Typography › Responsive headings; Dropzone README).
+ */
+export const stepLegendClasses = 'mb-2 type-label-lg text-ink sm:type-title-sm'
+
+/** A step's text, as a heading of `level` when given; otherwise plain text. */
+export function StepHeading({ level, children }: { level?: 2 | 3 | undefined; children: string }) {
+  if (level === 2) return <h2>{children}</h2>
+  if (level === 3) return <h3>{children}</h3>
+  return children
+}
 
 /**
  * A single choice shown as squished chips (docs/design-system/components/SizeChip). Real radio
@@ -61,13 +76,16 @@ export function SizeChips<T extends string>({
   disabled,
   className,
   legendClassName,
+  headingLevel,
 }: SizeChipsProps<T>) {
   const name = useId()
   // Neighbours get different corner patterns so the row does not look stamped.
   const squish = ['rounded-md-squish-a', 'rounded-md-squish-b', 'rounded-md-squish-c'] as const
   return (
     <fieldset className={className} disabled={disabled}>
-      <legend className={cn(stepLegendClasses, legendClassName)}>{legend}</legend>
+      <legend className={cn(stepLegendClasses, legendClassName)}>
+        <StepHeading level={headingLevel}>{legend}</StepHeading>
+      </legend>
       <div
         className={
           phoneColumns ? 'grid grid-cols-4 gap-2 sm:flex sm:flex-wrap' : 'flex flex-wrap gap-2'

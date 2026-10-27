@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import { cn } from '../cn.ts'
-import { type ChoiceOption, stepLegendClasses } from './SizeChips.tsx'
+import { type ChoiceOption, StepHeading, stepLegendClasses } from './SizeChips.tsx'
 
 export interface SegmentedOption<T extends string> extends ChoiceOption<T> {
   /** One line shown under the control while this option is selected, already translated. */
@@ -19,6 +19,11 @@ export interface SegmentedProps<T extends string> {
    * group on screen. The legend always stays, so the group keeps its name.
    */
   legendClassName?: string
+  /**
+   * Renders the legend's text as a heading of this level, so the step is also a section in the
+   * page's outline (the fieldset keeps the legend as its name).
+   */
+  headingLevel?: 2 | 3
 }
 
 /**
@@ -34,13 +39,16 @@ export function Segmented<T extends string>({
   disabled,
   className,
   legendClassName,
+  headingLevel,
 }: SegmentedProps<T>) {
   const name = useId()
   const hintId = useId()
   const hint = options.find((option) => option.value === value)?.hint
   return (
     <fieldset className={className} disabled={disabled} aria-describedby={hintId}>
-      <legend className={cn(stepLegendClasses, legendClassName)}>{legend}</legend>
+      <legend className={cn(stepLegendClasses, legendClassName)}>
+        <StepHeading level={headingLevel}>{legend}</StepHeading>
+      </legend>
       <div className="flex gap-1 rounded-md bg-surface-page p-1">
         {options.map((option) => (
           <label
