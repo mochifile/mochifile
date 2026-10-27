@@ -11,19 +11,21 @@ import { expect, test } from './fixtures.ts'
 const LOCALES = {
   en: {
     title: 'Page not found — Mochifile',
-    heading: "We can't find this page",
+    label: 'Error 404',
+    heading: "This page doesn't exist",
     home: '/',
-    action: 'Go to the home page',
-    tools: 'Or go straight to a tool',
+    action: 'Back to the home page',
+    tools: 'What you can do here',
     tool: '/compress-image/',
     skip: 'Skip to content',
   },
   pt: {
     title: 'Página não encontrada — Mochifile',
-    heading: 'Não encontramos esta página',
+    label: 'Erro 404',
+    heading: 'Esta página não existe',
     home: '/pt/',
-    action: 'Ir para a página inicial',
-    tools: 'Ou vá direto para uma ferramenta',
+    action: 'Voltar para o início',
+    tools: 'O que dá para fazer aqui',
     tool: '/pt/comprimir-imagem/',
     skip: 'Pular para o conteúdo',
   },
@@ -71,6 +73,7 @@ for (const { path, locale } of CASES) {
     await expect(page.locator('html')).toHaveAttribute('lang', locale)
     await expect(page).toHaveTitle(copy.title)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(copy.heading)
+    await expect(page.getByText(copy.label, { exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name: copy.skip })).toHaveAttribute('href', '#content')
 
     // Not indexable, no address of its own, nothing to suggest (ADR 0014, 0019).
@@ -123,7 +126,18 @@ for (const locale of ['en', 'pt'] as const) {
     await expect(page.getByRole('link', { name: copy.skip })).toBeFocused()
     await page.keyboard.press('Enter')
     await expect(page.locator('main#content')).toBeFocused()
-    // The way home is the first stop in the content, with a visible focus ring.
+    // Focus follows the card as drawn: the published tools first, then the way home, each
+    // with a visible focus ring.
+    const tools = page.getByRole('region', { name: copy.tools }).getByRole('link')
+    const toolCount = (await tools.count()) - 1
+    expect(toolCount).toBeGreaterThan(0)
+    for (let index = 0; index < toolCount; index++) {
+      await page.keyboard.press(TAB)
+      await expect(tools.nth(index)).toBeFocused()
+      expect(await tools.nth(index).evaluate((el) => getComputedStyle(el).outlineStyle)).toBe(
+        'solid',
+      )
+    }
     await page.keyboard.press(TAB)
     const action = page.locator('[data-primary-action]')
     await expect(action).toBeFocused()
