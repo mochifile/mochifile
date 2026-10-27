@@ -5,7 +5,8 @@
  *   Firefox and WebKit request https://localhost, and HSTS is ignored over HTTP anyway
  * - like Cloudflare, lets a rule that repeats an earlier rule's path replace it (no merging)
  * - serves `<path>/index.html` and redirects `/path` to `/path/`
- * - serves `404.html` with status 404
+ * - serves the nearest `404.html` up from the path with status 404 (`/pt/x/` gets
+ *   `pt/404.html`), as Cloudflare's `not_found_handling: "404-page"` does
  * - compresses like Cloudflare does in production (checked against mochifile.com): text, JS,
  *   CSS, JSON, XML, SVG and WebAssembly get brotli at quality 4 when the browser accepts it,
  *   gzip otherwise; fonts and images are sent as they are. Lighthouse runs against this
@@ -102,6 +103,16 @@ const rules = parseHeaders(readFileSync(join(root, '_headers'), 'utf8'))
 const isFile = (path: string) => statSync(path, { throwIfNoEntry: false })?.isFile() ?? false
 const isDir = (path: string) => statSync(path, { throwIfNoEntry: false })?.isDirectory() ?? false
 
+/** The nearest `404.html` in the path's folder or above it, ending at the root's. */
+function notFoundPage(pathname: string): string {
+  for (let dir = pathname; dir.includes('/'); ) {
+    dir = dir.slice(0, dir.lastIndexOf('/'))
+    const file = join(root, dir, '404.html')
+    if (isFile(file)) return file
+  }
+  return join(root, '404.html')
+}
+
 createServer((request, response) => {
   const url = new URL(request.url ?? '/', 'http://localhost')
   const pathname = decodeURIComponent(url.pathname)
@@ -130,7 +141,7 @@ createServer((request, response) => {
     response.end(body)
     return
   }
-  const { body, encoding } = encode(join(root, '404.html'), request)
+  const { body, encoding } = encode(notFoundPage(pathname), request)
   response.writeHead(404, {
     'Content-Type': types['.html'],
     Vary: 'Accept-Encoding',

@@ -6,6 +6,7 @@ import { defineConfig, fontProviders } from 'astro/config'
 import designTokens from '../../docs/design-system/tokens.json' with { type: 'json' }
 import { FONTS, fontUrl, weightRange } from './fonts/fonts.ts'
 import cspHashes from './integrations/csp-hashes.ts'
+import localeNotFound, { isNotFoundPage } from './integrations/locale-not-found.ts'
 import searchIndexing from './integrations/search-indexing.ts'
 import sitemapAlternates from './integrations/sitemap-alternates.ts'
 import thirdPartyLicenses from './integrations/third-party-licenses.ts'
@@ -85,7 +86,10 @@ export default defineConfig({
     alternates.integration,
     // hreflang alternates come from each built page, not from sitemap's i18n option, which
     // assumes the same path in every locale (wrong for translated tool slugs).
-    sitemap({ serialize: alternates.serialize }),
+    // Astro leaves out only the root 404 page; the other locales' are not indexable either.
+    sitemap({ filter: (page) => !isNotFoundPage(page), serialize: alternates.serialize }),
+    // `pt/404.html`, where Cloudflare looks for the Portuguese 404 page.
+    localeNotFound({ locales: locales.filter((locale) => locale !== defaultLocale) }),
     // Pre-launch noindex switch: see search-indexing.ts and ADR 0014.
     searchIndexing({ allowIndexing: ALLOW_SEARCH_INDEXING }),
     // /third-party-licenses.txt: notices of the code shipped to browsers (ADR 0016).
