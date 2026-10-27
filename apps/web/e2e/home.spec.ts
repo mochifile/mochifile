@@ -85,10 +85,10 @@ test('never redirects based on the browser language', async ({ testBrowser }) =>
 test('language switcher links between locales', async ({ page }) => {
   await page.goto('/')
   // The footer repeats the link (site-footer.spec.ts): this is the header's.
-  await page.getByRole('banner').getByRole('link', { name: 'Português' }).click()
+  await page.getByRole('banner').getByRole('link', { name: 'Switch to Portuguese' }).click()
   await expect(page).toHaveURL('/pt/')
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt')
-  await page.getByRole('banner').getByRole('link', { name: 'English' }).click()
+  await page.getByRole('banner').getByRole('link', { name: 'Mudar para inglês' }).click()
   await expect(page).toHaveURL('/')
 })
 
