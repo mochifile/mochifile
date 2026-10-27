@@ -110,12 +110,15 @@
 /*
  * Motion (README › Motion). Press: scale 0.97 for 120ms. Squish: 104% width / 96% height and
  * back over 280ms. Ready: translateY −6px → 0 over 320ms. Both on the brand's spring curve.
- * Under reduced motion they do not play (`motion-safe:` in components, `press` below).
+ * Indeterminate progress: a third of the bar slides across in 1.6s, ease-in-out, repeating
+ * only while work with no measurable progress happens. Under reduced motion none of them play
+ * (`motion-safe:` in components, `press` below).
  */
 @theme {
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-squish: squish 280ms var(--ease-spring);
   --animate-ready: ready 320ms var(--ease-spring);
+  --animate-indeterminate: indeterminate 1.6s ease-in-out infinite;
 
   @keyframes squish {
     40% {
@@ -125,6 +128,15 @@
   @keyframes ready {
     from {
       transform: translateY(-6px);
+    }
+  }
+  /* The segment is a third of the track: from just off its left end to just off its right. */
+  @keyframes indeterminate {
+    from {
+      translate: -100%;
+    }
+    to {
+      translate: 300%;
     }
   }
 }

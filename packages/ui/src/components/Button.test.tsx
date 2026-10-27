@@ -29,5 +29,8 @@ describe('Button', () => {
     expect(buttonClasses()).toContain('rounded-pill')
     expect(buttonClasses()).toContain('bg-action')
     expect(buttonClasses('secondary')).toContain('border-strong border-ink bg-transparent')
+    expect(buttonClasses('secondary-on-block')).toContain(
+      'border-ink-on-block bg-transparent text-ink-on-block',
+    )
   })
 })

@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from 'react'
 import { cn } from '../cn.ts'
 
-export type ButtonVariant = 'primary' | 'secondary'
+export type ButtonVariant = 'primary' | 'secondary' | 'secondary-on-block'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
@@ -10,6 +10,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const variants = {
   primary: 'bg-action text-action-ink',
   secondary: 'border-strong border-ink bg-transparent text-ink',
+  // On a brand block text is always ink-on-block, which stays dark in the dark theme.
+  'secondary-on-block': 'border-strong border-ink-on-block bg-transparent text-ink-on-block',
 } as const
 
 /**

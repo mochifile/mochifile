@@ -125,8 +125,9 @@ Line icons on a 24px grid, 2px stroke in `ink`, round caps and joins, no fills e
 - **Press:** buttons and chips scale to 0.97 for 120ms.
 - **Squish:** the mascot and the dropzone (on drag-over) flatten to 104% width / 96% height and spring back over 280ms with `cubic-bezier(0.34, 1.56, 0.64, 1)`.
 - **Ready:** one bounce of the result card (translateY −6px → 0, 320ms, same curve).
+- **Indeterminate progress:** the only looping animation, because it shows real work: when work has no measurable progress (preparing the tool), a third of the progress bar slides across it in 1.6s, `ease-in-out`, and stops as soon as the work does.
 - **Never** animate layout, never loop decoration, never delay a task for an animation.
-- Under `prefers-reduced-motion: reduce`, all of the above become instant opacity changes.
+- Under `prefers-reduced-motion: reduce`, all of the above become instant opacity changes; the indeterminate bar stays still and its text says what is happening.
 
 ## Accessibility
 

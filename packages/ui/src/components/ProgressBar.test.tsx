@@ -16,4 +16,13 @@ describe('ProgressBar', () => {
     rerender(<ProgressBar value={7} label="Compressing a.jpg" />)
     expect(bar.value).toBe(100)
   })
+
+  it('is indeterminate without a value: still named, and never claims a percentage', () => {
+    render(<ProgressBar label="Preparing the compressor" />)
+    const bar = screen.getByRole('progressbar', { name: 'Preparing the compressor' })
+    expect(bar.hasAttribute('aria-valuenow')).toBe(false)
+    expect(bar.textContent).toBe('')
+    expect(bar.querySelector('[class*="animate-indeterminate"]')).not.toBeNull()
+    expect(bar.getAttribute('style')).toBeNull()
+  })
 })
