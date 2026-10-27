@@ -58,4 +58,18 @@ describe('SizeChips', () => {
       'col-span-2',
     )
   })
+
+  it('keeps its legend, with extra classes, so the group always has a name', () => {
+    render(
+      <SizeChips
+        legend="Target size"
+        legendClassName="max-sm:sr-only"
+        options={options}
+        value="large"
+        onChange={() => {}}
+      />,
+    )
+    const legend = screen.getByRole('group', { name: 'Target size' }).querySelector('legend')
+    expect(legend?.className).toContain('max-sm:sr-only')
+  })
 })
