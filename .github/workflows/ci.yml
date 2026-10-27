@@ -46,6 +46,13 @@ jobs:
     name: E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Microsoft's image has the three browsers and their system libraries, so there is no
+    # `playwright install --with-deps`: that one downloaded ~50 MB through apt from the runner's
+    # Ubuntu mirror, which took over 5 minutes in 9% of 300 jobs, up to 20. The tag must be the
+    # version of @playwright/test (Renovate updates both together); the digest pins the image.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      options: --init --ipc=host
     strategy:
       fail-fast: false
       matrix:
@@ -60,13 +67,25 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Install ${{ matrix.browser }}
+      # When @playwright/test is updated without the image tag, every test would fail at once
+      # with "Executable doesn't exist"; say what to change instead.
+      - name: Check the image has this Playwright's browsers
         working-directory: apps/web
-        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+        run: |
+          missing=0
+          for dir in $(pnpm exec playwright install --dry-run ${{ matrix.browser }} | awk '/Install location:/ {print $3}'); do
+            if [ ! -d "$dir" ]; then
+              echo "::error::$dir is not in the image: set its tag in ci.yml to v$(pnpm exec playwright --version | awk '{print $2}')-noble"
+              missing=1
+            fi
+          done
+          exit $missing
       # Android's system font, so text before the brand fonts arrive renders in a size-adjusted
       # fallback as on our visitors' phones; the layout-shift test depends on it (ADR 0021).
       - name: Install Roboto
-        run: sudo apt-get install --yes --no-install-recommends fonts-roboto
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends fonts-roboto
       # Turborepo groups each task's output in GitHub Actions and prints it only when the task
       # ends, so a run that hit its timeout left an empty log. Streaming shows each test as it
       # finishes. Playwright's own globalTimeout (12 min) ends a stuck run first and writes its
@@ -75,6 +94,9 @@ jobs:
         timeout-minutes: 15
         env:
           TURBO_LOG_ORDER: stream
+          # Firefox will not start when $HOME, /github/home in a container job, is not owned by
+          # the current user (root); Playwright documents this workaround.
+          HOME: /root
         run: pnpm test:e2e -- --project=${{ matrix.browser }}
       # Also uploaded when the job passes, so traces of flaky (retried) tests are kept, and when
       # it is cancelled: `always()` still runs after the job's own timeout, `!cancelled()` does

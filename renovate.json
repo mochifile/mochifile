@@ -40,6 +40,16 @@
       "groupName": "test tooling"
     },
     {
+      "description": "CI runs the browsers from Playwright's image, which must be the @playwright/test version",
+      "matchPackageNames": ["mcr.microsoft.com/playwright"],
+      "groupName": "test tooling"
+    },
+    {
+      "description": "Pin container images to a digest, like the actions",
+      "matchDatasources": ["docker"],
+      "pinDigests": true
+    },
+    {
       "description": "TypeScript 7 is blocked until @astrojs/check supports it (see AGENTS.md)",
       "matchPackageNames": ["typescript"],
       "allowedVersions": "<7"
