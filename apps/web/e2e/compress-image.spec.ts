@@ -194,6 +194,7 @@ test('cancel stops the photos that have not finished', async ({ page }) => {
   const carryOn = page.getByRole('button', { name: 'Continue compressing' })
   await expect(carryOn).toBeFocused()
   await expect(page.getByText(/^Cancelled\. Ready: \d of 4 photos; the others/)).toBeVisible()
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
 
   // A file can be taken out of the list; focus moves to the next one's button.
   await page
@@ -225,6 +226,7 @@ test('says when the compressor did not load, and tries again when asked', async 
     await page.locator('[data-engine="failed"]').waitFor({ timeout: 30_000 })
     const message = page.getByRole('alert').filter({ hasText: "The compressor didn't load" })
     await expect(message).toBeVisible()
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
 
     // A photo added meanwhile waits instead of failing.
     await add(page, await photo('flowers'))
@@ -287,6 +289,18 @@ test.describe('accessibility', () => {
       await expect(rows(page).nth(1)).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
       // The success card's bounce has finished, so colours are measured at rest.
       await page.waitForTimeout(400)
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+
+      // A damaged file turns the batch's banner into an attention (mango) one, and its row
+      // into an error.
+      await add(page, {
+        name: 'damaged.jpg',
+        mimeType: 'image/jpeg',
+        buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]),
+      })
+      await expect(page.locator('[data-batch-status="attention"]')).toBeVisible({
+        timeout: 60_000,
+      })
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
     })
   }

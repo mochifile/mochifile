@@ -43,6 +43,7 @@
   "compress_image_clear": "Limpar lista",
   "compress_image_engine_failed": "O compressor não carregou, então as fotos ainda não podem ser comprimidas. Nada foi enviado para lugar nenhum.",
   "compress_image_engine_retry": "Tentar de novo",
+  "compress_image_preparing": "Preparando o compressor…",
   "compress_image_remove": "Remover",
   "compress_image_remove_named": "Remover {name}",
   "compress_image_progress_count": "Prontas: {done} de {total}",

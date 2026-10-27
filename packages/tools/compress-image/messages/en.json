@@ -43,6 +43,7 @@
   "compress_image_clear": "Clear list",
   "compress_image_engine_failed": "The compressor didn't load, so photos can't be compressed yet. Nothing was sent anywhere.",
   "compress_image_engine_retry": "Try again",
+  "compress_image_preparing": "Preparing the compressor…",
   "compress_image_remove": "Remove",
   "compress_image_remove_named": "Remove {name}",
   "compress_image_progress_count": "Ready: {done} of {total}",

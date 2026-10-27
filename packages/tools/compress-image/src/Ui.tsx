@@ -5,16 +5,22 @@ import { m } from '@mochifile/i18n/messages'
 import { type ToolOptions, validateFiles } from '@mochifile/tool-kit'
 import { createToolClient } from '@mochifile/tool-kit/client'
 import {
+  BatchStatus,
+  type BatchStatusTone,
   downloadZip,
+  FileTile,
+  ImageIcon,
+  isBlockTone,
   preloadZip,
   type QueueItem,
   ResultRow,
+  StateBlock,
   errorMessage as sharedErrorMessage,
   summarizeQueue,
   useFileQueue,
   usePrepareOnIntent,
 } from '@mochifile/tool-ui'
-import { Button, Dropzone, Notice, Segmented, SizeChips, Tag } from '@mochifile/ui'
+import { Button, Dropzone, Notice, ProgressBar, Segmented, SizeChips, Tag } from '@mochifile/ui'
 import { useEffect, useMemo, useState } from 'react'
 import { type CompressImageOptions, manifest } from './manifest.ts'
 import { formatSize, MAX_TARGET, MIN_TARGET, PRESETS, parseTarget, type SizeUnit } from './sizes.ts'
@@ -168,6 +174,35 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                 },
                 { locale },
               )
+
+  // The batch area: preparing, then working, then one banner for a finished batch (proposal
+  // v1.1 › Result banner, for two or more photos; one photo's row says it all).
+  const batch = summary.total > 1
+  const preparing = summary.pending > 0 && engine === 'loading'
+  const batchTone: BatchStatusTone =
+    preparing || (busy && batch && engine === 'ready')
+      ? 'working'
+      : busy || !batch
+        ? 'plain'
+        : summary.cancelled > 0
+          ? 'cancelled'
+          : summary.failed > 0
+            ? 'attention'
+            : 'ready'
+  const countText = m.compress_image_progress_count(
+    { done: String(summary.done), total: String(summary.total) },
+    { locale },
+  )
+  const batchTitle =
+    batchTone !== 'working'
+      ? summaryText
+      : preparing
+        ? m.compress_image_preparing({}, { locale })
+        : m.compress_image_status_encoding({}, { locale })
+  const batchDetail = batchTone === 'working' && batch ? countText : ''
+  // Full width on phones inside the tool panel, as every button there (Button README).
+  const batchButton = 'w-full sm:w-auto'
+  const batchSecondary = isBlockTone(batchTone) ? 'secondary-on-block' : 'secondary'
 
   const stale =
     targetBytes !== undefined &&
@@ -359,18 +394,16 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
             browser. Files added meanwhile wait, and adding files also tries again.
           */}
           {engineFailed && (
-            <div className="flex flex-col gap-3">
-              <div role="alert">
-                <Notice tone="danger">{m.compress_image_engine_failed({}, { locale })}</Notice>
-              </div>
-              <Button
-                variant="secondary"
-                className="w-full sm:w-auto sm:self-start"
-                onClick={retryEngine}
-              >
-                {m.compress_image_engine_retry({}, { locale })}
-              </Button>
-            </div>
+            <StateBlock
+              mascot="error"
+              action={
+                <Button variant="secondary" className="w-full sm:w-fit" onClick={retryEngine}>
+                  {m.compress_image_engine_retry({}, { locale })}
+                </Button>
+              }
+            >
+              {m.compress_image_engine_failed({}, { locale })}
+            </StateBlock>
           )}
         </div>
       </div>
@@ -380,54 +413,67 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
           aria-label={m.compress_image_list_label({}, { locale })}
           className="flex flex-col gap-4"
         >
-          {/*
-            Announced politely. Always in the page, since a live region added together with its
-            text may not be read; empty, it is visually hidden rather than removed.
-          */}
-          <p role="status" className="type-body-strong empty:sr-only">
-            {summaryText}
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {busy && (
-              <Button variant="secondary" onClick={cancelAll}>
-                {m.compress_image_cancel({}, { locale })}
-              </Button>
-            )}
-            {!busy && cancelledIds.length > 0 && (
-              // Continues with the settings the files were added with.
-              <Button data-continue onClick={() => requeue(new Set(cancelledIds))}>
-                {m.compress_image_continue({}, { locale })}
-              </Button>
-            )}
-            {!busy && stale && (
-              <Button
-                onClick={() =>
-                  requeue(
-                    new Set(
-                      items
-                        .filter(
-                          (item) =>
-                            item.error?.code !== 'unsupported-type' &&
-                            item.error?.code !== 'file-too-large',
-                        )
-                        .map((item) => item.id),
-                    ),
-                    targetBytes === undefined ? {} : { targetBytes, format },
-                  )
-                }
-              >
-                {m.compress_image_rerun({}, { locale })}
-              </Button>
-            )}
-            {done.length > 1 && !busy && (
-              <Button onClick={() => void downloadAll()}>
-                {m.compress_image_download_all({}, { locale })}
-              </Button>
-            )}
-            <Button variant="secondary" onClick={clearFiles}>
-              {m.compress_image_clear({}, { locale })}
-            </Button>
-          </div>
+          <BatchStatus
+            tone={batchTone}
+            title={batchTitle}
+            {...(batchDetail ? { detail: batchDetail } : {})}
+            progress={
+              batchTone === 'working' &&
+              (preparing ? (
+                <ProgressBar label={batchTitle} />
+              ) : (
+                <ProgressBar value={summary.done / summary.total} label={batchDetail} />
+              ))
+            }
+            actions={
+              <>
+                {busy && (
+                  <Button variant={batchSecondary} className={batchButton} onClick={cancelAll}>
+                    {m.compress_image_cancel({}, { locale })}
+                  </Button>
+                )}
+                {!busy && cancelledIds.length > 0 && (
+                  // Continues with the settings the files were added with.
+                  <Button
+                    data-continue
+                    className={batchButton}
+                    onClick={() => requeue(new Set(cancelledIds))}
+                  >
+                    {m.compress_image_continue({}, { locale })}
+                  </Button>
+                )}
+                {!busy && stale && (
+                  <Button
+                    className={batchButton}
+                    onClick={() =>
+                      requeue(
+                        new Set(
+                          items
+                            .filter(
+                              (item) =>
+                                item.error?.code !== 'unsupported-type' &&
+                                item.error?.code !== 'file-too-large',
+                            )
+                            .map((item) => item.id),
+                        ),
+                        targetBytes === undefined ? {} : { targetBytes, format },
+                      )
+                    }
+                  >
+                    {m.compress_image_rerun({}, { locale })}
+                  </Button>
+                )}
+                {done.length > 1 && !busy && (
+                  <Button className={batchButton} onClick={() => void downloadAll()}>
+                    {m.compress_image_download_all({}, { locale })}
+                  </Button>
+                )}
+                <Button variant={batchSecondary} className={batchButton} onClick={clearFiles}>
+                  {m.compress_image_clear({}, { locale })}
+                </Button>
+              </>
+            }
+          />
 
           <ul className="flex flex-col gap-4">
             {items.map((item, index) => (
@@ -445,6 +491,13 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                   removeNamed: (name) => m.compress_image_remove_named({ name }, { locale }),
                 }}
                 onRemove={() => removeFile(item.id)}
+                icon={
+                  <FileTile tint="mango">
+                    <ImageIcon />
+                  </FileTile>
+                }
+                // The batch status above shows the mascot whenever it is a block.
+                mascot={batchTone === 'plain'}
                 formatBytes={(bytes) => formatSize(bytes, locale)}
                 sizeSummary={(before, after) =>
                   m.compress_image_sizes(
