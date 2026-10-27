@@ -5,12 +5,17 @@
  * unknown address under `/pt/` gets this page in Portuguese and any other one gets English.
  * The same file answers at every unknown depth, so every link and asset here is root-relative.
  *
+ * The NotFound artboard ("Bloco e cartão"): a mango block with "Error 404", the heading, a
+ * short explanation and the error mascot, and a card overlapping it with what the visitor can
+ * do here: the published tools, then the way back home.
+ *
  * Not indexable and without alternates: it has no canonical address, and no language
  * suggestion (ADR 0019). The language links go to each locale's home page. Static HTML, no
  * script; the tool links come from the registry.
  */
 import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
+import type { ToolCategory } from '@mochifile/tool-kit'
 import Mascot from '../assets/mascot/mascot-error.svg'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { samePathInAllLocales } from '../lib/seo'
@@ -21,10 +26,25 @@ interface Props {
 }
 
 const { locale } = Astro.props
+
+// One literal class per category: Tailwind only generates classes it can read in the source.
+const tiles = {
+  image: 'bg-mango-tint text-mango-ink',
+  media: 'bg-ube-tint text-ube-ink',
+  pdf: 'bg-strawberry-tint text-strawberry-ink',
+} as const satisfies Record<ToolCategory, string>
+
+/** The icon on a tool's tile, as on the home page. Tools without one show no tile. */
+const icons: Partial<Record<string, string>> = {
+  'compress-image': 'M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7',
+}
+
 const toolLinks = tools.map(({ manifest }) => ({
   href: toolPaths(manifest)[locale],
   title: manifest.meta[locale].title,
   tagline: manifest.meta[locale].tagline,
+  tile: tiles[manifest.category],
+  icon: icons[manifest.id],
 }))
 ---
 
@@ -37,43 +57,67 @@ const toolLinks = tools.map(({ manifest }) => ({
 >
   <section aria-labelledby="not-found-heading">
     {/*
-      A mango block, as on the home page; the mascot always sits on a block (README › Mascot:
-      error, with text that says what to do). Under 600 px it sits above the heading, from
-      600 px beside the text.
+      The mango block. Under 1024 px the mascot sits in the flow below the text, as on the
+      phone artboard, and peeks from behind the card as on the home page: the artboard shows it
+      whole, 24 px above the card, which put the way home 61 px below the fold at 360 × 780 with
+      the full Portuguese tool title. From 1024 px it sits to the right of the text, and the
+      block's bottom padding is the card's overlap (`space-16`) plus the 40 px of mango the
+      artboard leaves visible above the card.
     */}
-    <div class="flex flex-col gap-6 rounded-2xl-squish-a bg-mango px-5 pt-6 pb-10 text-ink-on-block sm:flex-row sm:items-center sm:gap-10 sm:p-10 lg:p-14">
-      <Mascot aria-hidden="true" focusable="false" data-decoration class="block h-auto w-1/3 shrink-0 sm:order-last sm:w-1/4 lg:w-1/6" />
-      <div class="flex min-w-0 flex-1 flex-col gap-4 sm:gap-6 lg:max-w-reading-max">
-        <h1 id="not-found-heading" class="type-title sm:type-display-lg">{m.not_found_heading({}, { locale })}</h1>
-        <p class="type-body-lg">{m.not_found_text({}, { locale })}</p>
-        <a
-          href={localePath(locale)}
-          data-primary-action
-          class="press inline-flex min-h-target-primary items-center justify-center gap-2 rounded-pill bg-action px-5 text-center type-label-lg text-action-ink focus-ring sm:self-start sm:px-8"
-        >
-          {m.not_found_home({}, { locale })}
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0">
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-        </a>
+    <div class="rounded-2xl-squish-a bg-mango px-5 pt-5 pb-10 text-ink-on-block sm:px-10 sm:pt-10 lg:px-14 lg:pt-14 lg:pb-16">
+      <div class="flex flex-col gap-6 lg:mb-10 lg:flex-row lg:items-center">
+        <div class="flex min-w-0 flex-1 flex-col gap-3">
+          <p class="type-caption">{m.not_found_label({}, { locale })}</p>
+          <h1 id="not-found-heading" class="type-title text-balance sm:type-display-lg lg:type-display-xl">{m.not_found_heading({}, { locale })}</h1>
+          <p class="max-w-reading-max type-body sm:type-body-lg">{m.not_found_text({}, { locale })}</p>
+        </div>
+        {/* README › Mascot: error, on a block, with text that says what to do. */}
+        <Mascot aria-hidden="true" focusable="false" data-decoration class="block h-auto w-1/3 shrink-0 sm:w-1/6 lg:mr-10" />
       </div>
     </div>
+    {/*
+      Overlaps the block by `space-16` at every width, like the home card and the tool panel.
+      The artboard has 112 px on desktop, which is not a token (proposal v1.1 › off-scale values).
+    */}
+    <section aria-labelledby="not-found-tools" class="relative -mt-16 mx-2 flex flex-col gap-3 rounded-xl-squish-a bg-surface-card p-5 sm:mx-6 sm:p-8 lg:mx-8">
+      <div class="flex flex-col gap-2">
+        <h2 id="not-found-tools" class="type-label-lg">{m.not_found_tools_heading({}, { locale })}</h2>
+        {
+          toolLinks.length > 0 && (
+            <ul class="flex flex-col gap-2">
+              {toolLinks.map((link) => (
+                <li>
+                  <a href={link.href} class="group/link flex items-center gap-3 rounded-lg-squish-a bg-surface-sunken p-3 focus-ring">
+                    {link.icon && (
+                      <span aria-hidden="true" class:list={['flex size-target-min shrink-0 items-center justify-center rounded-md-squish-a', link.tile]}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6">
+                          <path d={link.icon} />
+                        </svg>
+                      </span>
+                    )}
+                    <span class="flex min-w-0 flex-col">
+                      <span class="type-body-strong group-hover/link:underline">{link.title}</span>
+                      <span class="type-body-sm text-ink-muted">{link.tagline}</span>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+      {/*
+        A bold text link, as in the artboard, at the primary target height (the artboard has
+        44 px) so the way home stays a full-size target; the card's gap is 8 px under the
+        artboard's 20 px to keep the same space between the row and the link's text.
+      */}
+      <a
+        href={localePath(locale)}
+        data-primary-action
+        class="inline-flex min-h-target-primary items-center self-start rounded-sm type-body-strong underline hover:no-underline focus-ring"
+      >
+        {m.not_found_home({}, { locale })}
+      </a>
+    </section>
   </section>
-  {
-    toolLinks.length > 0 && (
-      <section aria-labelledby="not-found-tools" class="mt-16 flex flex-col gap-4">
-        <h2 id="not-found-tools" class="type-title-sm sm:type-title">{m.not_found_tools_heading({}, { locale })}</h2>
-        <ul class="flex flex-col rounded-lg-squish-a bg-surface-card p-2 lg:max-w-reading-max">
-          {toolLinks.map((link) => (
-            <li>
-              <a href={link.href} class="group/link flex min-h-target-primary flex-col justify-center rounded-sm px-3 py-2 focus-ring">
-                <span class="font-bold group-hover/link:underline">{link.title}</span>
-                <span class="type-body-sm text-ink-muted">{link.tagline}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )
-  }
 </BaseLayout>
