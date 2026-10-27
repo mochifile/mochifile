@@ -125,7 +125,7 @@ test('keyboard: Tab order, Enter and Space, Escape and focus restoration', async
   expect(order).toEqual([
     { name: 'Skip to content', where: 'body', shown: true },
     { name: 'Mochifile', where: 'header', shown: true },
-    { name: 'Português', where: 'header', shown: true },
+    { name: 'Switch to Portuguese', where: 'header', shown: true },
     { name: 'Menu', where: 'header', shown: true },
   ])
 
@@ -585,7 +585,7 @@ for (const PHONE of PHONES) {
       expect(panel.y).toBeGreaterThanOrEqual(header.y + header.height)
 
       // Keyboard: the header's stops are all visible and on top, then the suggestion.
-      for (const name of ['Skip to content', 'Mochifile', 'Português', 'Menu']) {
+      for (const name of ['Skip to content', 'Mochifile', 'Switch to Portuguese', 'Menu']) {
         await page.keyboard.press(TAB)
         expect(await focused(page)).toMatchObject({ name, shown: true })
       }
@@ -629,21 +629,34 @@ for (const PHONE of PHONES) {
 
 /**
  * The language pill (SiteHeader artboard): one link with a globe to this page in the other
- * language. Under 1024 px it shows the code beside the menu button; from 1024 px the name. Its
- * accessible name is always the language's name, in that language.
+ * language. Under 1024 px it shows the code beside the menu button; from 1024 px the name, each
+ * in that language. Its accessible name is the action, in the page's language.
  */
 const PILL_PAGES = [
-  { path: '/compress-image/', other: '/pt/comprimir-imagem/', code: 'PT', name: 'Português' },
-  { path: '/pt/', other: '/', code: 'EN', name: 'English' },
+  {
+    path: '/compress-image/',
+    other: '/pt/comprimir-imagem/',
+    code: 'PT',
+    name: 'Português',
+    label: 'Switch to Portuguese',
+  },
+  { path: '/pt/', other: '/', code: 'EN', name: 'English', label: 'Mudar para inglês' },
 ] as const
 
-for (const { path, other, code, name } of PILL_PAGES) {
+for (const { path, other, code, name, label } of PILL_PAGES) {
   test(`the language pill links to ${other} from ${path} at every width`, async ({ page }) => {
     await page.goto(path)
     await expect(pill(page)).toHaveCount(1)
     await expect(pill(page)).toHaveAttribute('href', other)
     await expect(pill(page)).toHaveAttribute('hreflang', other.startsWith('/pt/') ? 'pt' : 'en')
-    await expect(pill(page)).toHaveAttribute('lang', other.startsWith('/pt/') ? 'pt' : 'en')
+    // Named in the page's language, so the name is read with the page's voice; the code and
+    // the language's name it shows are in that language.
+    await expect(pill(page)).toHaveAccessibleName(label)
+    await expect(pill(page)).not.toHaveAttribute('lang')
+    for (const span of await pill(page).locator('span').all()) {
+      await expect(span).toHaveAttribute('lang', other.startsWith('/pt/') ? 'pt' : 'en')
+    }
+    expect(await page.getByRole('banner').ariaSnapshot()).toContain(`link "${label}"`)
     // The page's own language is not offered: it is a link away, not a choice.
     await expect(page.locator('header a[aria-current="true"]')).toHaveCount(0)
 
@@ -651,7 +664,9 @@ for (const { path, other, code, name } of PILL_PAGES) {
       await page.setViewportSize({ width, height: 800 })
       const phone = width < 1024
       await expect(pill(page)).toBeVisible()
-      await expect(page.getByRole('banner').getByRole('link', { name, exact: true })).toBeVisible()
+      await expect(
+        page.getByRole('banner').getByRole('link', { name: label, exact: true }),
+      ).toBeVisible()
       // What the eye reads: the code, then the name.
       const shown = await pill(page).evaluate((el) =>
         [...el.querySelectorAll('span')]
