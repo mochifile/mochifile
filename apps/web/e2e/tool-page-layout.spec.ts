@@ -276,6 +276,20 @@ for (const p of pages) {
         if (overflow > 0) failures.push(`${width}px: ${overflow}px of horizontal overflow`)
         const hidden = await hiddenFocusables(page)
         if (hidden.length > 0) failures.push(`${width}px: hidden focus stops ${hidden.join(', ')}`)
+        // The breadcrumb links people can see are 44 px tall targets (README › Layout).
+        const crumbs = await page
+          .getByRole('navigation', { name: /breadcrumb|trilha/i })
+          .getByRole('link')
+          .evaluateAll((links) =>
+            links
+              .map((link) => link.getBoundingClientRect())
+              .filter((box) => box.width > 1)
+              .map((box) => box.height),
+          )
+        if (crumbs.length === 0) failures.push(`${width}px: no visible breadcrumb link`)
+        if (crumbs.some((height) => height < 44)) {
+          failures.push(`${width}px: breadcrumb links ${crumbs.join(', ')} px tall`)
+        }
       } finally {
         await context.close()
       }
