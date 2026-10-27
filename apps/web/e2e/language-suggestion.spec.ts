@@ -113,10 +113,7 @@ test('never shows after arriving through the language switcher', async ({ testBr
   try {
     // A Portuguese speaker deliberately switches to English.
     await page.goto('/pt/')
-    await page
-      .getByRole('navigation', { name: 'Idioma' })
-      .getByRole('link', { name: 'English' })
-      .click()
+    await page.getByRole('banner').getByRole('link', { name: 'English', exact: true }).click()
     await expect(page).toHaveURL('/')
     await expect(page.locator('aside[data-language-suggestion]')).toBeHidden()
     await page.goto('/compress-image/')

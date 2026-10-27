@@ -14,6 +14,8 @@ const trigger = (page: Page) => page.getByRole('button', { name: 'Menu' })
 const menu = (page: Page) => page.locator('[data-site-menu]')
 const suggestion = (page: Page) => page.locator('aside[data-language-suggestion]:not([hidden])')
 const isOpen = (page: Page) => menu(page).evaluate((el) => el.matches(':popover-open'))
+/** The language pill in the header row (the menu has its own language link). */
+const pill = (page: Page) => page.locator('header > div [data-language-switch]')
 
 /**
  * The key that moves focus to the next link. WebKit on macOS follows the system setting and
@@ -30,7 +32,16 @@ function focused(page: Page) {
     const box = el.getBoundingClientRect()
     const top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)
     return {
-      name: (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().replace(/\s+/g, ' '),
+      // Its text without the parts hidden from assistive technology (the pill's "PT").
+      name: (
+        el.getAttribute('aria-label') ??
+        [...el.childNodes]
+          .filter((node) => !(node instanceof Element && node.getAttribute('aria-hidden')))
+          .map((node) => node.textContent)
+          .join('')
+      )
+        .trim()
+        .replace(/\s+/g, ' '),
       where: el.closest('[data-site-menu]')
         ? 'menu'
         : (el.closest('header, main, footer, aside')?.tagName.toLowerCase() ?? 'body'),
@@ -409,10 +420,7 @@ for (const input of ['mouse', 'touch'] as const) {
         .getByRole('banner')
         .getByRole('link', { name: 'Mochifile' })
         .boundingBox()
-      const language = await page
-        .getByRole('navigation', { name: 'Language' })
-        .getByRole('link', { name: 'Português' })
-        .boundingBox()
+      const language = await pill(page).boundingBox()
       if (!logo || !language) throw new Error('missing boxes')
       await press((logo.x + logo.width + language.x) / 2, button.y)
       await expect(menu(page)).toBeHidden()
@@ -615,6 +623,103 @@ for (const PHONE of PHONES) {
       expect(errors).toEqual([])
     } finally {
       await context.close()
+    }
+  })
+}
+
+/**
+ * The language pill (SiteHeader artboard): one link with a globe to this page in the other
+ * language. Under 1024 px it shows the code beside the menu button; from 1024 px the name. Its
+ * accessible name is always the language's name, in that language.
+ */
+const PILL_PAGES = [
+  { path: '/compress-image/', other: '/pt/comprimir-imagem/', code: 'PT', name: 'Português' },
+  { path: '/pt/', other: '/', code: 'EN', name: 'English' },
+] as const
+
+for (const { path, other, code, name } of PILL_PAGES) {
+  test(`the language pill links to ${other} from ${path} at every width`, async ({ page }) => {
+    await page.goto(path)
+    await expect(pill(page)).toHaveCount(1)
+    await expect(pill(page)).toHaveAttribute('href', other)
+    await expect(pill(page)).toHaveAttribute('hreflang', other.startsWith('/pt/') ? 'pt' : 'en')
+    await expect(pill(page)).toHaveAttribute('lang', other.startsWith('/pt/') ? 'pt' : 'en')
+    // The page's own language is not offered: it is a link away, not a choice.
+    await expect(page.locator('header a[aria-current="true"]')).toHaveCount(0)
+
+    for (const width of [320, 360, 390, 600, 768, 1023, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 800 })
+      const phone = width < 1024
+      await expect(pill(page)).toBeVisible()
+      await expect(page.getByRole('banner').getByRole('link', { name, exact: true })).toBeVisible()
+      // What the eye reads: the code, then the name.
+      const shown = await pill(page).evaluate((el) =>
+        [...el.querySelectorAll('span')]
+          .filter((span) => span.getBoundingClientRect().width > 1)
+          .map((span) => span.textContent?.trim())
+          .join(' '),
+      )
+      expect(shown, `${width} px`).toBe(phone ? code : name)
+      const box = await pill(page).boundingBox()
+      if (!box) throw new Error('no pill')
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      expect(box.x + box.width).toBeLessThanOrEqual(width)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      )
+      if (phone) {
+        // Beside the menu button, 8 px before it, on one row.
+        const button = await trigger(page).boundingBox()
+        if (!button) throw new Error('no menu button')
+        expect(Math.round(button.x - (box.x + box.width))).toBe(8)
+        expect(Math.round(box.y + box.height / 2)).toBe(Math.round(button.y + button.height / 2))
+      }
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await pill(page).click()
+    await expect(page).toHaveURL(other)
+  })
+}
+
+for (const colorScheme of ['light', 'dark'] as const) {
+  test(`the Portuguese header and menu are axe-clean in the ${colorScheme} theme`, async ({
+    testBrowser,
+  }) => {
+    const { default: AxeBuilder } = await import('@axe-core/playwright')
+    for (const viewport of [
+      { width: 360, height: 800 },
+      { width: 1024, height: 768 },
+    ]) {
+      const { context, page, errors } = await phoneContext(testBrowser, {
+        viewport,
+        colorScheme,
+        locale: 'pt-BR',
+      })
+      try {
+        await page.goto('/pt/comprimir-imagem/')
+        const results = await new AxeBuilder({ page }).include('header').analyze()
+        expect(results.violations).toEqual([])
+        // The pill's outline is the control border of the active theme, as on the menu button.
+        const [outline, control] = await page.evaluate(() => {
+          const probe = document.createElement('div')
+          probe.className = 'border-chip border-border-control'
+          document.body.append(probe)
+          const value = getComputedStyle(probe).borderTopColor
+          probe.remove()
+          const link = document.querySelector('header > div [data-language-switch]') as Element
+          return [getComputedStyle(link).borderTopColor, value]
+        })
+        expect(outline).toBe(control)
+        if (viewport.width < 1024) {
+          await page.getByRole('button', { name: 'Menu' }).click()
+          await expect(menu(page).getByRole('link', { name: 'English' })).toBeVisible()
+          expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+        }
+        expect(errors).toEqual([])
+      } finally {
+        await context.close()
+      }
     }
   })
 }
