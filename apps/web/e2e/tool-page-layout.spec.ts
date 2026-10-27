@@ -335,3 +335,94 @@ for (const colorScheme of ['light', 'dark'] as const) {
     })
   }
 }
+
+/**
+ * The tool card is as tall as the tool (ToolPanel artboard): the height reserved against layout
+ * shift (`tool-reserve`) is on a box around it, so a short tool leaves page background under
+ * the card, never a blank band inside it. Every tool page, both languages, every width.
+ */
+test('the tool card ends with the tool, inside a box that keeps the reserve', async ({
+  testBrowser,
+  request,
+}) => {
+  test.setTimeout(240_000)
+  const paths = await toolPaths(request)
+  const failures: string[] = []
+  for (const width of WIDTHS) {
+    const context = await testBrowser.newContext({
+      ...projectContextOptions(),
+      viewport: { width, height: 900 },
+    })
+    try {
+      const page = await context.newPage()
+      for (const path of paths) {
+        await page.goto(path)
+        await page.locator('[data-tool-card] input[type="file"]').waitFor({ state: 'attached' })
+        await page.evaluate(() => document.fonts.ready)
+        const { band, reserve, box } = await page.evaluate(() => {
+          const card = document.querySelector('[data-tool-card]')
+          const tool = card?.querySelector('astro-island > *')
+          const outer = card?.parentElement
+          if (!card || !tool || !outer) throw new Error('no tool card')
+          const padding = Number.parseFloat(getComputedStyle(card).paddingBottom)
+          return {
+            band:
+              card.getBoundingClientRect().bottom - padding - tool.getBoundingClientRect().bottom,
+            reserve: Number.parseFloat(getComputedStyle(outer).minHeight),
+            box: outer.getBoundingClientRect().height,
+          }
+        })
+        if (Math.abs(band) > 1) failures.push(`${path} at ${width}px: ${band.toFixed(1)} px band`)
+        if (!(reserve > 0) || box < reserve - 0.5) {
+          failures.push(`${path} at ${width}px: box ${box.toFixed(1)} px, reserve ${reserve}`)
+        }
+      }
+    } finally {
+      await context.close()
+    }
+  }
+  expect(failures).toEqual([])
+})
+
+/** Before the tool's JavaScript runs, the card fills the reserve: the tool will appear there. */
+test('the tool card fills the reserve until the tool renders', async ({ testBrowser }) => {
+  test.setTimeout(120_000)
+  const failures: string[] = []
+  for (const width of WIDTHS) {
+    for (const path of ['/compress-image/', '/pt/comprimir-imagem-para-50kb/']) {
+      const context = await testBrowser.newContext({
+        ...projectContextOptions(),
+        viewport: { width, height: 900 },
+      })
+      try {
+        let release = () => {}
+        const held = new Promise<void>((resolve) => {
+          release = resolve
+        })
+        await context.route('**/_astro/*.js', async (route) => {
+          await held
+          await route.continue()
+        })
+        const page = await context.newPage()
+        await page.goto(path, { waitUntil: 'domcontentloaded' })
+        const before = await page.evaluate(() => {
+          const card = document.querySelector('[data-tool-card]')
+          const outer = card?.parentElement
+          if (!card || !outer) throw new Error('no tool card')
+          return {
+            card: card.getBoundingClientRect().height,
+            box: outer.getBoundingClientRect().height,
+          }
+        })
+        if (Math.abs(before.card - before.box) > 0.5) {
+          failures.push(`${path} at ${width}px: card ${before.card} px, reserve ${before.box} px`)
+        }
+        release()
+        await page.locator('[data-tool-card] input[type="file"]').waitFor({ state: 'attached' })
+      } finally {
+        await context.close()
+      }
+    }
+  }
+  expect(failures).toEqual([])
+})
