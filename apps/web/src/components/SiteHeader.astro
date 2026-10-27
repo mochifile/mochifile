@@ -29,6 +29,11 @@ const toolLinks = tools.map(({ manifest }) => ({
   tagline: manifest.meta[locale].tagline,
 }))
 const otherLocales = locales.filter((target) => target !== locale)
+/** The language pill's width from 1024 px, per language it links to: see --spacing-language-link-*. */
+const pillWidth: Record<Locale, string> = {
+  en: 'lg:w-language-link-en',
+  pt: 'lg:w-language-link-pt',
+}
 const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
 ---
 
@@ -76,34 +81,48 @@ const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
         }
       </ul>
     </nav>
-    <div class="ml-auto flex items-center gap-2 lg:gap-6">
-      <nav aria-label={m.nav_language({}, { locale })}>
-        <ul class="flex gap-1 type-body-sm font-semibold">
-          {/* Fixed-width cells: see --spacing-language-link. */}
-          {
-            locales.map((target) => (
-              // Under 600 px only the other languages show, so the menu button fits at 360 px.
-              <li class:list={[target === locale && 'max-sm:hidden']}>
-                <a
-                  href={paths[target]}
-                  hreflang={localeTags[target]}
-                  lang={localeTags[target]}
-                  data-language-switch
-                  aria-current={target === locale ? 'true' : undefined}
-                  class:list={[
-                    'press inline-flex min-h-target-min w-language-link items-center justify-center rounded-pill border-chip px-1 focus-ring',
-                    target === locale
-                      ? 'border-ink font-bold'
-                      : 'border-transparent hover:border-border-control',
-                  ]}
-                >
-                  {localeNames[target]}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </nav>
+    <div class="ml-auto flex items-center gap-2">
+      {/*
+        The other language, as one pill with a globe (SiteHeader artboard; ADR 0007): a plain
+        link to this page's alternate, so no menu and no script. Under 1024 px it shows the
+        language's code, "EN", beside the menu button; from 1024 px its name, "English". Its
+        accessible name is the name at every width, read in that language (`lang`). The pill has
+        a fixed width, so the font swap never moves it.
+      */}
+      {
+        otherLocales.map((target) => (
+          <a
+            href={paths[target]}
+            hreflang={localeTags[target]}
+            lang={localeTags[target]}
+            data-language-switch
+            class:list={[
+              'press inline-flex min-h-target-min w-language-link-phone items-center justify-center gap-2 rounded-pill border-chip border-border-control px-3 text-ink hover:border-ink focus-ring lg:px-4',
+              pillWidth[target],
+            ]}
+          >
+            {/* Line icon on the 24px grid, 2px stroke (README › Iconography). */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              class="size-4 shrink-0"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3 12h18" />
+              <path d="M12 3c3 3 3 15 0 18-3-3-3-15 0-18" />
+            </svg>
+            {/* Locale ids are two-letter language codes ("en", "pt"). */}
+            <span aria-hidden="true" class="type-caption font-bold lg:hidden">
+              {target.toUpperCase()}
+            </span>
+            <span class="type-body-sm font-semibold max-lg:sr-only">{localeNames[target]}</span>
+          </a>
+        ))
+      }
       {/* The browser exposes its open and closed state (aria-expanded) from `popovertarget`. */}
       <button
         type="button"
@@ -180,8 +199,22 @@ const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
                 hreflang={localeTags[target]}
                 lang={localeTags[target]}
                 data-language-switch
-                class="flex min-h-target-primary items-center rounded-sm px-3 font-semibold hover:underline focus-ring"
+                class="flex min-h-target-primary items-center gap-3 rounded-sm px-3 font-semibold hover:underline focus-ring"
               >
+                {/* The header pill's globe (MenuMobile artboard). */}
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  class="size-5 shrink-0"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M3 12h18" />
+                  <path d="M12 3c3 3 3 15 0 18-3-3-3-15 0-18" />
+                </svg>
                 {localeNames[target]}
               </a>
             </li>
