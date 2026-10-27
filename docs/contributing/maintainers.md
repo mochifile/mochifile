@@ -17,4 +17,8 @@
   ([deployment.md](deployment.md)).
 - [x] Set up the `www.mochifile.com` and `mochifile.app` redirects in the Cloudflare dashboard
   ([deployment.md → Domains](deployment.md#domains), ADR 0015).
+- [x] Turn off Cloudflare Web Analytics on `mochifile.com`
+  ([deployment.md → Web Analytics stays off](deployment.md#web-analytics-stays-off), ADR 0009).
+- [ ] Decide whether to keep Cloudflare's Network Error Logging headers
+  ([deployment.md → Network Error Logging is separate](deployment.md#network-error-logging-is-separate)).
 - [ ] At launch, allow search indexing (ADR 0014).
