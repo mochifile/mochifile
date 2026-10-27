@@ -243,6 +243,52 @@ test('says when the compressor did not load, and tries again when asked', async 
   }
 })
 
+test('on a phone, the options are a compact list that opens in place', async ({
+  testBrowser,
+  browserName,
+}) => {
+  // Like Safari on macOS, WebKit's Tab skips buttons unless Option is held.
+  const tab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab'
+  const context = await testBrowser.newContext({
+    ...projectContextOptions(),
+    viewport: { width: 390, height: 844 },
+  })
+  try {
+    const page = await context.newPage()
+    await page.goto('/compress-image-to-50kb/')
+    const size = page.getByRole('button', { name: 'Maximum size, 50 KB, Change' })
+    const format = page.getByRole('button', { name: 'Save as, Same as original, Change' })
+    await expect(size).toHaveAttribute('aria-expanded', 'false')
+    await expect(format).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.getByRole('radio', { name: '20 KB' })).toBeHidden()
+
+    // Open with the keyboard, pick a size with the arrows, close: focus stays on the row.
+    await size.focus()
+    await page.keyboard.press('Enter')
+    await expect(size).toHaveAttribute('aria-expanded', 'true')
+    await page.keyboard.press(tab)
+    await expect(page.getByRole('radio', { name: '50 KB' })).toBeFocused()
+    await page.keyboard.press('ArrowLeft')
+    await expect(page.getByRole('radio', { name: '20 KB' })).toBeChecked()
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+    const changed = page.getByRole('button', { name: 'Maximum size, 20 KB, Change' })
+    await changed.focus()
+    await page.keyboard.press('Enter')
+    await expect(changed).toHaveAttribute('aria-expanded', 'false')
+    await expect(changed).toBeFocused()
+    await expect(page.getByRole('radio', { name: '20 KB' })).toBeHidden()
+
+    // Processing is unchanged: the photo is compressed to the size picked in the list.
+    await waitForEngine(page)
+    await add(page, await photo('flowers'))
+    const result = await downloadResult(page)
+    expect(result.name).toBe('flowers-20kb.jpg')
+    expect(result.bytes.length).toBeLessThanOrEqual(20_000)
+  } finally {
+    await context.close()
+  }
+})
+
 test('a custom size can be typed and is validated', async ({ page }) => {
   await page.goto('/compress-image/')
   await choose(page, 'Other size')
