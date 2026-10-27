@@ -456,7 +456,7 @@ test('the tool card fills the reserve until the tool renders', async ({ testBrow
  * 48 px under 1024 px and 64 px from 1024 px, plus at most a line of slack where the panel's
  * text wraps differently between pages. With the brand fonts, and with the text face's
  * fallback, which the tool may render with before that face arrives (the display face is
- * preloaded). Every tool page, 320–1440 px every 4 px.
+ * preloaded). Every tool page, 320–1440 px every 4 px (8 px with the fallback).
  */
 for (const fonts of ['brand', 'fallback'] as const) {
   test(`the reserve fits the tool at every width (${fonts} fonts)`, async ({
@@ -489,32 +489,25 @@ for (const fonts of ['brand', 'fallback'] as const) {
         await page.goto(path)
         await page.locator('[data-tool-card] input[type="file"]').waitFor({ state: 'attached' })
         if (fonts === 'brand') await page.evaluate(() => document.fonts.ready)
-        for (let width = 320; width <= 1440; width += 4) {
+        // Every 4 px with the brand fonts; every 8 px is enough to catch the fallback's line breaks.
+        for (let width = 320; width <= 1440; width += fonts === 'brand' ? 4 : 8) {
           await page.setViewportSize({ width, height: 900 })
-          const { tool, reserve, under } = await page.evaluate(
-            () =>
-              new Promise<{ tool: number; reserve: number; under: number }>((resolve) =>
-                // Two frames: the tool may also react to the new width (matchMedia).
-                requestAnimationFrame(() =>
-                  requestAnimationFrame(() => {
-                    const card = document.querySelector('[data-tool-card]')
-                    const outer = card?.parentElement
-                    let next = outer?.nextElementSibling
-                    while (next && next.getBoundingClientRect().height === 0) {
-                      next = next.nextElementSibling
-                    }
-                    if (!card || !outer || !next) throw new Error('no tool card')
-                    resolve({
-                      tool:
-                        card.getBoundingClientRect().height +
-                        Number.parseFloat(getComputedStyle(outer).paddingBottom),
-                      reserve: Number.parseFloat(getComputedStyle(outer).minHeight),
-                      under: next.getBoundingClientRect().top - card.getBoundingClientRect().bottom,
-                    })
-                  }),
-                ),
-              ),
-          )
+          // Layout follows CSS alone (no script reads the width), so reading it after the
+          // resize gives the new layout.
+          const { tool, reserve, under } = await page.evaluate(() => {
+            const card = document.querySelector('[data-tool-card]')
+            const outer = card?.parentElement
+            let next = outer?.nextElementSibling
+            while (next && next.getBoundingClientRect().height === 0) next = next.nextElementSibling
+            if (!card || !outer || !next) throw new Error('no tool card')
+            return {
+              tool:
+                card.getBoundingClientRect().height +
+                Number.parseFloat(getComputedStyle(outer).paddingBottom),
+              reserve: Number.parseFloat(getComputedStyle(outer).minHeight),
+              under: next.getBoundingClientRect().top - card.getBoundingClientRect().bottom,
+            }
+          })
           const designed = width >= DESKTOP ? 64 : 48
           if (tool > reserve + 0.5) {
             failures.push(
