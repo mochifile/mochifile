@@ -7,12 +7,14 @@ import { createToolClient } from '@mochifile/tool-kit/client'
 import {
   BatchStatus,
   type BatchStatusTone,
+  DownloadIcon,
   downloadZip,
   FileTile,
   ImageIcon,
   isBlockTone,
   OptionList,
   OptionRow,
+  PrivacyNote,
   preloadZip,
   type QueueItem,
   ResultRow,
@@ -322,7 +324,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
   const hasWebp = items.some((item) => item.file.type === 'image/webp')
 
   return (
-    <div ref={rootRef} className="flex flex-col gap-8" data-engine={engine}>
+    <div ref={rootRef} className="flex flex-col gap-5 lg:gap-6" data-engine={engine}>
       {/* Phones: one column. Desktop: options on the left, the dropzone in the wider column. */}
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-5 lg:items-start lg:gap-8">
         <div className="flex flex-col gap-5 lg:col-span-2">
@@ -474,9 +476,6 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
             )}
             pasteHint={m.compress_image_paste_hint({}, { locale })}
           />
-          <p className="type-body-sm text-ink-muted">
-            {m.compress_image_privacy_note({}, { locale })}
-          </p>
           {tooMany && (
             <div role="alert">
               <Notice tone="warning">
@@ -564,6 +563,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                 )}
                 {done.length > 1 && !busy && (
                   <Button className={batchButton} onClick={() => void downloadAll()}>
+                    <DownloadIcon />
                     {m.compress_image_download_all({}, { locale })}
                   </Button>
                 )}
@@ -634,6 +634,11 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
           </ul>
         </section>
       )}
+
+      {/* Last in every state, under the results too (ToolPanel artboard). */}
+      <PrivacyNote lead={m.compress_image_privacy_lead({}, { locale })}>
+        {m.compress_image_privacy_note({}, { locale })}
+      </PrivacyNote>
     </div>
   )
 }
