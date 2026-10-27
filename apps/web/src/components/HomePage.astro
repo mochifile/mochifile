@@ -1,8 +1,8 @@
 ---
 /**
  * The home page, "Bloco e cartão" direction (design-system proposal v1.1): a mango block with
- * the headline, a "Start here" card overlapping it, three steps, the published tools and the
- * privacy band. Static HTML: no script beyond the site-wide language suggestion.
+ * the headline, a "Start here" card overlapping it, three steps (from 600 px), the published
+ * tools and the privacy band. Static HTML: no script beyond the site-wide language suggestion.
  *
  * Every destination comes from the tool registry. The card leads to one tool (START_TOOL_ID)
  * and its size variants, and disappears if that tool is not published; the tool list shows one
@@ -276,7 +276,12 @@ const chipClass =
         </div>
       )
     }
-    <ol aria-label={m.home_steps_label({}, { locale })} class="mx-3 mt-8 grid gap-4 sm:mx-6 lg:mx-8 lg:grid-cols-3">
+    {/*
+      From 600 px only: the phone home (artboard HomeMobile) goes from the card straight to the
+      tools, so under 600 px the steps are not rendered at all, leaving no gap, no layout shift
+      and nothing for assistive technology. They hold no links.
+    */}
+    <ol aria-label={m.home_steps_label({}, { locale })} class="mx-3 mt-8 grid gap-4 max-sm:hidden sm:mx-6 lg:mx-8 lg:grid-cols-3">
       {
         steps.map((step, index) => (
           <li class="flex items-center gap-3">
