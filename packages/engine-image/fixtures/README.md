@@ -19,6 +19,7 @@ contain no people and no personal data.
 | `synthetic.heic` | 400 × 300 | The test suite's synthetic image, written by macOS `sips` | Generated for this project, no rights claimed (CC0) |
 | `synthetic-alpha.heic` | 400 × 300 | The same with a transparent left half (an alpha auxiliary image) | Generated for this project, no rights claimed (CC0) |
 | `display-p3-chart.heic` | 128 × 128 | A chart of 16 flat 32 px colour patches in the Display P3 colour space, with Apple's Display P3 ICC profile (`colr`/`prof`, as iPhone photos have), for the colour tests (ADR 0025). Made in code as a lossless PNG, tagged with `sips --embedProfile "Display P3.icc"` and written with `sips -s format heic` | Generated for this project, no rights claimed (CC0) |
+| `display-p3-alpha.heic` | 128 × 128 | Four columns of Display P3 colours (the saturated green, red and blue and the skin tone of the chart) with alpha 255, 160, 64 and 0 down the rows, with the same ICC profile and an alpha auxiliary image, for the colour tests (ADR 0025). Made the same way as the chart from an RGBA PNG | Generated for this project, no rights claimed (CC0) |
 
 The iPhone photo kept its location in EXIF even with location services off. Its EXIF item
 (GPS, device, software, capture times, lens and MakerNote) was blanked in place, without
