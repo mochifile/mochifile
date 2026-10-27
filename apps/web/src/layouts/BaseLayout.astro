@@ -56,8 +56,11 @@ const alternates = buildAlternates(paths, site)
     <SiteHeader locale={locale} paths={paths} />
     {/* Pages without alternates (e.g. 404) have nothing to suggest. */}
     {!noindex && <LanguageSuggestion locale={locale} paths={paths} />}
-    {/* The skip link's target: `tabindex="-1"` moves focus here in every engine without adding a Tab stop. */}
-    <main id="content" tabindex="-1" class="mx-auto w-full max-w-content-max flex-1 px-4 pt-4 pb-16 outline-none sm:pt-6">
+    {/*
+      The skip link's target: `tabindex="-1"` moves focus here in every engine without adding a Tab stop.
+      From 1024 px the first block sits `space-2` (8 px) under the header, as in every desktop artboard.
+    */}
+    <main id="content" tabindex="-1" class="mx-auto w-full max-w-content-max flex-1 px-4 pt-4 pb-16 outline-none sm:pt-6 lg:pt-2">
       <slot />
     </main>
     <SiteFooter locale={locale} paths={paths} />
