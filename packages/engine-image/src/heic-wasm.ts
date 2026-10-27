@@ -86,8 +86,7 @@ export async function loadHeicDecoder(wasmBinary?: Uint8Array): Promise<HeicDeco
       if (lib.heif_image_handle_is_premultiplied_alpha(handle)) unpremultiply(pixels)
       // libheif leaves the colours in the file's profile (Display P3 on iPhone photos), and the
       // outputs are untagged sRGB; the browser's own decoder converts, so this must too.
-      const profile = readHeifIccProfile(bytes)
-      if (profile) convertToSrgb(pixels, profile)
+      applyColorProfile(bytes, pixels)
       return new ImageData(pixels, width, height)
     } finally {
       // Free the WebAssembly memory now: a 12 MP photo holds about 50 MB.
@@ -106,5 +105,19 @@ function unpremultiply(data: Uint8ClampedArray): void {
     data[i] = ((data[i] ?? 0) * 255) / alpha
     data[i + 1] = ((data[i + 1] ?? 0) * 255) / alpha
     data[i + 2] = ((data[i + 2] ?? 0) * 255) / alpha
+  }
+}
+
+/**
+ * Converts the decoded pixels from the file's ICC profile to sRGB. A profile is untrusted input
+ * and only an improvement on what libheif returns, so whatever goes wrong with it must not turn
+ * a photo that decodes fine into a failed conversion: the pixels then stay as decoded.
+ */
+function applyColorProfile(bytes: Uint8Array, pixels: Uint8ClampedArray): void {
+  try {
+    const profile = readHeifIccProfile(bytes)
+    if (profile) convertToSrgb(pixels, profile)
+  } catch {
+    // Unusable profile: keep the decoded colours.
   }
 }

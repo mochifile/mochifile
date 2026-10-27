@@ -47,27 +47,45 @@ function srgbEncodeTable(): Uint8Array {
   return encodeTable
 }
 
-/** Reads the profile's tag table and its tone curves and colorants; undefined if unsupported. */
+/** Device classes of profiles that describe an RGB image's colours (not links or abstracts). */
+const IMAGE_CLASSES = new Set(['mntr', 'scnr', 'spac', 'prtr'])
+/** Lookup-table transforms. When one exists it takes precedence over the matrix: not handled. */
+const TABLE_TAGS = ['A2B0', 'A2B1', 'D2B0', 'D2B1']
+/** The ICC connection space white (D50) as XYZ. */
+const D50_WHITE = [0.9642, 1, 0.8249]
+
+/**
+ * Reads the profile's header, tag table, colorants and tone curves. Undefined if the profile is
+ * not a plain matrix/TRC RGB profile or does not hold together; it is never trusted.
+ */
 function parseMatrixProfile(icc: Uint8Array): MatrixProfile | undefined {
   if (icc.length < 132) return undefined
   const view = new DataView(icc.buffer, icc.byteOffset, icc.byteLength)
   const sig = (at: number) => String.fromCharCode(...icc.subarray(at, at + 4))
-  // Header: 'acsp' file signature, RGB data colour space and an XYZ connection space.
-  if (sig(36) !== 'acsp' || sig(16) !== 'RGB ' || sig(20) !== 'XYZ ') return undefined
+  // The declared size bounds everything below (bytes after it are padding). Version 2 and 4
+  // share the layout read here; 5 (iccMAX) does not.
+  const size = view.getUint32(0)
+  const major = icc[8] ?? 0
+  if (size < 132 || size > icc.length || major < 2 || major > 4) return undefined
+  // Header: device class, RGB data colour space, an XYZ connection space, 'acsp' signature.
+  if (!IMAGE_CLASSES.has(sig(12)) || sig(16) !== 'RGB ' || sig(20) !== 'XYZ ') return undefined
+  if (sig(36) !== 'acsp') return undefined
 
   const count = view.getUint32(128)
-  if (count > 256 || 132 + count * 12 > icc.length) return undefined
+  if (count > 256 || 132 + count * 12 > size) return undefined
   const tags = new Map<string, { offset: number; size: number }>()
   for (let i = 0; i < count; i += 1) {
     const entry = 132 + i * 12
+    const name = sig(entry)
     const offset = view.getUint32(entry + 4)
-    const size = view.getUint32(entry + 8)
-    if (size >= 8 && offset <= icc.length && size <= icc.length - offset) {
-      tags.set(sig(entry), { offset, size })
+    const length = view.getUint32(entry + 8)
+    // A repeated tag has no single meaning: readers disagree on which entry wins.
+    if (tags.has(name)) return undefined
+    if (length >= 8 && offset <= size && length <= size - offset) {
+      tags.set(name, { offset, size: length })
     }
   }
-  // A lookup-table transform takes precedence over the matrix when both exist: not handled.
-  if (tags.has('A2B0') || tags.has('A2B1')) return undefined
+  if (TABLE_TAGS.some((name) => tags.has(name))) return undefined
 
   const s15 = (at: number) => view.getInt32(at) / 65536
   const colorant = (name: string): number[] | undefined => {
@@ -84,10 +102,15 @@ function parseMatrixProfile(icc: Uint8Array): MatrixProfile | undefined {
   })
   const [cr, cg, cb] = curves
   if (!r || !g || !b || !cr || !cg || !cb) return undefined
-  // Colorants are columns: XYZ = [r g b] · linear RGB.
-  const toXyz = [r[0], g[0], b[0], r[1], g[1], b[1], r[2], g[2], b[2]]
-  if (toXyz.some((v) => v === undefined || !Number.isFinite(v))) return undefined
-  return { toXyz: toXyz as number[], curves: [cr, cg, cb] }
+  // Colorants are columns: XYZ = [r g b] · linear RGB. Real ones are non-negative, give or take
+  // the rounding of chromatic adaptation (Apple's Display P3 has a Z of -0.001).
+  const toXyz = [
+    r[0] ?? 0, g[0] ?? 0, b[0] ?? 0,
+    r[1] ?? 0, g[1] ?? 0, b[1] ?? 0,
+    r[2] ?? 0, g[2] ?? 0, b[2] ?? 0,
+  ] // biome-ignore format: 3 × 3 matrix
+  if (toXyz.some((v) => !(v >= -0.01 && v <= 2))) return undefined
+  return { toXyz, curves: [cr, cg, cb] }
 }
 
 /** A tone curve tag (`curv` or `para`) as a function from the encoded to the linear value. */
@@ -97,6 +120,8 @@ function parseCurve(
   offset: number,
   size: number,
 ): Curve | undefined {
+  // Both curve types start with a signature, 4 reserved bytes and a count or function type.
+  if (size < 12) return undefined
   const type = sig(offset)
   if (type === 'curv') {
     const n = view.getUint32(offset + 8)
@@ -138,11 +163,42 @@ function parseCurve(
 }
 
 /**
+ * Whether sampled values behave as a tone curve: finite, starting at black, rising (within the
+ * rounding of 16-bit tables) and ending above black. Anything else is a damaged or hostile
+ * profile, and converting with it would paint the picture wrongly.
+ */
+function isToneCurve(table: Float32Array): boolean {
+  let previous = 0
+  for (const v of table) {
+    if (!Number.isFinite(v) || v < previous - 0.002) return false
+    previous = Math.max(previous, v)
+  }
+  return (table[0] ?? 1) <= 0.01 && previous > 0.5
+}
+
+/** Whether RGB white (1, 1, 1) lands on the D50 white of the connection space, within 3%. */
+function mapsWhiteToWhite(toXyz: number[], lut: Float32Array[]): boolean {
+  const white = lut.map((table) => table[255] ?? 0)
+  return D50_WHITE.every((expected, row) => {
+    const sum =
+      (toXyz[row * 3] ?? 0) * (white[0] ?? 0) +
+      (toXyz[row * 3 + 1] ?? 0) * (white[1] ?? 0) +
+      (toXyz[row * 3 + 2] ?? 0) * (white[2] ?? 0)
+    return Math.abs(sum - expected) <= 0.03 * expected
+  })
+}
+
+/**
  * Converts `pixels` (non-premultiplied RGBA, in place) from the ICC `profile` to sRGB, clipping
  * colours outside the sRGB gamut (as browsers do by default). Alpha is untouched.
  *
- * @returns whether the pixels were converted: false for an unsupported profile, and for one
- * that already is sRGB, where there is nothing to do and no reason to touch the pixels.
+ * Nothing is written until the whole profile has been checked, so the pixels are either
+ * converted completely or not touched at all. A profile is refused when its header, tag table,
+ * colorants or curves are inconsistent (see `parseMatrixProfile` and `isToneCurve`), when it
+ * does not map RGB white to the D50 white, or when it uses a lookup table. It never throws.
+ *
+ * @returns whether the pixels were converted: false for an unusable profile, and for one that
+ * already is sRGB, where there is nothing to do and no reason to touch the pixels.
  */
 export function convertToSrgb(pixels: Uint8ClampedArray, profile: Uint8Array): boolean {
   const parsed = parseMatrixProfile(profile)
@@ -161,6 +217,9 @@ export function convertToSrgb(pixels: Uint8ClampedArray, profile: Uint8Array): b
   })
   // Per-channel lookup from the 8-bit encoded value to linear light.
   const lut = curves.map((curve) => Float32Array.from({ length: 256 }, (_, i) => curve(i / 255)))
+  if (!lut.every(isToneCurve) || !m.every(Number.isFinite) || !mapsWhiteToWhite(toXyz, lut)) {
+    return false
+  }
 
   const identityMatrix = m.every((v, k) => Math.abs(v - (k % 4 === 0 ? 1 : 0)) < 0.002)
   const srgbCurves = lut.every((table) =>

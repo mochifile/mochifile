@@ -159,7 +159,9 @@ export function readHeifIccProfile(b: Uint8Array): Uint8Array | undefined {
     const property = properties[index - 1]
     if (property?.type !== 'colr') continue
     const type = fourcc(b, property.start)
-    if (type === 'prof' || type === 'rICC') return b.subarray(property.start + 4, property.end)
+    if (type !== 'prof' && type !== 'rICC') continue
+    const profile = b.subarray(property.start + 4, property.end)
+    if (profile.length > 0) return profile
   }
   return undefined
 }

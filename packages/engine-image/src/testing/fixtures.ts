@@ -18,6 +18,7 @@ export const HEIC_FIXTURES = [
   'synthetic',
   'synthetic-alpha',
   'display-p3-chart',
+  'display-p3-alpha',
 ] as const
 export type HeicFixture = (typeof HEIC_FIXTURES)[number]
 

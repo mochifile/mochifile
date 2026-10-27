@@ -90,3 +90,60 @@ describe('HEIC with a Display P3 profile, decoded with WebAssembly', () => {
     },
   )
 })
+
+describe('HEIC with a Display P3 profile and an alpha channel', () => {
+  // `display-p3-alpha.heic`: columns of P3 green, red, blue and skin; alpha 255, 160, 64, 0 by row.
+  const COLUMNS = [
+    { name: 'green', expected: [0, 203, 73] },
+    { name: 'red', expected: [250, 31, 49] },
+    { name: 'blue', expected: [10, 91, 239] },
+    { name: 'skin', expected: [209, 147, 115] },
+  ]
+  const ALPHAS = [255, 160, 64]
+
+  const decode = async (bytes: Uint8Array<ArrayBuffer>) => {
+    const info = sniffImage(bytes)
+    return engine.decode(bytes, info, displaySize(info))
+  }
+  const pixelAt = (image: ImageData, patchColumn: number, patchRow: number) => {
+    const at = ((patchRow * 32 + 16) * 128 + patchColumn * 32 + 16) * 4
+    return [...image.data.subarray(at, at + 4)]
+  }
+
+  it('converts the colours of translucent areas and keeps their alpha', async () => {
+    const image = await decode((await readHeic('display-p3-alpha')) as Uint8Array<ArrayBuffer>)
+    expect(image.width).toBe(128)
+    for (const [column, { name, expected }] of COLUMNS.entries()) {
+      for (const [row, alpha] of ALPHAS.entries()) {
+        const [r = 0, g = 0, b = 0, a = 0] = pixelAt(image, column, row)
+        // Colours are straight (not premultiplied), so translucent areas convert like opaque ones.
+        expect(near([r, g, b], expected, 6), `${name}, alpha ${alpha}: ${[r, g, b]}`).toBe(true)
+        // The alpha in the source PNG, which HEVC codes as a separate image.
+        expect(Math.abs(a - alpha), `${name} alpha`).toBeLessThanOrEqual(2)
+      }
+      expect(pixelAt(image, column, 3)[3]).toBeLessThanOrEqual(2)
+    }
+  })
+
+  it('converts before filling transparency with white for JPG', async () => {
+    const { bytes } = await convertImage(
+      new Blob([(await readHeic('display-p3-alpha')) as Uint8Array<ArrayBuffer>]),
+      { format: 'jpeg' },
+      { engine, signal: new AbortController().signal },
+    )
+    const jpeg = await engine.codecs.decode('jpeg', bytes)
+    for (const [column, { name, expected }] of COLUMNS.entries()) {
+      for (const [row, alpha] of ALPHAS.entries()) {
+        // Composite of the sRGB colour over white; compositing P3 numbers would differ by 20+.
+        const over = expected.map((c) => c * (alpha / 255) + 255 * (1 - alpha / 255))
+        const actual = pixelAt(jpeg, column, row).slice(0, 3)
+        expect(
+          near(actual, over, 10),
+          `${name}, alpha ${alpha}: ${actual} vs ${over.map(Math.round)}`,
+        ).toBe(true)
+      }
+      // Fully transparent: white.
+      expect(near(pixelAt(jpeg, column, 3).slice(0, 3), [255, 255, 255], 4)).toBe(true)
+    }
+  })
+})
