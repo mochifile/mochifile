@@ -13,10 +13,15 @@ export async function readPhoto(name: Photo): Promise<Uint8Array> {
   return new Uint8Array(await readFile(new URL(`../../fixtures/${name}.jpg`, import.meta.url)))
 }
 
-export const HEIC_FIXTURES = ['iphone-grid', 'synthetic', 'synthetic-alpha'] as const
+export const HEIC_FIXTURES = [
+  'iphone-grid',
+  'synthetic',
+  'synthetic-alpha',
+  'display-p3-chart',
+] as const
 export type HeicFixture = (typeof HEIC_FIXTURES)[number]
 
-/** HEIC fixtures (see `fixtures/README.md`): a real iPhone grid photo and two synthetic files. */
+/** HEIC fixtures (see `fixtures/README.md`): a real iPhone grid photo and synthetic files. */
 export async function readHeic(name: HeicFixture): Promise<Uint8Array> {
   return new Uint8Array(await readFile(new URL(`../../fixtures/${name}.heic`, import.meta.url)))
 }
