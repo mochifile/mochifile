@@ -419,20 +419,29 @@ test('the tool card fills the reserve until the tool renders', async ({ testBrow
         })
         const page = await context.newPage()
         await page.goto(path, { waitUntil: 'domcontentloaded' })
-        const before = await page.evaluate(() => {
-          const card = document.querySelector('[data-tool-card]')
-          const outer = card?.parentElement
-          if (!card || !outer) throw new Error('no tool card')
-          return {
-            card: card.getBoundingClientRect().height,
-            box: outer.getBoundingClientRect().height,
-          }
-        })
-        if (Math.abs(before.card - before.box) > 0.5) {
+        const measure = () =>
+          page.evaluate(() => {
+            const card = document.querySelector('[data-tool-card]')
+            const outer = card?.parentElement
+            if (!card || !outer) throw new Error('no tool card')
+            return {
+              card: card.getBoundingClientRect().height,
+              box: outer.getBoundingClientRect().height,
+              under: Number.parseFloat(getComputedStyle(outer).paddingBottom),
+            }
+          })
+        const before = await measure()
+        // The card fills the reserve but for the space the box keeps under it.
+        if (Math.abs(before.card + before.under - before.box) > 0.5) {
           failures.push(`${path} at ${width}px: card ${before.card} px, reserve ${before.box} px`)
         }
         release()
         await page.locator('[data-tool-card] input[type="file"]').waitFor({ state: 'attached' })
+        // The tool fits the reserve: the box, and so everything below it, has not moved.
+        const after = await measure()
+        if (Math.abs(after.box - before.box) > 0.5) {
+          failures.push(`${path} at ${width}px: the box went from ${before.box} to ${after.box} px`)
+        }
       } finally {
         await context.close()
       }
@@ -440,3 +449,85 @@ test('the tool card fills the reserve until the tool renders', async ({ testBrow
   }
   expect(failures).toEqual([])
 })
+
+/**
+ * The reserve follows the tool closely at every width: the tool never outgrows it (nothing
+ * below moves when the tool renders), and under the card there is the artboards' space,
+ * 48 px under 1024 px and 64 px from 1024 px, plus at most a line of slack where the panel's
+ * text wraps differently between pages. With the brand fonts, and with the text face's
+ * fallback, which the tool may render with before that face arrives (the display face is
+ * preloaded). Every tool page, 320–1440 px every 4 px.
+ */
+for (const fonts of ['brand', 'fallback'] as const) {
+  test(`the reserve fits the tool at every width (${fonts} fonts)`, async ({
+    testBrowser,
+    request,
+  }) => {
+    test.setTimeout(300_000)
+    const paths = await toolPaths(request)
+    const failures: string[] = []
+    for (const path of paths) {
+      const context = await testBrowser.newContext({
+        ...projectContextOptions(),
+        viewport: { width: 320, height: 900 },
+      })
+      try {
+        const page = await context.newPage()
+        if (fonts === 'fallback') {
+          // The display face is preloaded (BaseLayout), so it is in place for the first paint;
+          // the others can arrive after the tool renders.
+          const html = await (await page.request.get(path)).text()
+          const preloaded = new Set(
+            [...html.matchAll(/<link rel="preload" href="([^"]+\.woff2)"/g)].map((m) => m[1]),
+          )
+          await context.route('**/*.woff2', (route) =>
+            preloaded.has(new URL(route.request().url()).pathname)
+              ? route.continue()
+              : route.abort(),
+          )
+        }
+        await page.goto(path)
+        await page.locator('[data-tool-card] input[type="file"]').waitFor({ state: 'attached' })
+        if (fonts === 'brand') await page.evaluate(() => document.fonts.ready)
+        for (let width = 320; width <= 1440; width += 4) {
+          await page.setViewportSize({ width, height: 900 })
+          const { tool, reserve, under } = await page.evaluate(
+            () =>
+              new Promise<{ tool: number; reserve: number; under: number }>((resolve) =>
+                // Two frames: the tool may also react to the new width (matchMedia).
+                requestAnimationFrame(() =>
+                  requestAnimationFrame(() => {
+                    const card = document.querySelector('[data-tool-card]')
+                    const outer = card?.parentElement
+                    let next = outer?.nextElementSibling
+                    while (next && next.getBoundingClientRect().height === 0) {
+                      next = next.nextElementSibling
+                    }
+                    if (!card || !outer || !next) throw new Error('no tool card')
+                    resolve({
+                      tool:
+                        card.getBoundingClientRect().height +
+                        Number.parseFloat(getComputedStyle(outer).paddingBottom),
+                      reserve: Number.parseFloat(getComputedStyle(outer).minHeight),
+                      under: next.getBoundingClientRect().top - card.getBoundingClientRect().bottom,
+                    })
+                  }),
+                ),
+              ),
+          )
+          const designed = width >= DESKTOP ? 64 : 48
+          if (tool > reserve + 0.5) {
+            failures.push(
+              `${path} at ${width}px: the tool needs ${tool} px, the reserve is ${reserve}`,
+            )
+          } else if (fonts === 'brand' && (under < designed - 0.5 || under > designed + 56)) {
+            failures.push(`${path} at ${width}px: ${under.toFixed(1)} px under the card`)
+          }
+        }
+      } finally {
+        await context.close()
+      }
+    }
+    expect(failures).toEqual([])
+  })
+}
