@@ -1,0 +1,144 @@
+---
+/**
+ * Hero of the V2 home: headline, the CLI install box (planned, OS tabs without script), the Ask
+ * prompt (a concept) and the four checks. Only "Under 50 KB" leads somewhere real, the
+ * compressor's 50 KB page; every other control opens the "not available yet" message.
+ */
+import type { Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import Icon from './Icon.astro'
+
+interface Props {
+  locale: Locale
+  /** The compressor's page for a 50 KB target, when it is published. */
+  under50Href: string | undefined
+}
+const { locale, under50Href } = Astro.props
+
+const chips = [
+  { dot: 'hv2-dot-ube', label: m.hv2_chip_remove_bg({}, { locale }) },
+  { dot: 'hv2-dot-straw', label: m.hv2_chip_ebay({}, { locale }) },
+  { dot: 'hv2-dot-matcha', label: m.hv2_chip_vinted({}, { locale }) },
+  { dot: 'hv2-dot-mango', label: m.hv2_chip_square({}, { locale }) },
+  { dot: 'hv2-dot-ube', label: m.hv2_chip_pagespeed({}, { locale }) },
+  { dot: 'hv2-dot-red', label: m.hv2_chip_to_pdf({}, { locale }) },
+]
+const swapChips = [m.hv2_chip_convert({}, { locale }), m.hv2_chip_rotate({}, { locale })]
+const checks = [
+  m.hv2_check_plain({}, { locale }),
+  m.hv2_check_one_drop({}, { locale }),
+  m.hv2_check_batch({}, { locale }),
+  m.hv2_check_free({}, { locale }),
+]
+---
+
+<section class="hv2-w hv2-hero" aria-labelledby="hv2-hero-title">
+  <div class="hv2-split hv2-hero-split">
+    <div class="hv2-stack hv2-g24">
+      <span class="hv2-eyebrow">{m.hv2_hero_eyebrow({}, { locale })}</span>
+      <h1 id="hv2-hero-title" class="hv2-h1">
+        {m.hv2_hero_title_start({}, { locale })} <span class="hv2-mark">{m.hv2_hero_title_mark({}, { locale })}</span>
+      </h1>
+      <p class="hv2-lead">{m.hv2_hero_lead({}, { locale })}</p>
+
+      <fieldset class="hv2-install" aria-describedby="hv2-install-note">
+        <legend class="sr-only">{m.hv2_install_label({}, { locale })} · {m.hv2_install_os_label({}, { locale })}</legend>
+        <div class="hv2-install-top">
+          <div class="hv2-os-tabs">
+            <label class="hv2-os"><input type="radio" name="hv2-os" id="hv2-os-mac" class="hv2-os-input" checked />macOS</label>
+            <label class="hv2-os"><input type="radio" name="hv2-os" id="hv2-os-win" class="hv2-os-input" />Windows</label>
+            <label class="hv2-os"><input type="radio" name="hv2-os" id="hv2-os-linux" class="hv2-os-input" />Linux</label>
+          </div>
+          <span class="hv2-pill hv2-pill-dark">{m.hv2_install_soon({}, { locale })}</span>
+        </div>
+        <div class="hv2-install-code">
+          <span class="hv2-cmd hv2-cmd-unix"><span class="c"># {m.hv2_install_homebrew({}, { locale })}</span>{'\n'}<span class="p">$</span> brew install mochifile{'\n'}<span class="c"># {m.hv2_install_or_npm({}, { locale })}</span>{'\n'}<span class="p">$</span> npm install -g @mochifile/cli</span>
+          <span class="hv2-cmd hv2-cmd-win"><span class="c"># {m.hv2_install_npm_node({}, { locale })}</span>{'\n'}<span class="p">&gt;</span> npm install -g @mochifile/cli</span>
+          <button type="button" class="hv2-copy" popovertarget="hv2-soon" title={m.hv2_install_copy_hint({}, { locale })}>
+            {m.hv2_install_copy({}, { locale })}
+          </button>
+        </div>
+      </fieldset>
+
+      <div class="hv2-stack hv2-g8">
+        <button type="button" class="hv2-btn hv2-btn-outline hv2-btn-lg hv2-self-start hv2-cli-link" popovertarget="hv2-soon">
+          {m.hv2_cli_link({}, { locale })}
+          <Icon d="M5 12h14M13 6l6 6-6 6" />
+        </button>
+        <span id="hv2-install-note" class="hv2-small hv2-muted">{m.hv2_cli_note({}, { locale })}</span>
+      </div>
+    </div>
+
+    <div class="hv2-stack hv2-g12">
+      <div class="hv2-prompt-wrap">
+        <div class="hv2-prompt" role="group" aria-label={m.hv2_prompt_label({}, { locale })}>
+          <div class="hv2-row hv2-g16 hv2-nowrap">
+            <button type="button" class="hv2-prompt-add" popovertarget="hv2-soon" aria-label={m.hv2_prompt_add_files({}, { locale })}>
+              <Icon d="M12 5v14M5 12h14" size={24} />
+            </button>
+            <span class="hv2-muted hv2-prompt-hint">{m.hv2_prompt_add_hint({}, { locale })}</span>
+          </div>
+          <textarea
+            class="hv2-prompt-input"
+            rows="2"
+            aria-label={m.hv2_prompt_label({}, { locale })}
+            placeholder={m.hv2_prompt_placeholder({}, { locale })}
+          ></textarea>
+          <ul class="hv2-row hv2-g8 hv2-prompt-chips" aria-label={m.hv2_prompt_chips_label({}, { locale })}>
+            <li>
+              {
+                under50Href ? (
+                  <a class="hv2-chip" href={under50Href}><span class="hv2-dot hv2-dot-mango"></span>{m.hv2_chip_under_50({}, { locale })}</a>
+                ) : (
+                  <button type="button" class="hv2-chip" popovertarget="hv2-soon"><span class="hv2-dot hv2-dot-mango"></span>{m.hv2_chip_under_50({}, { locale })}</button>
+                )
+              }
+            </li>
+            {
+              chips.map((chip) => (
+                <li><button type="button" class="hv2-chip" popovertarget="hv2-soon"><span class:list={['hv2-dot', chip.dot]}></span>{chip.label}</button></li>
+              ))
+            }
+            {
+              swapChips.map((label) => (
+                <li>
+                  <button type="button" class="hv2-chip" popovertarget="hv2-soon">
+                    <Icon d="M4 8h13l-3-3M20 16H7l3 3" size={14} stroke={2.2} />{label}
+                  </button>
+                </li>
+              ))
+            }
+          </ul>
+          <div class="hv2-prompt-foot">
+            <span class="hv2-row hv2-g8 hv2-nowrap">
+              <Icon d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9" stroke={2} />{m.hv2_prompt_no_files({}, { locale })}
+            </span>
+            <span class="hv2-row hv2-g4 hv2-nowrap">
+              <button type="button" class="hv2-icon-btn" popovertarget="hv2-soon" aria-label={m.hv2_prompt_help({}, { locale })}>
+                <Icon d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01" stroke={2} />
+              </button>
+              <button type="button" class="hv2-send" popovertarget="hv2-soon" aria-label={m.hv2_prompt_send({}, { locale })}>
+                <Icon d="M4 12l16-8-6 16-2.5-6.5z" stroke={2.2} />
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="hv2-more-room" popovertarget="hv2-soon">
+        <span class="hv2-more-room-lead">{m.hv2_prompt_more_room({}, { locale })}</span> <span class="hv2-link">{m.hv2_prompt_open_ask({}, { locale })}</span>
+      </button>
+    </div>
+  </div>
+
+  <hr class="hv2-divider hv2-hero-rule" />
+  <ul class="hv2-checks" aria-label={m.hv2_checks_label({}, { locale })}>
+    {
+      checks.map((text) => (
+        <li class="hv2-check">
+          <Icon d="M5 12.5l4.5 4.5L19 7" stroke={2.6} />
+          <span>{text}</span>
+        </li>
+      ))
+    }
+  </ul>
+</section>

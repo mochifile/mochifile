@@ -1,0 +1,28 @@
+---
+/**
+ * The message shown when someone uses a part of the design that does not work yet. It is a
+ * native popover (ADR 0023: no script), opened by any button with `popovertarget="hv2-soon"`.
+ * It moves focus to its button when it opens, so screen readers announce it, and Esc or a click
+ * outside closes it and returns focus. It never pretends anything was processed.
+ */
+import type { Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+
+interface Props {
+  locale: Locale
+  /** The one thing that works today: the page of the image compressor. */
+  toolHref: string
+}
+const { locale, toolHref } = Astro.props
+---
+
+<div id="hv2-soon" popover="auto" role="dialog" aria-labelledby="hv2-soon-title" class="hv2-soon">
+  <p id="hv2-soon-title" class="hv2-h4">{m.hv2_soon_title({}, { locale })}</p>
+  <p class="hv2-small hv2-muted">{m.hv2_soon_text({}, { locale })}</p>
+  <div class="hv2-row hv2-g12">
+    <a class="hv2-btn hv2-btn-soft" href={toolHref}>{m.hv2_soon_action({}, { locale })}</a>
+    <button type="button" class="hv2-btn hv2-btn-primary" popovertarget="hv2-soon" popovertargetaction="hide" autofocus>
+      {m.hv2_soon_close({}, { locale })}
+    </button>
+  </div>
+</div>

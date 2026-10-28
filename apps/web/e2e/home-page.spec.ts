@@ -1,12 +1,12 @@
 import AxeBuilder from '@axe-core/playwright'
-import type { APIRequestContext, Page } from '@playwright/test'
+import type { Browser, Page } from '@playwright/test'
 import { expect, projectContextOptions, test } from './fixtures.ts'
 
 /**
- * The home page ("Bloco e cartão"): the "Start here" card, the tool list and the privacy band.
- * Every destination comes from the tool registry; the e2e build also has the template tool (a
- * second tool, in a second category), so the list is checked with two groups here and with one
- * tool in the unit tests (src/lib/home.test.ts).
+ * The home page, Mochifile V2 (docs/design-ref/v2, artboard MFHome). Visual first: every
+ * designed part is on the page, but only the image compressor works, so the checks are that
+ * what works leads to real pages, and that what does not says so, without script and without
+ * pretending to process anything.
  */
 
 const LOCALES = [
@@ -14,58 +14,67 @@ const LOCALES = [
     locale: 'en',
     browserLocale: 'en-US',
     path: '/',
-    heading: 'Your files, the right size.',
-    action: 'Compress a photo',
+    h1: 'Compress images, video and PDFs in plain words.',
+    sections: [
+      'Works where you work',
+      'Compression is just one thing you can ask for',
+      'What happens to your files',
+      'Frequently asked questions',
+      'Ready to squish some files?',
+    ],
+    under50: 'Under 50 KB',
+    under50Example: 'Under 50 KB for a job form',
+    under50Page: '/compress-image-to-50kb/',
+    under50Title: 'Compress an image to 50 KB',
     tool: '/compress-image/',
-    toolTitle: 'Compress an image to a target size',
-    sizes: 'Popular sizes',
-    otherSizes: 'Other target sizes',
-    featured: ['50 KB', '100 KB', '200 KB'],
-    others: ['20 KB', '500 KB', '1 MB'],
-    groups: ['Image', 'PDF'],
-    tools: 'Tools',
-    steps: 'How it works',
-    privacy: "Your files don't leave your device.",
+    start: 'Start for free',
+    soon: 'Not available yet',
+    gotIt: 'Got it',
+    chip: 'eBay',
+    send: 'Send',
+    copy: 'Copy',
+    faqOpen: 'Is Mochifile free?',
+    faqClosed: 'Are my files uploaded?',
+    faqAnswer: /No\. Browser tools open, change and save/,
   },
   {
     locale: 'pt',
     browserLocale: 'pt-BR',
     path: '/pt/',
-    heading: 'Seus arquivos do tamanho certo.',
-    action: 'Comprimir uma foto',
+    h1: 'Comprima imagens, vídeos e PDFs em palavras simples.',
+    sections: [
+      'Funciona onde você trabalha',
+      'Comprimir é só uma das coisas que você pode pedir',
+      'O que acontece com seus arquivos',
+      'Perguntas frequentes',
+      'Pronto para espremer uns arquivos?',
+    ],
+    under50: 'Até 50 KB',
+    under50Example: 'Até 50 KB para um formulário de emprego',
+    under50Page: '/pt/comprimir-imagem-para-50kb/',
+    under50Title: 'Comprimir imagem para 50 KB',
     tool: '/pt/comprimir-imagem/',
-    toolTitle: 'Comprimir imagem para o tamanho que você precisa',
-    sizes: 'Tamanhos mais pedidos',
-    otherSizes: 'Outros tamanhos',
-    featured: ['50 KB', '100 KB', '200 KB'],
-    others: ['20 KB', '500 KB', '1 MB'],
-    groups: ['Imagem', 'PDF'],
-    tools: 'Ferramentas',
-    steps: 'Como funciona',
-    privacy: 'Seus arquivos não saem do seu aparelho.',
+    start: 'Começar de graça',
+    soon: 'Ainda não está disponível',
+    gotIt: 'Entendi',
+    chip: 'eBay',
+    send: 'Enviar',
+    copy: 'Copiar',
+    faqOpen: 'O Mochifile é grátis?',
+    faqClosed: 'Meus arquivos são enviados?',
+    faqAnswer: /Não\. As ferramentas do navegador abrem, alteram e salvam/,
   },
 ] as const
 
-const WIDTHS = [320, 360, 390, 600, 768, 1024, 1440]
-
-/** The key that moves focus to the next link (WebKit on macOS follows the system setting). */
-const tabKey = (browserName: string) =>
-  browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab'
+const WIDTHS = [320, 390, 640, 768, 1024, 1440]
 
 const main = (page: Page) => page.getByRole('main')
-const sizesNav = (page: Page, name: string) => main(page).getByRole('navigation', { name })
-
-/** Paths listed in the sitemap: everything published. */
-async function publishedPaths(request: APIRequestContext): Promise<Set<string>> {
-  const xml = await (await request.get('/sitemap-0.xml')).text()
-  return new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1] ?? '').pathname))
-}
 
 /** A context whose browser language matches the page, so no language suggestion shows. */
 async function openHome(
-  testBrowser: import('@playwright/test').Browser,
+  testBrowser: Browser,
   c: (typeof LOCALES)[number],
-  options: { width: number; height?: number; colorScheme?: 'light' | 'dark' },
+  options: { width: number; height?: number },
 ) {
   const context = await testBrowser.newContext({
     ...projectContextOptions(),
@@ -73,8 +82,6 @@ async function openHome(
     locale: c.browserLocale,
   })
   const page = await context.newPage()
-  // As site-footer.spec.ts does. See the axe test for Firefox in CI.
-  await page.emulateMedia({ colorScheme: options.colorScheme ?? 'light' })
   await page.goto(c.path)
   await page.evaluate(() => document.fonts.ready)
   return { context, page }
@@ -82,327 +89,236 @@ async function openHome(
 
 for (const c of LOCALES) {
   test.describe(`home ${c.path}`, () => {
-    test('the primary action opens the general Compress image page', async ({ page }) => {
+    test('shows every designed section, in order', async ({ page }) => {
       await page.goto(c.path)
-      const action = page.locator('[data-primary-action]')
-      await expect(action).toHaveCount(1)
-      await expect(action).toHaveAccessibleName(c.action)
-      await expect(action).toHaveAttribute('href', c.tool)
-      await action.click()
+      await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(c.h1)
+      const headings = await main(page).getByRole('heading', { level: 2 }).allTextContents()
+      expect(headings).toEqual([...c.sections])
+      // The Ask prompt, the CLI install box and the hub are drawn, not replaced by a notice.
+      await expect(main(page).getByRole('textbox')).toBeVisible()
+      await expect(
+        main(page)
+          .getByRole('group', { name: /Mochifile/ })
+          .first(),
+      ).toBeVisible()
+      await expect(main(page).getByRole('img', { name: /CLI.*MCP.*API/ })).toBeVisible()
+      await expect(main(page).getByText('mochifile serve')).toBeVisible()
+    })
+
+    test('what works leads to real pages', async ({ page, request }) => {
+      await page.goto(c.path)
+      // The hero chip and the example are the compressor's 50 KB page, which exists.
+      for (const name of [c.under50, c.under50Example]) {
+        const link = main(page).getByRole('link', { name, exact: true })
+        await expect(link).toHaveAttribute('href', c.under50Page)
+      }
+      const target = await request.get(c.under50Page)
+      expect(target.status()).toBe(200)
+      expect(await target.text()).toMatch(new RegExp(`<h1[^>]*>${c.under50Title}</h1>`))
+
+      const start = main(page).getByRole('link', { name: c.start })
+      await expect(start).toHaveAttribute('href', c.tool)
+      await start.click()
       await expect(page).toHaveURL(c.tool)
-      // The general page, not a variant: it starts from the manifest's default target.
-      await expect(page.getByRole('heading', { level: 1 })).toHaveText(c.toolTitle)
     })
 
-    test('size presets are real variant pages, labelled with their target', async ({
+    test('the OS tabs switch the install command without script', async ({ page }) => {
+      await page.goto(c.path)
+      const box = main(page).locator('fieldset')
+      // Only the command for the chosen system is displayed (`toContainText` also reads hidden text).
+      const shown = box.locator('.hv2-cmd:visible')
+      await expect(box.getByRole('radio', { name: 'macOS' })).toBeChecked()
+      await expect(shown).toHaveCount(1)
+      await expect(shown).toContainText('brew install mochifile')
+      await expect(shown).toContainText('npm install -g @mochifile/cli')
+      await box.getByText('Windows', { exact: true }).click()
+      await expect(box.getByRole('radio', { name: 'Windows' })).toBeChecked()
+      await expect(shown).toHaveCount(1)
+      await expect(shown).not.toContainText('brew install mochifile')
+      await expect(shown).toContainText('npm install -g @mochifile/cli')
+      await box.getByText('Linux', { exact: true }).click()
+      await expect(shown).toContainText('brew install mochifile')
+    })
+
+    test('a part that does not work yet says so, and closes with Esc', async ({ page }) => {
+      await page.goto(c.path)
+      const message = page.getByRole('dialog', { name: c.soon })
+      await expect(message).toBeHidden()
+      for (const name of [c.chip, c.send]) {
+        await main(page).getByRole('button', { name, exact: true }).click()
+        await expect(message).toBeVisible()
+        // It leads on to the one thing that works.
+        await expect(message.getByRole('link')).toHaveAttribute('href', c.tool)
+        await page.keyboard.press('Escape')
+        await expect(message).toBeHidden()
+      }
+      // Nothing was processed and nothing navigated.
+      expect(new URL(page.url()).pathname).toBe(c.path)
+      await expect(main(page).getByRole('textbox')).toHaveValue('')
+    })
+
+    test('the unavailable copy button explains itself, and the message closes with its button', async ({
       page,
-      request,
     }) => {
       await page.goto(c.path)
-      const published = await publishedPaths(request)
-      const nav = sizesNav(page, c.sizes)
-      const featured = nav.locator('[data-featured-sizes] a')
-      const others = nav.locator('[data-other-sizes] a')
-      await expect(featured).toHaveText([...c.featured])
-      await expect(others).toHaveText([...c.others])
-      await expect(nav.getByRole('list', { name: c.otherSizes })).toBeVisible()
-
-      for (const link of [...(await featured.all()), ...(await others.all())]) {
-        const href = (await link.getAttribute('href')) ?? ''
-        const label = (await link.textContent()) ?? ''
-        expect(published.has(href), `${href} is published`).toBe(true)
-        // Named by the page it opens, which contains the visible label (WCAG 2.5.3).
-        const name = await link.evaluate((el) => el.getAttribute('aria-label') ?? '')
-        expect(name).toContain(label)
-        const target = await request.get(href)
-        expect(target.status(), href).toBe(200)
-        expect(await target.text()).toMatch(new RegExp(`<h1[^>]*>${name}</h1>`))
-      }
+      await main(page).getByRole('button', { name: c.copy, exact: true }).click()
+      const message = page.getByRole('dialog', { name: c.soon })
+      await expect(message).toBeVisible()
+      await message.getByRole('button', { name: c.gotIt }).click()
+      await expect(message).toBeHidden()
     })
 
-    test('lists the published tools from the registry, one group per category', async ({
+    test('the FAQ opens and closes with the keyboard', async ({ page }) => {
+      await page.goto(c.path)
+      const closed = page.locator('summary', { hasText: c.faqClosed })
+      await expect(page.locator('details[open]')).toHaveCount(1)
+      await expect(page.getByText(c.faqAnswer)).toBeHidden()
+      await closed.focus()
+      await page.keyboard.press('Enter')
+      await expect(page.getByText(c.faqAnswer)).toBeVisible()
+      await expect(page.locator('details[open]')).toHaveCount(2)
+      await page.keyboard.press('Enter')
+      await expect(page.getByText(c.faqAnswer)).toBeHidden()
+    })
+
+    test('the page is light-only and has no script or inline style of its own', async ({
       page,
-      request,
     }) => {
+      await page.emulateMedia({ colorScheme: 'dark' })
       await page.goto(c.path)
-      const published = await publishedPaths(request)
-      const section = main(page).getByRole('region', { name: c.tools })
-      // Two categories in the e2e build (compress-image and the template tool): each group is a
-      // labelled list with at least one tool.
-      const lists = section.getByRole('list')
-      await expect(lists).toHaveCount(c.groups.length)
-      for (const [index, group] of c.groups.entries()) {
-        await expect(lists.nth(index)).toHaveAccessibleName(group)
-        expect(await lists.nth(index).getByRole('link').count()).toBeGreaterThan(0)
-      }
-      const hrefs = await section
-        .getByRole('link')
-        .evaluateAll((links) => links.map((link) => link.getAttribute('href') ?? ''))
-      expect(hrefs).toContain(c.tool)
-      for (const href of hrefs) expect(published.has(href), `${href} is published`).toBe(true)
-      // The tool's block is named by its title and purpose; its "MB → KB" picture is hidden.
-      await expect(section.getByRole('link', { name: c.toolTitle })).toBeVisible()
-      await expect(section.getByText('MB → KB')).toHaveAttribute('aria-hidden', 'true')
-    })
-
-    test('links only to published pages and existing files', async ({ page, request }) => {
-      await page.goto(c.path)
-      const published = await publishedPaths(request)
-      const hrefs = await main(page)
-        .getByRole('link')
-        .evaluateAll((links) => links.map((link) => link.getAttribute('href') ?? ''))
-      expect(hrefs.length).toBeGreaterThan(0)
-      for (const href of hrefs) {
-        if (href.startsWith('https://')) {
-          expect(href).toBe('https://github.com/mochifile/mochifile')
-          continue
-        }
-        expect(published.has(href), `${href} is published`).toBe(true)
-      }
-      // Tools count as released once the registry publishes them (the sitemap check above); no
-      // page outside the tools exists yet: search, about, help, pricing, account or API.
-      expect(
-        hrefs.filter((href) => /search|about|help|pric|login|account|api/i.test(href)),
-      ).toEqual([])
-    })
-
-    test('decorations are hidden from assistive technology', async ({ page }) => {
-      await page.goto(c.path)
-      const heading = page.getByRole('heading', { level: 1 })
-      await expect(heading).toHaveAccessibleName(c.heading)
-      await expect(heading.locator('[data-measure]')).toHaveAttribute('aria-hidden', 'true')
-      for (const svg of await main(page).locator('svg').all()) {
-        const hidden = await svg.evaluate((el) => Boolean(el.closest('[aria-hidden="true"]')))
-        expect(hidden).toBe(true)
-      }
-      await expect(main(page).getByRole('img')).toHaveCount(0)
-    })
-
-    test('has the heading outline: one h1, then sections', async ({ page }) => {
-      await page.goto(c.path)
-      const headings = await main(page)
-        .getByRole('heading')
-        .evaluateAll((els) => els.map((el) => `${el.tagName} ${el.textContent?.trim()}`))
-      expect(headings[0]).toMatch(/^H1 /)
-      expect(headings.filter((h) => h.startsWith('H1'))).toHaveLength(1)
-      expect(headings).toContain(`H2 ${c.tools}`)
-      expect(headings).toContain(`H2 ${c.privacy}`)
-      // Never skip a level going down.
-      const levels = headings.map((h) => Number(h[1]))
-      for (const [index, level] of levels.entries()) {
-        if (index > 0) expect(level - (levels[index - 1] ?? 1)).toBeLessThanOrEqual(1)
-      }
-    })
-
-    test('keyboard: the action comes first in the content, with a visible focus ring', async ({
-      testBrowser,
-      browserName,
-    }) => {
-      const { context, page } = await openHome(testBrowser, c, { width: 1280 })
-      try {
-        const TAB = tabKey(browserName)
-        let found = false
-        for (let i = 0; i < 20 && !found; i++) {
-          await page.keyboard.press(TAB)
-          found = await page.evaluate(() =>
-            Boolean(document.activeElement?.matches('[data-primary-action]')),
-          )
-        }
-        expect(found, 'the primary action is reachable with Tab').toBe(true)
-        const ring = await page.evaluate(() => {
-          const style = getComputedStyle(document.activeElement as Element)
-          return { style: style.outlineStyle, width: style.outlineWidth }
-        })
-        expect(ring).toEqual({ style: 'solid', width: '3px' })
-        // Then the sizes, in reading order.
-        const next: string[] = []
-        for (let i = 0; i < c.featured.length + c.others.length; i++) {
-          await page.keyboard.press(TAB)
-          next.push(await page.evaluate(() => document.activeElement?.textContent?.trim() ?? ''))
-        }
-        expect(next).toEqual([...c.featured, ...c.others])
-      } finally {
-        await context.close()
-      }
+      const ground = await page
+        .locator('.hv2')
+        .evaluate((el) => getComputedStyle(el).backgroundColor)
+      expect(ground).toBe('rgb(255, 247, 236)')
+      expect(await page.locator('main script').count()).toBe(0)
+      expect(await page.locator('main [style]').count()).toBe(0)
     })
   })
 }
+
+test('every illustration loads and is decorative', async ({ testBrowser }) => {
+  const { context, page } = await openHome(testBrowser, LOCALES[0], { width: 1440 })
+  try {
+    // They are lazy: bring each one into view.
+    await page.evaluate(async () => {
+      for (const img of document.querySelectorAll('.hv2 img')) {
+        img.scrollIntoView()
+        await new Promise((resolve) => setTimeout(resolve, 80))
+      }
+    })
+    await page.waitForTimeout(300)
+    const images = await page.locator('.hv2 img').evaluateAll((list) =>
+      list.map((img) => ({
+        alt: img.getAttribute('alt'),
+        loaded: (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0,
+        src: img.getAttribute('src'),
+      })),
+    )
+    // The app icon in the hub, three category pictures, the happy and the squishing mascots.
+    expect(images).toHaveLength(6)
+    for (const image of images) {
+      expect(image.alt, image.src ?? '').toBe('')
+      expect(image.loaded, `${image.src} loaded`).toBe(true)
+    }
+  } finally {
+    await context.close()
+  }
+})
 
 for (const c of LOCALES) {
-  test(`privacy band ${c.path}: compact rows on phones, cards from 600 px`, async ({
+  test(`the page never scrolls sideways, and nothing leaves the window (${c.path})`, async ({
     testBrowser,
   }) => {
-    for (const width of [320, 390, 600, 1280]) {
-      const { context, page } = await openHome(testBrowser, c, { width })
-      try {
-        const band = main(page).getByRole('region', { name: c.privacy })
-        const proofs = band.getByRole('listitem')
-        await expect(proofs).toHaveCount(3)
-        // One GitHub link at every width: after the list on phones, in its card from 600 px.
-        const github = band.locator('a[href="https://github.com/mochifile/mochifile"]')
-        await expect(github.filter({ visible: true })).toHaveCount(1)
-        const inCard = await github
-          .filter({ visible: true })
-          .evaluate((link) => Boolean(link.closest('li')))
-        expect(inCard, `${width} px`).toBe(width >= 600)
-        // Phones show each proof's title only (artboard HomeMobile); cards add their text.
-        for (const proof of await proofs.all()) {
-          await expect(proof.locator('strong')).toBeVisible()
-          const text = proof.locator('span')
-          await (width >= 600 ? expect(text).toBeVisible() : expect(text).toBeHidden())
-        }
-      } finally {
-        await context.close()
-      }
-    }
-  })
-}
-
-for (const c of LOCALES) {
-  test(`three steps ${c.path}: none on phones, shown from 600 px`, async ({ testBrowser }) => {
-    for (const width of [320, 360, 390, 599, 600, 768, 1024, 1440]) {
-      const { context, page } = await openHome(testBrowser, c, { width })
-      try {
-        const steps = main(page).locator('ol')
-        await expect(steps).toHaveCount(1)
-        const tree = await main(page).ariaSnapshot()
-        if (width < 600) {
-          // Artboard HomeMobile: the card, then the tools. Not rendered, so it takes no space,
-          // holds no focus stop and is out of the accessibility tree.
-          await expect(steps).toBeHidden()
-          expect(await steps.evaluate((el) => el.getClientRects().length), `${width} px`).toBe(0)
-          expect(tree).not.toContain(`list "${c.steps}"`)
-          // The tools section follows the card at the usual section spacing (space-16).
-          const gap = await page.evaluate(() => {
-            const card = document.querySelector('[data-start-card]')?.getBoundingClientRect()
-            const tools = document
-              .querySelector('#home-tools')
-              ?.closest('section')
-              ?.getBoundingClientRect()
-            return card && tools ? Math.round(tools.top - card.bottom) : null
-          })
-          expect(gap, `${width} px`).toBe(64)
-        } else {
-          await expect(main(page).getByRole('list', { name: c.steps })).toBeVisible()
-          await expect(steps.getByRole('listitem')).toHaveCount(3)
-          expect(tree).toContain(`list "${c.steps}"`)
-        }
-      } finally {
-        await context.close()
-      }
-    }
-  })
-}
-
-for (const width of WIDTHS) {
-  test(`fits ${width} px without overflow, hidden focusable content or small targets`, async ({
-    testBrowser,
-  }) => {
-    for (const c of LOCALES) {
+    const failures: string[] = []
+    for (const width of WIDTHS) {
       const { context, page } = await openHome(testBrowser, c, { width })
       try {
         const overflow = await page.evaluate(
-          () => document.documentElement.scrollWidth - window.innerWidth,
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
         )
-        expect(overflow, `${c.path} scrolls sideways`).toBeLessThanOrEqual(0)
-
-        const problems = await main(page)
-          .locator('a, button, [tabindex]:not([tabindex="-1"])')
-          .evaluateAll((els) =>
-            els.flatMap((el) => {
-              // Not rendered at this width (`display: none`, like the privacy band's GitHub link
-              // for the other layout): it cannot take focus, so it is neither hidden content nor
-              // a target. The privacy band test checks that exactly one of those links shows.
-              if (el.getClientRects().length === 0) return []
-              const r = el.getBoundingClientRect()
-              const name = el.textContent?.trim()
-              if (!el.checkVisibility({ visibilityProperty: true })) return [`${name}: hidden`]
-              return r.height < 44 || r.width < 44 ? [`${name}: ${r.width}×${r.height}`] : []
-            }),
-          )
-        expect(problems, c.path).toEqual([])
-
-        // No hero text runs under the mascot or the drops, and the card clips nothing.
-        const overlaps = await page.evaluate(() => {
-          const decorations = [...document.querySelectorAll('[data-decoration]')]
-            .map((el) => el.getBoundingClientRect())
-            .filter((r) => r.width > 0)
-          if (decorations.length === 0) return ['no mascot']
-          const hero = document.querySelector('#home-heading')?.closest('section')
-          const texts = [...(hero?.querySelectorAll('h1, p, li') ?? [])].filter(
-            (el) => !el.closest('[data-start-card]') && !el.closest('ol'),
-          )
-          return texts.flatMap((el) => {
-            const r = el.getBoundingClientRect()
-            const hit = decorations.some(
-              (d) =>
-                r.width > 0 &&
-                r.left < d.right &&
-                r.right > d.left &&
-                r.top < d.bottom &&
-                r.bottom > d.top,
-            )
-            return hit ? [el.textContent?.trim().slice(0, 30)] : []
-          })
-        })
-        expect(overlaps, `${c.path} text under a decoration`).toEqual([])
-        const clipped = await page.locator('[data-start-card]').evaluate((card) => {
-          const box = card.getBoundingClientRect()
-          return [...card.querySelectorAll('*')]
+        if (overflow > 0) failures.push(`${width}px: page ${overflow}px too wide`)
+        const outside = await page.locator('.hv2').evaluate((root) => {
+          const right = document.documentElement.clientWidth
+          return [...root.querySelectorAll('h1, h2, h3, p, a, button, summary, li, img')]
             .filter((el) => {
+              if (el.closest('.hv2-soon')) return false
               const r = el.getBoundingClientRect()
-              return (
-                r.width > 0 && (r.left < box.left || r.right > box.right || r.bottom > box.bottom)
-              )
+              return r.width > 0 && (r.left < -0.5 || r.right > right + 0.5)
             })
-            .map((el) => el.textContent?.trim().slice(0, 30))
+            .map((el) => el.textContent?.trim().slice(0, 24) ?? el.nodeName)
         })
-        expect(clipped, `${c.path} card content outside the card`).toEqual([])
+        if (outside.length > 0) failures.push(`${width}px: outside: ${outside.join(', ')}`)
       } finally {
         await context.close()
       }
     }
+    expect(failures).toEqual([])
   })
 }
 
-for (const colorScheme of ['light', 'dark'] as const) {
-  for (const width of [390, 1280]) {
-    test(`has no axe violations (${colorScheme} theme, ${width} px)`, async ({
-      testBrowser,
-      browserName,
-    }) => {
-      for (const c of LOCALES) {
-        const { context, page } = await openHome(testBrowser, c, { width, colorScheme })
-        try {
-          // In CI, Firefox kept matching the light scheme after both the context option and
-          // emulateMedia asked for dark (its trace shows the request and the light ground), so
-          // there the dark case would only re-run the light one. It is checked in Chromium and
-          // WebKit; anywhere else, an emulation that does not apply fails.
-          const emulated = await page.evaluate(
-            (scheme) => matchMedia(`(prefers-color-scheme: ${scheme})`).matches,
-            colorScheme,
-          )
-          test.skip(
-            !emulated && browserName === 'firefox',
-            `Firefox did not apply the ${colorScheme} colour scheme emulation`,
-          )
-          expect(emulated, 'the colour scheme emulation applies').toBe(true)
-          // The theme really applies: the page ground follows the colour scheme.
-          const ground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
-          expect(ground).toBe(colorScheme === 'light' ? 'rgb(255, 247, 236)' : 'rgb(23, 20, 31)')
-          const result = await new AxeBuilder({ page }).analyze()
-          expect(result.violations, c.path).toEqual([])
-        } finally {
-          await context.close()
-        }
-      }
-    })
-  }
-}
-
-test('nothing moves on its own, and presses do not animate under reduced motion', async ({
+test('the hub is a list of surfaces on phones and a diagram on wider screens', async ({
   testBrowser,
 }) => {
+  const phone = await openHome(testBrowser, LOCALES[0], { width: 390 })
+  try {
+    await expect(phone.page.locator('.hv2-hub-lines')).toBeHidden()
+    await expect(phone.page.locator('.hv2-hub-label').first()).toBeHidden()
+  } finally {
+    await phone.context.close()
+  }
+  const desktop = await openHome(testBrowser, LOCALES[0], { width: 1440 })
+  try {
+    await expect(desktop.page.locator('.hv2-hub-lines')).toBeVisible()
+    await expect(desktop.page.locator('.hv2-hub-label')).toHaveCount(2)
+    // Six dots go out and six come back, animated by SVG, not script.
+    await expect(desktop.page.locator('.hv2-hub-flow')).toHaveCount(12)
+  } finally {
+    await desktop.context.close()
+  }
+})
+
+test('the hub dots travel along the lines, inside the hub, with CSS animations', async ({
+  testBrowser,
+}) => {
+  const { context, page } = await openHome(testBrowser, LOCALES[0], { width: 1440 })
+  try {
+    const hub = page.locator('.hv2-hub')
+    await hub.scrollIntoViewIfNeeded()
+    const dots = page.locator('.hv2-flow-request')
+    await expect(dots).toHaveCount(6)
+    const where = () =>
+      dots.evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect()
+          return [Math.round(r.left), Math.round(r.top)]
+        }),
+      )
+    const box = await hub.boundingBox()
+    if (!box) throw new Error('no hub box')
+    // Some dot is visible and has moved between two moments, and none leaves the hub.
+    const seen = new Set<string>()
+    for (let i = 0; i < 6; i++) {
+      for (const [x, y] of await where()) {
+        expect(x).toBeGreaterThanOrEqual(box.x - 6)
+        expect(x).toBeLessThanOrEqual(box.x + box.width + 6)
+        expect(y).toBeGreaterThanOrEqual(box.y - 6)
+        expect(y).toBeLessThanOrEqual(box.y + box.height + 6)
+        seen.add(`${x},${y}`)
+      }
+      await page.waitForTimeout(250)
+    }
+    expect(seen.size, 'the dots change place').toBeGreaterThan(6)
+    // At least a dot is visible (opacity above 0) at some moment of the cycle.
+    const opacities = await dots.evaluateAll((els) =>
+      els.map((el) => +getComputedStyle(el).opacity),
+    )
+    expect(Math.max(...opacities)).toBeGreaterThan(0)
+  } finally {
+    await context.close()
+  }
+})
+
+test('the hub stops moving under reduced motion and shows still dots', async ({ testBrowser }) => {
   const context = await testBrowser.newContext({
     ...projectContextOptions(),
     reducedMotion: 'reduce',
@@ -411,12 +327,29 @@ test('nothing moves on its own, and presses do not animate under reduced motion'
     const page = await context.newPage()
     await page.goto('/')
     await page.evaluate(() => document.fonts.ready)
+    await expect(page.locator('.hv2-hub-flow').first()).toBeHidden()
+    await expect(page.locator('.hv2-hub-static').first()).toBeVisible()
     expect(await page.evaluate(() => document.getAnimations().length)).toBe(0)
-    const transition = await page
-      .locator('[data-primary-action]')
-      .evaluate((el) => getComputedStyle(el).transitionDuration)
-    expect(transition).toBe('0s')
   } finally {
     await context.close()
   }
 })
+
+for (const width of [390, 1280]) {
+  test(`has no axe violations (${width} px)`, async ({ testBrowser }) => {
+    for (const c of LOCALES) {
+      const { context, page } = await openHome(testBrowser, c, { width })
+      try {
+        const result = await new AxeBuilder({ page }).analyze()
+        expect(result.violations, c.path).toEqual([])
+        // The message is part of the page too: check it open.
+        await main(page).getByRole('button', { name: c.chip, exact: true }).click()
+        await expect(page.getByRole('dialog', { name: c.soon })).toBeVisible()
+        const open = await new AxeBuilder({ page }).analyze()
+        expect(open.violations, `${c.path} with the message open`).toEqual([])
+      } finally {
+        await context.close()
+      }
+    }
+  })
+}

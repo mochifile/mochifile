@@ -99,18 +99,15 @@ for (const c of cases) {
   })
 }
 
-// The home page lists the size variants of its "Start here" tool only (home-page.spec.ts); every
-// other variant is one step further, on its tool's page, which the home page links to.
+// The V2 home leads to the image compressor and its 50 KB page (home-page.spec.ts); every other
+// variant is one step further, on the tool's page, where the tool lists its own variants.
 test('the home page leads to variant pages through their tool', async ({ page }) => {
   await page.goto('/')
-  await page
-    .getByRole('main')
-    .getByRole('link', { name: /^Template tool/ })
-    .click()
-  await expect(page).toHaveURL('/template-tool/')
-  await expect(page.getByRole('link', { name: 'Template tool: lower case' })).toHaveAttribute(
+  await page.getByRole('main').getByRole('link', { name: 'Start for free' }).click()
+  await expect(page).toHaveURL('/compress-image/')
+  await expect(page.getByRole('link', { name: 'Compress an image to 20 KB' })).toHaveAttribute(
     'href',
-    '/template-tool-lowercase/',
+    '/compress-image-to-20kb/',
   )
 })
 
