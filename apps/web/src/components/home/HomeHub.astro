@@ -2,8 +2,9 @@
 /**
  * "Works where you work": one engine and six ways in. A picture, not a live diagram, so it is
  * one image for assistive technology. Dots travel along each line (ube: request, surface to
- * engine; mango: result, engine to surface) with SVG `<animate>`, no script; under
- * `prefers-reduced-motion` they stop and a still dot sits mid-line. On phones it becomes a list.
+ * engine; mango: result, engine to surface) with CSS animations, no script (SVG `<animate>`
+ * makes Firefox write inline styles, which the CSP blocks); under `prefers-reduced-motion`
+ * they stop and a still dot sits mid-line. On phones it becomes a list.
  * The six cards below describe each surface. Only the web app exists today; the rest say so.
  */
 import type { Locale } from '@mochifile/i18n'
@@ -16,7 +17,10 @@ interface Props {
 }
 const { locale } = Astro.props
 
-/** Positions are percentages of the hub box, as on the canvas; `delay` staggers the dots. */
+/**
+ * Positions are percentages of the hub box, as on the canvas. The dots' timing and the nodes'
+ * places are in home.css (`.hv2-n-<id>`); `x` and `y` here only draw the lines.
+ */
 const nodes = [
   {
     id: 'cli',
@@ -68,9 +72,6 @@ const nodes = [
   },
 ] as const
 const CORE = { x: 50, y: 46 }
-const DURATION = 2.6
-const opacityValues = '0;1;1;0'
-const opacityTimes = '0;0.15;0.8;1'
 
 const surfaces = [
   {
@@ -129,28 +130,22 @@ const surfaces = [
     <div class="hv2-hub" role="img" aria-label={m.hv2_hub_alt({}, { locale })}>
       <svg class="hv2-hub-lines" aria-hidden="true" focusable="false">
         {
-          nodes.map((node) => {
-            const mid = { x: (node.x + CORE.x) / 2, y: (node.y + CORE.y) / 2 }
-            const back = node.delay + DURATION / 2
-            return (
-              <>
-                <line class="hv2-hub-line" x1={`${node.x}%`} y1={`${node.y}%`} x2={`${CORE.x}%`} y2={`${CORE.y}%`} />
-                <circle class="hv2-hub-static hv2-hub-request" cx={`${mid.x}%`} cy={`${mid.y}%`} r="3.5" />
-                <circle class="hv2-hub-flow hv2-hub-request" r="5" cx={`${node.x}%`} cy={`${node.y}%`} opacity="0">
-                  <animate attributeName="cx" values={`${node.x}%;${CORE.x}%`} dur={`${DURATION}s`} begin={`${node.delay}s`} repeatCount="indefinite" />
-                  <animate attributeName="cy" values={`${node.y}%;${CORE.y}%`} dur={`${DURATION}s`} begin={`${node.delay}s`} repeatCount="indefinite" />
-                  <animate attributeName="opacity" values={opacityValues} keyTimes={opacityTimes} dur={`${DURATION}s`} begin={`${node.delay}s`} repeatCount="indefinite" />
-                </circle>
-                <circle class="hv2-hub-flow hv2-hub-result" r="5" cx={`${CORE.x}%`} cy={`${CORE.y}%`} opacity="0">
-                  <animate attributeName="cx" values={`${CORE.x}%;${node.x}%`} dur={`${DURATION}s`} begin={`${back}s`} repeatCount="indefinite" />
-                  <animate attributeName="cy" values={`${CORE.y}%;${node.y}%`} dur={`${DURATION}s`} begin={`${back}s`} repeatCount="indefinite" />
-                  <animate attributeName="opacity" values={opacityValues} keyTimes={opacityTimes} dur={`${DURATION}s`} begin={`${back}s`} repeatCount="indefinite" />
-                </circle>
-              </>
-            )
-          })
+          nodes.map((node) => (
+            <>
+              <line class="hv2-hub-line" x1={`${node.x}%`} y1={`${node.y}%`} x2={`${CORE.x}%`} y2={`${CORE.y}%`} />
+              <circle class="hv2-hub-static hv2-hub-request" cx={`${(node.x + CORE.x) / 2}%`} cy={`${(node.y + CORE.y) / 2}%`} r="3.5" />
+            </>
+          ))
         }
       </svg>
+      {
+        nodes.map((node) => (
+          <>
+            <span class={`hv2-hub-flow hv2-flow-request hv2-n-${node.id}`} aria-hidden="true" />
+            <span class={`hv2-hub-flow hv2-flow-result hv2-n-${node.id}`} aria-hidden="true" />
+          </>
+        ))
+      }
       <span class="hv2-eyebrow hv2-eyebrow-sm hv2-hub-label hv2-l-once">{m.hv2_hub_install_once({}, { locale })}</span>
       <span class="hv2-eyebrow hv2-eyebrow-sm hv2-hub-label hv2-l-none">{m.hv2_hub_no_install({}, { locale })}</span>
       <div class="hv2-hub-core">

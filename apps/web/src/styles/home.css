@@ -300,6 +300,9 @@ body:has(.hv2) {
   color: var(--mango-ink);
 }
 .hv2-pill-dark {
+  /* A fixed width, so the pill's left edge stays put when the font arrives. */
+  width: 6.9rem;
+  justify-content: flex-start;
   background: var(--surface-inverse-raised);
   color: var(--hv2-soon-on-ink);
   margin-right: 4px;
@@ -408,6 +411,11 @@ body:has(.hv2) {
 .hv2-g4 {
   gap: 4px;
 }
+.hv2-cli-link {
+  /* A fixed width with the arrow at its end: the arrow never moves when the font arrives. */
+  width: 15rem;
+  justify-content: space-between;
+}
 .hv2-self-start {
   align-self: flex-start;
 }
@@ -420,7 +428,20 @@ body:has(.hv2) {
   font-size: 15px;
 }
 .hv2-prompt-chips {
+  /*
+   * Equal cells, as many per row as fit: where each chip starts depends on the width of the
+   * list, never on how wide the font draws a label (a layout shift when Figtree arrives).
+   */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
   margin-top: 4px;
+}
+.hv2-prompt-chips .hv2-chip {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 6px 10px;
+  line-height: 18px;
+  white-space: normal;
 }
 .hv2-hero-rule {
   margin: 48px 0 24px;
@@ -476,7 +497,9 @@ body:has(.hv2) {
   margin-bottom: 10px;
 }
 .hv2-os-tabs {
-  display: inline-flex;
+  /* Three equal tabs: where each starts never depends on how wide the font draws a label. */
+  display: grid;
+  grid-template-columns: repeat(3, 4.6rem);
   padding: 3px;
   border-radius: 999px;
   background: var(--surface-inverse-raised);
@@ -485,8 +508,9 @@ body:has(.hv2) {
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0;
   border-radius: 999px;
   color: var(--ink-on-inverse-muted);
   font-size: 13.5px;
@@ -627,6 +651,11 @@ body:has(.hv2) {
   background: var(--ink);
   color: var(--surface-page);
 }
+.hv2-more-room-lead {
+  /* Fixed width with the text at its end, so the link keeps its place in either font. */
+  min-width: 8rem;
+  text-align: left;
+}
 .hv2-more-room .hv2-link {
   /* Wide enough for the link in either language, so its start never depends on the font. */
   display: inline-block;
@@ -642,6 +671,16 @@ body:has(.hv2) {
   font-size: 14px;
   color: var(--ink-muted);
   text-decoration: none;
+}
+
+/* Phones: the line is left-aligned under the prompt, one part per row, so nothing depends on a width. */
+@media (max-width: 400px) {
+  .hv2-more-room {
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: stretch;
+    gap: 0;
+  }
 }
 
 /* ---------- hub ---------- */
@@ -670,6 +709,8 @@ body:has(.hv2) {
 }
 .hv2-hub-node {
   position: absolute;
+  left: calc(var(--ax) * 1%);
+  top: calc(var(--ay) * 1%);
   transform: translate(-50%, -50%);
 }
 .hv2-hub-node .hv2-chip {
@@ -907,24 +948,6 @@ body:has(.hv2) {
     margin-top: 160px;
   }
 }
-/*
- * With the full two-column hero the example chips are three equal columns, as they fall on the
- * canvas, so where each one starts never depends on how wide the font draws the one before it.
- */
-@media (min-width: 1101px) {
-  .hv2-prompt-chips {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .hv2-prompt-chips .hv2-chip {
-    width: 100%;
-    justify-content: center;
-    padding: 6px 10px;
-    line-height: 18px;
-    text-align: center;
-    white-space: normal;
-  }
-}
 @media (max-width: 1100px) {
   .hv2-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -972,9 +995,6 @@ body:has(.hv2) {
   .hv2-faq {
     grid-template-columns: minmax(0, 1fr);
   }
-  .hv2-os {
-    padding: 0 11px;
-  }
   .hv2-install-code {
     flex-direction: column;
     font-size: 12.5px;
@@ -1001,7 +1021,8 @@ body:has(.hv2) {
     gap: 10px;
   }
   .hv2-hub-lines,
-  .hv2-hub-label {
+  .hv2-hub-label,
+  .hv2-hub-flow {
     display: none;
   }
   .hv2-hub-node {

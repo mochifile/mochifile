@@ -61,7 +61,7 @@ const checks = [
       </fieldset>
 
       <div class="hv2-stack hv2-g8">
-        <button type="button" class="hv2-btn hv2-btn-outline hv2-btn-lg hv2-self-start" popovertarget="hv2-soon">
+        <button type="button" class="hv2-btn hv2-btn-outline hv2-btn-lg hv2-self-start hv2-cli-link" popovertarget="hv2-soon">
           {m.hv2_cli_link({}, { locale })}
           <Icon d="M5 12h14M13 6l6 6-6 6" />
         </button>
@@ -125,7 +125,7 @@ const checks = [
         </div>
       </div>
       <button type="button" class="hv2-more-room" popovertarget="hv2-soon">
-        {m.hv2_prompt_more_room({}, { locale })} <span class="hv2-link">{m.hv2_prompt_open_ask({}, { locale })}</span>
+        <span class="hv2-more-room-lead">{m.hv2_prompt_more_room({}, { locale })}</span> <span class="hv2-link">{m.hv2_prompt_open_ask({}, { locale })}</span>
       </button>
     </div>
   </div>
