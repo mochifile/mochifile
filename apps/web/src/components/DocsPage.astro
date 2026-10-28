@@ -99,7 +99,7 @@ const tools = [
     chip: 'npm install -g @mochifile/cli',
     tile: 'bg-ube-tint text-ube-ink',
     icon: 'M4 5h16v14H4zM8 10l3 2-3 2M13 15h4',
-    squish: 'rounded-lg-squish-a',
+    squish: 'rounded-card',
   },
   {
     id: 'mcp',
@@ -108,7 +108,7 @@ const tools = [
     chip: 'mochifile.com/mcp',
     tile: 'bg-mango-tint text-mango-ink',
     icon: 'M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0zM12 18v3',
-    squish: 'rounded-lg-squish-b',
+    squish: 'rounded-card',
   },
   {
     id: 'chrome',
@@ -117,17 +117,18 @@ const tools = [
     chip: 'mochifile.com/chrome',
     tile: 'bg-matcha-tint text-matcha-ink',
     icon: 'M10 4a2 2 0 1 1 4 0v2h4v4h-2a2 2 0 1 0 0 4h2v4h-4v-2a2 2 0 1 0-4 0v2H6v-4H4a2 2 0 1 1 0-4h2V6h4z',
-    squish: 'rounded-lg-squish-c',
+    squish: 'rounded-card',
   },
 ]
 
 const heading = 'docs-endpoint flex flex-wrap items-center gap-3'
-const card = 'flex flex-col gap-4 bg-surface-card p-5 sm:p-7'
-const label = 'type-caption tracking-widest text-ink-muted uppercase'
+const card =
+  'flex flex-col gap-4 border-hairline border-card-line bg-surface-card p-5 shadow-card sm:p-7'
+const label = 'type-eyebrow text-ink-muted uppercase'
 ---
 
 <BaseLayout locale={locale} title={text(m.docs_title)} description={text(m.docs_description)} paths={samePathInAllLocales('docs')}>
-  <div class="docs-page mx-auto flex w-full max-w-content-max flex-col gap-8 pb-10 lg:pt-4">
+  <div class="docs-page mx-auto flex w-full max-w-site-inner flex-col gap-8 pb-10 lg:pt-4">
     <header class="flex flex-col items-start gap-3">
       <nav aria-label={text(m.docs_breadcrumb_label)} class="type-body-sm text-ink-muted">
         <ol class="flex flex-wrap items-center gap-x-2">
@@ -139,10 +140,10 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
         </ol>
       </nav>
       <p class="flex items-center gap-2">
-        <span class="inline-flex min-h-6 items-center rounded-pill bg-ube-tint px-3 type-caption tracking-wider text-ube-ink uppercase">{text(m.docs_pill_api)}</span>
-        <span class="inline-flex min-h-6 items-center rounded-pill border-chip border-line bg-surface-card px-3 type-caption tracking-wider uppercase">{text(m.docs_pill_version)}</span>
+        <span class="inline-flex min-h-6 items-center rounded-pill bg-ube-tint px-3 type-pill text-ube-ink uppercase">{text(m.docs_pill_api)}</span>
+        <span class="inline-flex min-h-6 items-center rounded-pill border-chip border-line bg-surface-card px-3 type-pill uppercase">{text(m.docs_pill_version)}</span>
       </p>
-      <h1 class="type-title text-balance sm:type-display-lg lg:type-display-xl">{text(m.docs_heading)}</h1>
+      <h1 class="type-page-title-sm text-balance sm:type-page-title">{text(m.docs_heading)}</h1>
       <p class="max-w-reading-max type-body text-ink-muted sm:type-body-lg">{text(m.docs_lead)}</p>
       {/* A real notice, not a placeholder: the API does not exist. Attention colours (design system README › Colour). */}
       <p class="flex max-w-reading-max items-start gap-3 rounded-md-squish-a bg-warning-tint p-4 type-body-sm text-warning-ink">
@@ -152,8 +153,8 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
     </header>
 
     {/* Under 1024 px the list of sections is a menu. */}
-    <details class="docs-menu rounded-lg-squish-a bg-surface-card lg:hidden">
-      <summary class="flex min-h-target-primary cursor-pointer list-none items-center justify-between gap-3 rounded-lg-squish-a px-5 type-label-lg focus-ring">
+    <details class="docs-menu rounded-card border-hairline border-card-line bg-surface-card shadow-card lg:hidden">
+      <summary class="flex min-h-target-primary cursor-pointer list-none items-center justify-between gap-3 rounded-card px-5 type-label-lg focus-ring">
         {text(m.docs_menu)}
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="docs-menu-chevron size-6 shrink-0"><path d="m6 9 6 6 6-6" /></svg>
       </summary>
@@ -177,8 +178,8 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
 
       <div class="flex min-w-0 flex-col gap-14">
         <section id="overview" aria-labelledby="overview-heading" class="flex flex-col gap-4">
-          <h2 id="overview-heading" class="type-label-lg sm:type-title-sm">{text(m.docs_overview_heading)}</h2>
-          <div class:list={[card, 'rounded-lg-squish-a']}>
+          <h2 id="overview-heading" class="type-block-title-sm sm:type-block-title">{text(m.docs_overview_heading)}</h2>
+          <div class:list={[card, 'rounded-card']}>
             <p>{text(m.docs_overview_base)}</p>
             <p class="docs-code docs-code-inline"><code>{API_BASE_URL}</code></p>
             <p class="type-body-sm text-ink-muted">{text(m.docs_overview_base_note)}</p>
@@ -186,7 +187,7 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
               {
                 stats.map((stat) => (
                   <li class="flex flex-col gap-1 rounded-md-squish-a bg-surface-sunken p-4">
-                    <span class="type-caption tracking-wider text-ink-muted uppercase">{stat.label}</span>
+                    <span class="type-pill text-ink-muted uppercase">{stat.label}</span>
                     <span class="type-title-sm">—</span>
                     <span class="type-caption text-ink-muted">{stat.unit}</span>
                     <span class="type-caption font-bold text-ube-ink">{text(m.docs_stat_pending)}</span>
@@ -199,8 +200,8 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
         </section>
 
         <section id="authentication" aria-labelledby="auth-heading" class="flex flex-col gap-4">
-          <h2 id="auth-heading" class="type-label-lg sm:type-title-sm">{text(m.docs_auth_heading)}</h2>
-          <div class:list={[card, 'rounded-lg-squish-b']}>
+          <h2 id="auth-heading" class="type-block-title-sm sm:type-block-title">{text(m.docs_auth_heading)}</h2>
+          <div class:list={[card, 'rounded-card']}>
             <p>{text(m.docs_auth_text)}</p>
             <div class="docs-code">
               <p class="docs-code-head">{text(m.docs_auth_header_label)}</p>
@@ -215,8 +216,8 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
 
         {
           [
-            { id: 'compress', method: 'POST', path: '/v1/images/compress', intro: text(m.docs_compress_text), params: compressParams, example: compressExample(text(m.docs_compress_comment)), headers: true, squish: 'rounded-lg-squish-c' },
-            { id: 'convert', method: 'POST', path: '/v1/images/convert', intro: text(m.docs_convert_text), params: convertParams, example: convertExample(text(m.docs_convert_comment)), headers: false, squish: 'rounded-lg-squish-a' },
+            { id: 'compress', method: 'POST', path: '/v1/images/compress', intro: text(m.docs_compress_text), params: compressParams, example: compressExample(text(m.docs_compress_comment)), headers: true, squish: 'rounded-card' },
+            { id: 'convert', method: 'POST', path: '/v1/images/convert', intro: text(m.docs_convert_text), params: convertParams, example: convertExample(text(m.docs_convert_comment)), headers: false, squish: 'rounded-card' },
           ].map((endpoint) => (
             <section id={endpoint.id} aria-labelledby={`${endpoint.id}-heading`} class="flex flex-col gap-4">
               <h2 id={`${endpoint.id}-heading`} class={heading}>
@@ -279,7 +280,7 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
 
         <section id="pdf-merge" aria-labelledby="pdf-merge-heading" class="flex flex-col gap-4">
           <h2 id="pdf-merge-heading" class={heading}><span class="docs-method bg-ube-ink">POST</span>/v1/pdfs/merge</h2>
-          <div class:list={[card, 'rounded-lg-squish-b']}>
+          <div class:list={[card, 'rounded-card']}>
             <p>{text(m.docs_pdf_text)}</p>
             <DocsExample id="pdf-merge" example={mergeExample(text(m.docs_pdf_comment))} label={text(m.docs_tabs_label)} />
           </div>
@@ -287,7 +288,7 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
 
         <section id="jobs" aria-labelledby="jobs-heading" class="flex flex-col gap-4">
           <h2 id="jobs-heading" class={heading}><span class="docs-method bg-matcha-ink">GET</span>/v1/jobs/{'{id}'}</h2>
-          <div class:list={[card, 'rounded-lg-squish-c']}>
+          <div class:list={[card, 'rounded-card']}>
             <p>{text(m.docs_jobs_text)}</p>
             <DocsExample id="jobs" example={jobsExample} label={text(m.docs_tabs_label)} />
             <pre class="docs-code"><code set:html={highlightCode(jobsResponse)} /></pre>
@@ -295,8 +296,8 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
         </section>
 
         <section id="errors" aria-labelledby="errors-heading" class="flex flex-col gap-4">
-          <h2 id="errors-heading" class="type-label-lg sm:type-title-sm">{text(m.docs_errors_heading)}</h2>
-          <div class="overflow-hidden rounded-lg-squish-a bg-surface-card">
+          <h2 id="errors-heading" class="type-block-title-sm sm:type-block-title">{text(m.docs_errors_heading)}</h2>
+          <div class="overflow-hidden rounded-card border-hairline border-card-line bg-surface-card shadow-card">
             <div class="docs-table-wrap">
               <table role="table" class="docs-table docs-table-errors">
                 <thead role="rowgroup">
@@ -321,11 +322,11 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
         </section>
 
         <section aria-labelledby="tools-heading" class="flex flex-col gap-4">
-          <h2 id="tools-heading" class="type-label-lg sm:type-title-sm">{text(m.docs_tools_heading)}</h2>
+          <h2 id="tools-heading" class="type-block-title-sm sm:type-block-title">{text(m.docs_tools_heading)}</h2>
           <ul class="grid gap-4 md:grid-cols-3">
             {
               tools.map((tool) => (
-                <li id={tool.id} class:list={['flex flex-col items-start gap-3 bg-surface-card p-5', tool.squish]}>
+                <li id={tool.id} class:list={['flex flex-col items-start gap-3 border-hairline border-card-line bg-surface-card p-5 shadow-card', tool.squish]}>
                   <span class:list={['flex size-icon-tile items-center justify-center rounded-md-squish-a', tool.tile]}>
                     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6"><path d={tool.icon} /></svg>
                   </span>
@@ -333,7 +334,7 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
                   <p class="type-body-sm text-ink-muted">{tool.text}</p>
                   <p class="mt-auto flex flex-wrap items-center gap-2">
                     <code class="docs-chip">{tool.chip}</code>
-                    <span class="inline-flex min-h-6 items-center rounded-pill bg-mango-tint px-3 type-caption tracking-wider text-mango-ink uppercase">{text(m.docs_planned)}</span>
+                    <span class="inline-flex min-h-6 items-center rounded-pill bg-mango-tint px-3 type-pill text-mango-ink uppercase">{text(m.docs_planned)}</span>
                   </p>
                 </li>
               ))
@@ -341,7 +342,7 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
           </ul>
         </section>
 
-        <section aria-labelledby="help-heading" class="flex flex-col items-center gap-3 rounded-xl-squish-a bg-surface-card p-6 text-center sm:p-10">
+        <section aria-labelledby="help-heading" class="flex flex-col items-center gap-3 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-6 text-center sm:p-10">
           <img
             src={mascot144.src}
             srcset={`${mascot144.src} 144w, ${mascot276.src} 276w`}
@@ -353,10 +354,10 @@ const label = 'type-caption tracking-widest text-ink-muted uppercase'
             decoding="async"
             class="h-auto w-[calc(var(--space-16)+var(--space-2))] rounded-md-squish-a"
           />
-          <h2 id="help-heading" class="type-label-lg sm:type-title-sm">{text(m.docs_help_heading)}</h2>
+          <h2 id="help-heading" class="type-block-title-sm sm:type-block-title">{text(m.docs_help_heading)}</h2>
           <p class="max-w-reading-max type-body-sm text-ink-muted">{text(m.docs_help_text)}</p>
           <div class="flex flex-wrap items-center justify-center gap-3">
-            <a href="https://github.com/mochifile/mochifile" class="press inline-flex min-h-target-primary items-center justify-center gap-2 rounded-pill border-chip border-border-control bg-surface-card px-6 type-label-lg focus-ring">
+            <a href="https://github.com/mochifile/mochifile" class="press inline-flex min-h-target-primary items-center justify-center gap-2 rounded-pill border-hairline border-card-line bg-surface-card shadow-chip px-6 type-label-lg focus-ring">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-button-icon"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
               {text(m.docs_help_github)}
             </a>

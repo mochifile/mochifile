@@ -44,8 +44,8 @@ const topics = [
 
 // Inputs are not squished and have the control border (design system README › Shape, Colour).
 const control =
-  'min-h-target-primary w-full rounded-sm border-chip border-border-control bg-surface-card px-4 text-ink placeholder:text-ink-muted user-invalid:border-danger type-body focus-ring'
-const label = 'type-caption tracking-widest uppercase'
+  'min-h-target-primary w-full rounded-sm border-hairline border-card-line bg-surface-card shadow-chip px-4 text-ink placeholder:text-ink-muted user-invalid:border-danger type-body focus-ring'
+const label = 'type-eyebrow uppercase'
 const error =
   'hidden items-center gap-2 type-body-sm text-danger-ink group-has-[:user-invalid]/field:flex'
 const fields = [
@@ -87,7 +87,7 @@ const fields = [
         decoding="async"
         class="h-auto w-[calc(var(--space-16)+var(--space-5))] rounded-md-squish-a"
       />
-      <h1 id="contact-heading" class="type-title text-balance sm:type-display-lg">{m.contact_heading({}, { locale })}</h1>
+      <h1 id="contact-heading" class="type-section-title-sm text-balance sm:type-section-title">{m.contact_heading({}, { locale })}</h1>
       <div class="contact-intro">
         <Content />
       </div>
@@ -96,7 +96,7 @@ const fields = [
     <form
       method="dialog"
       aria-label={m.contact_form_label({}, { locale })}
-      class="group/form flex w-full max-w-[calc(var(--reading-max)*2/3)] flex-col gap-5 rounded-xl-squish-a bg-surface-card p-5 sm:p-8"
+      class="group/form flex w-full max-w-[calc(var(--reading-max)*2/3)] flex-col gap-5 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-5 sm:p-8"
     >
       <div class="group/field flex flex-col gap-2">
         <label for="contact-topic" class={label}>{m.contact_topic_label({}, { locale })}</label>

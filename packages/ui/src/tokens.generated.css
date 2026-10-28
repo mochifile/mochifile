@@ -394,6 +394,19 @@
   line-height: 21px;
   font-weight: 500;
 }
+@utility type-pill {
+  font-family: var(--family-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+}
+@utility type-prose {
+  font-family: var(--family-sans);
+  font-size: 16.5px;
+  line-height: 28px;
+  font-weight: 400;
+}
 @utility type-menu-link {
   font-family: var(--family-display);
   font-size: 22px;
@@ -404,5 +417,46 @@
   font-family: var(--family-display);
   font-size: 16px;
   line-height: 20px;
+  font-weight: 700;
+}
+@utility type-page-title {
+  font-family: var(--family-display);
+  font-size: 60px;
+  line-height: 64px;
+  font-weight: 700;
+  letter-spacing: -1.4px;
+}
+@utility type-page-title-sm {
+  font-family: var(--family-display);
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: 700;
+  letter-spacing: -0.9px;
+}
+@utility type-section-title {
+  font-family: var(--family-display);
+  font-size: 40px;
+  line-height: 46px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+}
+@utility type-section-title-sm {
+  font-family: var(--family-display);
+  font-size: 30px;
+  line-height: 35px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+@utility type-block-title {
+  font-family: var(--family-display);
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+@utility type-block-title-sm {
+  font-family: var(--family-display);
+  font-size: 22px;
+  line-height: 28px;
   font-weight: 700;
 }

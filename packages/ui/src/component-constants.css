@@ -37,6 +37,10 @@
   --spacing-section: 96px;
   --spacing-footer-end: 48px;
   --spacing-ask-gap: 6px;
+  /* Content widths of inner pages (V2 canvas `.w` 1104, `.w-mid` 904 and `.w-narrow` 784 px, less their 32px gutters). */
+  --container-site-inner: 1040px;
+  --container-mid: 840px;
+  --container-narrow: 720px;
   /*
    * Soft shadows of the V2 canvas (mf.css). They tint with ube (cards) or ink (primary pill and
    * chips) and replace v1's "no drop shadows" for these surfaces only (ADR 0030).

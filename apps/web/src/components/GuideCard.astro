@@ -23,9 +23,9 @@ const Tag = href ? 'a' : 'article'
 <Tag
   href={href}
   aria-labelledby={href ? id : undefined}
-  class:list={['group/card flex h-full w-full flex-col gap-3 bg-surface-card p-5', squish, href && 'focus-ring']}
+  class:list={['group/card flex h-full w-full flex-col gap-3 border-hairline border-card-line bg-surface-card p-5 shadow-card', squish, href && 'focus-ring']}
 >
-  <span class:list={['inline-flex min-h-6 items-center self-start rounded-pill px-3 type-caption tracking-wider uppercase', tone]}>{topic}</span>
+  <span class:list={['inline-flex min-h-6 items-center self-start rounded-pill px-3 type-pill uppercase', tone]}>{topic}</span>
   <h3 id={id} class:list={['type-label-lg', href && 'group-hover/card:underline']}>{title}</h3>
   <p class="type-body-sm text-ink-muted">{summary}</p>
   <span class="mt-auto flex items-center justify-between gap-3 pt-2 type-caption text-ink-muted">

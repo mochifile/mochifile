@@ -66,7 +66,7 @@ const indexPath = guidesIndexPaths()[locale]
   description={meta.summary}
   paths={guidePaths(guide)}
 >
-  <div class="guide-page mx-auto flex w-full max-w-content-max flex-col gap-10 pb-10 sm:gap-16 lg:pt-4">
+  <div class="guide-page mx-auto flex w-full max-w-site-inner flex-col gap-10 pb-10 sm:gap-16 lg:pt-4">
     <div class="grid gap-14 lg:grid-cols-[minmax(0,1fr)_calc(var(--space-16)*3+var(--space-4)*2)]">
       <article aria-labelledby="guide-title" class="flex min-w-0 max-w-reading-max flex-col items-start gap-6">
         <nav aria-label={m.guides_breadcrumb_label({}, { locale })} class="type-body-sm text-ink-muted">
@@ -82,8 +82,8 @@ const indexPath = guidesIndexPaths()[locale]
             <li aria-current="page" class="text-ink">{topicLabel}</li>
           </ol>
         </nav>
-        <span class:list={['inline-flex min-h-6 items-center rounded-pill px-3 type-caption tracking-wider uppercase', topicTone[guide.topic]]}>{topicLabel}</span>
-        <h1 id="guide-title" class="type-title text-balance sm:type-display-lg">{meta.title}</h1>
+        <span class:list={['inline-flex min-h-6 items-center rounded-pill px-3 type-pill uppercase', topicTone[guide.topic]]}>{topicLabel}</span>
+        <h1 id="guide-title" class="type-section-title-sm text-balance sm:type-section-title">{meta.title}</h1>
         <p class="type-body-sm text-ink-muted">{m.guide_byline({}, { locale })} · {m.guides_read_min({ minutes: meta.minutes }, { locale })}</p>
         <img
           src={sheetWaiting696.src}
@@ -93,7 +93,7 @@ const indexPath = guidesIndexPaths()[locale]
           width={696}
           height={428}
           decoding="async"
-          class="h-auto w-full rounded-lg-squish-a"
+          class="h-auto w-full rounded-mascot"
         />
         <div class="page-copy guide-copy">
           <Content />
@@ -102,7 +102,7 @@ const indexPath = guidesIndexPaths()[locale]
 
       <aside aria-label={m.guide_on_this_page({}, { locale })} class="hidden lg:block">
         <div class="sticky top-6 flex flex-col gap-1">
-          <p class="px-3 pb-2 type-caption tracking-widest text-ube-ink uppercase">{m.guide_on_this_page({}, { locale })}</p>
+          <p class="px-3 pb-2 type-eyebrow text-accent uppercase">{m.guide_on_this_page({}, { locale })}</p>
           <nav aria-label={m.guide_on_this_page({}, { locale })} class="flex flex-col gap-1">
             {
               contents.map((heading, index) => (
@@ -115,7 +115,7 @@ const indexPath = guidesIndexPaths()[locale]
               ))
             }
           </nav>
-          <div class="mt-5 flex flex-col gap-1 rounded-lg-squish-a bg-surface-card p-4">
+          <div class="mt-5 flex flex-col gap-1 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-4">
             <img src={useImages354.src} alt="" width={354} height={216} loading="lazy" decoding="async" class="h-auto w-full rounded-md-squish-a" />
             <p class="mt-2 type-body-strong">{m.guide_tool_name({}, { locale })}</p>
             <p class="type-caption text-ink-muted">{m.guide_tool_text({}, { locale })}</p>

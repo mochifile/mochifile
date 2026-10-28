@@ -24,7 +24,7 @@ const { id, example, label } = Astro.props
     <legend class="sr-only">{label}</legend>
     {
       exampleLanguages.map(({ key, label: name }) => (
-        <label class="docs-tab press inline-flex min-h-target-min cursor-pointer items-center rounded-pill border-chip border-border-control bg-surface-card px-4 type-body-sm has-[:checked]:border-ink has-[:checked]:bg-action has-[:checked]:font-bold has-[:checked]:text-action-ink">
+        <label class="docs-tab press inline-flex min-h-target-min cursor-pointer items-center rounded-pill border-hairline border-card-line bg-surface-card shadow-chip px-4 type-body-sm has-[:checked]:border-ink has-[:checked]:bg-action has-[:checked]:font-bold has-[:checked]:text-action-ink">
           <input type="radio" name={`${id}-language`} value={key} checked={key === 'curl'} class="sr-only" />
           {name}
         </label>

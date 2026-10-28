@@ -64,19 +64,19 @@ const arrow = 'M5 12h14M13 6l6 6-6 6'
 ---
 
 <BaseLayout locale={locale} title={m.guides_title({}, { locale })} description={m.guides_description({}, { locale })} paths={guidesIndexPaths()}>
-  <div class="guides-page mx-auto flex w-full max-w-content-max flex-col gap-10 pb-10 sm:gap-16 lg:pt-4">
+  <div class="guides-page mx-auto flex w-full max-w-site-inner flex-col gap-10 pb-10 sm:gap-16 lg:pt-4">
     <header class="flex flex-col items-start gap-4">
       <nav aria-label={m.guides_breadcrumb_label({}, { locale })} class="type-body-sm text-ink-muted">
         <ol class="flex flex-wrap items-center gap-x-2">
           <li class="flex items-center gap-2">
-            <a href={localePath(locale)} class="inline-flex min-h-target-min items-center rounded-sm underline hover:no-underline focus-ring">{m.guides_home({}, { locale })}</a>
+            <a href={localePath(locale)} class="inline-flex min-h-target-min items-center rounded-sm hover:underline focus-ring">{m.guides_home({}, { locale })}</a>
             <span aria-hidden="true">›</span>
           </li>
           <li aria-current="page" class="text-ink">{m.guides_breadcrumb_current({}, { locale })}</li>
         </ol>
       </nav>
-      <p class="type-caption tracking-widest text-ube-ink uppercase">{m.guides_eyebrow({ count: published.length }, { locale })}</p>
-      <h1 class="type-title text-balance sm:type-display-lg lg:type-display-xl">{m.guides_heading_before({}, { locale })}<span class="guides-mark">{m.guides_heading_mark({}, { locale })}</span></h1>
+      <p class="type-eyebrow text-accent uppercase">{m.guides_eyebrow({ count: published.length }, { locale })}</p>
+      <h1 class="type-page-title-sm text-balance sm:type-page-title">{m.guides_heading_before({}, { locale })}<span class="guides-mark">{m.guides_heading_mark({}, { locale })}</span></h1>
       <span aria-hidden="true" class="flex items-center gap-2">
         <span class="block h-1 w-10 rounded-pill bg-ube"></span>
         <span class="block size-2 rounded-pill bg-strawberry"></span>
@@ -88,7 +88,7 @@ const arrow = 'M5 12h14M13 6l6 6-6 6'
     {
       hero && (
         <section aria-labelledby="guides-featured" class="flex flex-col gap-6">
-          <h2 id="guides-featured" class="type-label-lg sm:type-title-sm">{m.guides_featured_heading({}, { locale })}</h2>
+          <h2 id="guides-featured" class="type-block-title-sm sm:type-block-title">{m.guides_featured_heading({}, { locale })}</h2>
           <a
             href={guidePaths(hero)[locale]}
             aria-labelledby="guides-hero-title"
@@ -96,14 +96,14 @@ const arrow = 'M5 12h14M13 6l6 6-6 6'
           >
             <span class="flex flex-col items-start gap-4">
               <span class="flex flex-wrap items-center gap-2">
-                <span class="inline-flex min-h-6 items-center rounded-pill bg-mango px-3 type-caption tracking-wider text-ink-on-block uppercase">
+                <span class="inline-flex min-h-6 items-center rounded-pill bg-mango px-3 type-pill text-ink-on-block uppercase">
                   <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="mr-1 size-4"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z" /></svg>
                   {m.guides_featured_badge({}, { locale })}
                 </span>
-                <span class="inline-flex min-h-6 items-center rounded-pill bg-surface-inverse-raised px-3 type-caption tracking-wider text-ink-on-inverse uppercase">{topicLabel[hero.topic]}</span>
+                <span class="inline-flex min-h-6 items-center rounded-pill bg-surface-inverse-raised px-3 type-pill text-ink-on-inverse uppercase">{topicLabel[hero.topic]}</span>
                 <span class="type-caption text-ink-on-inverse-muted">{minutes(hero)}</span>
               </span>
-              <span id="guides-hero-title" class="type-title text-balance group-hover/hero:underline sm:type-display-lg">{hero.meta[locale].title}</span>
+              <span id="guides-hero-title" class="type-section-title-sm text-balance group-hover/hero:underline">{hero.meta[locale].title}</span>
               <span class="type-body text-ink-on-inverse-muted sm:type-body-lg">{hero.meta[locale].summary}</span>
               <span class="mt-2 inline-flex min-h-target-primary items-center justify-center gap-2 rounded-pill bg-mango px-6 type-label-lg text-ink-on-block">
                 {m.guides_read_guide({}, { locale })}
@@ -118,7 +118,7 @@ const arrow = 'M5 12h14M13 6l6 6-6 6'
               width={1100}
               height={651}
               decoding="async"
-              class="hidden h-auto w-full rounded-lg-squish-a sm:block"
+              class="hidden h-auto w-full rounded-mascot sm:block"
             />
           </a>
           {picks.length > 0 && (
@@ -146,7 +146,7 @@ const arrow = 'M5 12h14M13 6l6 6-6 6'
 
     <section aria-label={m.guides_list_label({}, { locale })} class="guides-filter flex flex-col gap-6">
       <div class="group/search mx-auto flex w-full max-w-[calc(var(--reading-max)*3/4)] flex-col gap-2">
-        <label class="guides-search grid min-h-target-primary grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 rounded-pill border-chip border-border-control bg-surface-card px-4 py-2">
+        <label class="guides-search grid min-h-target-primary grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 rounded-pill border-hairline border-card-line bg-surface-card shadow-chip px-4 py-2">
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6 shrink-0 text-ink-muted"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" /></svg>
           <span class="sr-only">{m.guides_search_placeholder({}, { locale })}</span>
           {/*
@@ -163,7 +163,7 @@ const arrow = 'M5 12h14M13 6l6 6-6 6'
         <legend class="sr-only">{m.guides_topics_legend({}, { locale })}</legend>
         {
           chips.map((chip) => (
-            <label class="guides-chip press inline-flex min-h-target-min cursor-pointer items-center rounded-pill border-chip border-border-control bg-surface-card px-4 type-body-sm has-[:checked]:border-ink has-[:checked]:bg-action has-[:checked]:font-bold has-[:checked]:text-action-ink">
+            <label class="guides-chip press inline-flex min-h-target-min cursor-pointer items-center rounded-pill border-hairline border-card-line bg-surface-card shadow-chip px-4 type-body-sm has-[:checked]:border-ink has-[:checked]:bg-action has-[:checked]:font-bold has-[:checked]:text-action-ink">
               <input type="radio" name="guides-topic" value={chip.key} checked={chip.key === 'all'} class="sr-only" />
               {chip.label}
             </label>
@@ -190,7 +190,7 @@ const arrow = 'M5 12h14M13 6l6 6-6 6'
         }
       </ul>
       <div class="flex justify-center">
-        <button type="button" popovertarget="guides-no-more" class="press inline-flex min-h-target-primary items-center justify-center rounded-pill border-chip border-border-control bg-surface-card px-6 type-label-lg focus-ring">{m.guides_show_more({}, { locale })}</button>
+        <button type="button" popovertarget="guides-no-more" class="press inline-flex min-h-target-primary items-center justify-center rounded-pill border-hairline border-card-line bg-surface-card shadow-chip px-6 type-label-lg focus-ring">{m.guides_show_more({}, { locale })}</button>
       </div>
       {/* Not a result: it says there is nothing more. A toast where the Popover API exists, text where it does not. */}
       <div

@@ -13,9 +13,4 @@ export const topicTone = {
 } as const satisfies Record<GuideTopic, string>
 
 /** Neighbouring cards vary their squish (design system README › Shape). */
-export const cardSquish = [
-  'rounded-lg-squish-a',
-  'rounded-lg-squish-b',
-  'rounded-lg-squish-c',
-  'rounded-lg-squish-b',
-] as const
+export const cardSquish = ['rounded-card', 'rounded-card', 'rounded-card', 'rounded-card'] as const

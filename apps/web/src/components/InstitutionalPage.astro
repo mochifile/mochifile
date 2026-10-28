@@ -62,7 +62,7 @@ const headingId = `${id}-heading`
   description={text.description({}, { locale })}
   paths={pagePaths(id)}
 >
-  <article aria-labelledby={headingId} class="mx-auto flex w-full max-w-reading-max flex-col gap-8 pb-10 lg:pt-4">
+  <article aria-labelledby={headingId} class="mx-auto flex w-full max-w-narrow flex-col gap-8 pb-10 lg:pt-4">
     <PageHeading eyebrow={text.eyebrow({}, { locale })} heading={text.heading({}, { locale })} id={headingId} />
     {
       id === 'about' && (
@@ -75,7 +75,7 @@ const headingId = `${id}-heading`
           width={1100}
           height={651}
           decoding="async"
-          class="h-auto w-full rounded-xl-squish-a"
+          class="h-auto w-full rounded-mascot"
         />
       )
     }
@@ -93,6 +93,16 @@ const headingId = `${id}-heading`
    * page (or follows About's first heading), links and bullets in the accent, the quotation,
    * inline code and the policy block. Every value is a token.
    */
+  .institutional-copy {
+    @apply type-prose;
+  }
+  /* V2 canvas: prose h2 30/36 and h3 21/27, in the display face. */
+  .institutional-copy h2 {
+    @apply type-section-title-sm;
+  }
+  .institutional-copy h3 {
+    @apply type-block-title-sm;
+  }
   .institutional-copy > p:first-child,
   .institutional-copy > h2:first-child + p {
     @apply type-body-lg;
@@ -101,7 +111,7 @@ const headingId = `${id}-heading`
     margin-top: 0;
   }
   .institutional-copy a {
-    color: var(--ube-ink);
+    color: var(--accent);
     font-weight: 600;
     text-decoration-thickness: 2px;
     text-underline-offset: 3px;
