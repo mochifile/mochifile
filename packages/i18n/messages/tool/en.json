@@ -1,0 +1,7 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "tool_requires_js_title": "This tool needs JavaScript.",
+  "tool_requires_js_text": "Please enable it in your browser to continue. Your files are processed inside your browser, and JavaScript does that work.",
+  "tool_related_heading": "Related tools",
+  "tool_open": "Open tool"
+}
