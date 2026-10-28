@@ -6,6 +6,8 @@ This is the single source of truth for how Mochifile looks, sounds and behaves. 
 
 **Status:** v1. Colours, type, spacing, radius, dark theme and core components are settled. The logo is final (v1). The mascot is **provisional** (see *Mascot*).
 
+**Site V2 shell:** the header, phone menu and footer follow the approved V2 canvas ([ADR 0026](../adr/0026-v2-site-shell.md)): a cream footer with soft shadows, `accent` links and the `site-*` sizes and type styles in `tokens.json`. The rest of this book still applies to everything else.
+
 **Proposed v1.1:** additive, non-normative proposals for the launch redesign live in [`proposals/v1.1/`](proposals/v1.1/README.md). They are not approved, and v1 stays authoritative until they are explicitly accepted.
 
 ## Essence

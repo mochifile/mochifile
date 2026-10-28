@@ -3,6 +3,8 @@
 - **Status:** Proposed in [PR #42](https://github.com/mochifile/mochifile/pull/42); Accepted
   on merge
 - **Date:** 2026-10-26
+- **Amended by:** [ADR 0026](0026-v2-site-shell.md): the official lettering files replace the
+  masters and copies below, the logo is 151px wide, and the footer has no logo
 
 ## Context
 
