@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import type { Page } from '@playwright/test'
-import { expect, test } from './fixtures.ts'
+import { expect, projectContextOptions, test } from './fixtures.ts'
 
 /**
  * The 404 pages (V2 artboard MFNotFound). Cloudflare answers an unknown path with the nearest
@@ -209,5 +209,64 @@ for (const locale of ['en', 'pt'] as const) {
         expect((box?.y ?? Infinity) + (box?.height ?? 0)).toBeLessThanOrEqual(viewport.height)
       }
     })
+  }
+}
+
+/**
+ * The mascot is the `sheet-lost` illustration (the 2026-10 collection): decoration, sharp on a
+ * Retina screen, and its box is reserved by the file's own size so the text below never moves.
+ */
+for (const locale of ['en', 'pt'] as const) {
+  const missing = locale === 'en' ? '/does-not-exist/' : '/pt/nao-existe/'
+  for (const scale of [1, 2] as const) {
+    for (const width of [320, 390, 768, 1440] as const) {
+      test(`the ${locale} page shows sheet-lost, sharp at DPR ${scale} (${width} px)`, async ({
+        testBrowser,
+        pageErrors,
+      }) => {
+        const context = await testBrowser.newContext({
+          ...projectContextOptions(),
+          viewport: { width, height: 900 },
+          deviceScaleFactor: scale,
+        })
+        try {
+          const page = await context.newPage()
+          page.on('console', (message) => {
+            if (message.type() === 'error') pageErrors.push(message.text())
+          })
+          await openMissing(page, pageErrors, missing)
+          const image = page.locator('main img')
+          await expect(image).toHaveCount(1)
+          await expect(image).toHaveAttribute('alt', '')
+          await expect(image).toHaveJSProperty('complete', true)
+          const info = await image.evaluate(async (el) => {
+            const img = el as HTMLImageElement
+            const box = img.getBoundingClientRect()
+            // The file's own pixels (naturalWidth is in CSS px when `sizes` is set).
+            const bitmap = await createImageBitmap(await (await fetch(img.currentSrc)).blob())
+            return {
+              current: img.currentSrc,
+              srcset: img.srcset,
+              shown: box.width,
+              height: box.height,
+              attrs: [Number(img.getAttribute('width')), Number(img.getAttribute('height'))],
+              pixels: bitmap.width,
+            }
+          })
+          expect(info.current).toContain('sheet-lost')
+          // Two files (720 and 1440 px); the browser takes the smaller when it is sharp enough.
+          expect(info.srcset.split(',').map((candidate) => candidate.trim().split(' ')[1])).toEqual(
+            ['720w', '1440w'],
+          )
+          expect(info.pixels).toBeGreaterThanOrEqual(Math.floor(info.shown * scale))
+          // The box keeps the artwork's proportions (1630 x 965) from the first paint.
+          const [attrWidth = 0, attrHeight = 1] = info.attrs
+          expect(attrWidth / attrHeight).toBeCloseTo(1630 / 965, 2)
+          expect(info.shown / info.height).toBeCloseTo(1630 / 965, 1)
+        } finally {
+          await context.close()
+        }
+      })
+    }
   }
 }

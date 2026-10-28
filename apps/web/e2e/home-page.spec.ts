@@ -222,8 +222,12 @@ test('every illustration loads and is decorative', async ({ testBrowser }) => {
         src: img.getAttribute('src'),
       })),
     )
-    // The app icon in the hub, three category pictures, the happy and the squishing mascots.
+    // The app icon in the hub, three category pictures, the padlocked-folder mascot in the
+    // privacy card and the squishing mascot in the closing call.
     expect(images).toHaveLength(6)
+    expect(
+      images.map((image) => /sheet-(safe|squish)|use-|app-icon/.exec(image.src ?? '')?.[0]),
+    ).toEqual(['app-icon', 'use-', 'use-', 'use-', 'sheet-safe', 'sheet-squish'])
     for (const image of images) {
       expect(image.alt, image.src ?? '').toBe('')
       expect(image.loaded, `${image.src} loaded`).toBe(true)

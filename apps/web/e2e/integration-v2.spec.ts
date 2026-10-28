@@ -420,9 +420,10 @@ for (const path of FAQ_PAGES) {
 }
 
 /**
- * The category cards' illustrations (Home and Ask): the approved art is 354-366 px wide and nothing
- * larger exists, so each has a 2x file made from it. A Retina screen must be served that file, and
- * the box must be reserved by the image's own size.
+ * The category cards' illustrations (Home and Ask), made from 1.6 k px originals at 720 px (1x) and
+ * 1440 px (2x) (issue #78). Whatever the screen, the file the browser picks must have at least the
+ * pixels the box needs, a Retina screen must get the 1440 px file where the box is wider than 360
+ * CSS px, and the box must be reserved by the image's own size.
  */
 for (const { path, selector } of [
   { path: '/', selector: '.hv2-example-img' },
@@ -430,8 +431,8 @@ for (const { path, selector } of [
   { path: '/pt/pergunte/', selector: '.ask-media' },
 ] as const) {
   for (const scale of [1, 2] as const) {
-    for (const width of [1440, 390] as const) {
-      test(`${path} card images at DPR ${scale}, ${width} px: the sharper file for Retina, sized in advance`, async ({
+    for (const width of [1440, 1024, 390] as const) {
+      test(`${path} card images at DPR ${scale}, ${width} px: enough pixels, sized in advance`, async ({
         testBrowser,
       }) => {
         const context = await testBrowser.newContext({
@@ -459,15 +460,17 @@ for (const { path, selector } of [
                 attrs: [img.getAttribute('width'), img.getAttribute('height')],
               }
             })
-            // Two candidates; the box is reserved by the image's own width and height.
-            expect(info.srcset.split(',').length).toBe(2)
-            expect(Number(info.attrs[0])).toBeGreaterThan(300)
-            expect(Number(info.attrs[1])).toBeGreaterThan(200)
-            // A 2x screen gets the doubled file, a 1x screen the original pixels.
-            expect(info.current).toMatch(scale === 2 ? /-2x\./ : /-1x\./)
-            expect(info.pixels).toBe(Number(info.attrs[0]) * scale)
+            // Two candidates, 720 and 1440 px; the box is reserved by the 720 px file's size.
+            expect(
+              info.srcset.split(',').map((candidate) => candidate.trim().split(' ')[1]),
+            ).toEqual(['720w', '1440w'])
+            expect(info.attrs.map(Number)).toEqual([720, expect.any(Number)])
+            expect(Number(info.attrs[1])).toBeGreaterThan(400)
             // The file has at least the screen's pixels for the box, on a desktop and on a phone.
             expect(info.pixels).toBeGreaterThanOrEqual(Math.floor(info.shown * scale))
+            // A wide card on a Retina screen (1024 px: 432 CSS px) gets the doubled file.
+            if (info.shown * scale > 720) expect(info.current).toMatch(/-1440\./)
+            else expect(info.current).toMatch(/-720\./)
           }
         } finally {
           await context.close()
