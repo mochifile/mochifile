@@ -61,6 +61,7 @@ export async function toolPaths(request: {
         slug !== 'pt' &&
         !templateSlugs.has(slug) &&
         !sitePageSlugs.has(slug) &&
+        slug !== 'docs' &&
         !accountSlugs.has(slug) &&
         !institutionalSlugs.has(slug)
       )

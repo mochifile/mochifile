@@ -1,0 +1,548 @@
+---
+/**
+ * The API reference (the "Site final" artboard MFDocs): a preview of an API that does not exist
+ * yet, so the page says so up front and nothing on it can be called. Title, notice, a section
+ * list (a sticky column from 1024 px, a menu under it), the overview, authentication, the four
+ * planned endpoints with their parameters, headers and examples in three languages, the errors,
+ * the CLI, MCP and Chrome extension cards, and the way to ask for help. Static HTML, no script.
+ *
+ * - The example tabs are radio buttons and `:has()` (see DocsExample).
+ * - The section menu under 1024 px is a `<details>`.
+ * - The endpoints are the approved conceptual routes (README › Docs/API), not the artboard's
+ *   shorter names. Limits, plan sizes and the key format are not set, so they show as "set at
+ *   launch" instead of a number. Everything planned says so ("Planned").
+ */
+import { type Locale, localePath } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import mascot144 from '../assets/brand/expr-idea-144.webp'
+import mascot276 from '../assets/brand/expr-idea-276.webp'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import {
+  API_BASE_URL,
+  compressExample,
+  convertExample,
+  highlightCode,
+  inlineCode,
+  jobsExample,
+  jobsResponse,
+  mergeExample,
+} from '../lib/docs-api'
+import { samePathInAllLocales } from '../lib/seo'
+import DocsExample from './DocsExample.astro'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+const text = (fn: (params: Record<string, never>, options: { locale: Locale }) => string) =>
+  fn({}, { locale })
+
+const nav: Array<{ id: string; label: string; mono: boolean }> = [
+  { id: 'overview', label: text(m.docs_nav_overview), mono: false },
+  { id: 'authentication', label: text(m.docs_nav_auth), mono: false },
+  { id: 'compress', label: 'POST /v1/images/compress', mono: true },
+  { id: 'convert', label: 'POST /v1/images/convert', mono: true },
+  { id: 'pdf-merge', label: 'POST /v1/pdfs/merge', mono: true },
+  { id: 'jobs', label: 'GET /v1/jobs/{id}', mono: true },
+  { id: 'errors', label: text(m.docs_nav_errors), mono: false },
+  { id: 'cli', label: text(m.docs_nav_cli), mono: false },
+  { id: 'mcp', label: text(m.docs_nav_mcp), mono: false },
+  { id: 'chrome', label: text(m.docs_nav_chrome), mono: false },
+]
+
+const stats = [
+  { label: text(m.docs_stat_anon), unit: text(m.docs_stat_files_month) },
+  { label: text(m.docs_stat_free), unit: text(m.docs_stat_ops_month) },
+  { label: text(m.docs_stat_starter), unit: text(m.docs_stat_ops_month) },
+  { label: text(m.docs_stat_pro), unit: text(m.docs_stat_ops_month) },
+  { label: text(m.docs_stat_size), unit: text(m.docs_stat_per_request) },
+]
+
+const compressParams = [
+  { name: 'format', fallback: 'same', desc: text(m.docs_p_format) },
+  { name: 'maxSize', fallback: '—', desc: text(m.docs_p_maxsize) },
+  { name: 'width', fallback: '—', desc: text(m.docs_p_width) },
+  { name: 'height', fallback: '—', desc: text(m.docs_p_height) },
+  { name: 'fit', fallback: 'contain', desc: text(m.docs_p_fit) },
+  { name: 'quality', fallback: 'auto', desc: text(m.docs_p_quality) },
+  { name: 'keepMetadata', fallback: 'false', desc: text(m.docs_p_keepmetadata) },
+  { name: 'background', fallback: 'white', desc: text(m.docs_p_background) },
+]
+const convertParams = [
+  { name: 'format', fallback: '—', desc: text(m.docs_p_format) },
+  { name: 'quality', fallback: 'auto', desc: text(m.docs_p_quality) },
+  { name: 'keepMetadata', fallback: 'false', desc: text(m.docs_p_keepmetadata) },
+  { name: 'background', fallback: 'white', desc: text(m.docs_p_background) },
+]
+const responseHeaders = [
+  { name: 'X-Mochifile-Original-Size', desc: text(m.docs_h_original) },
+  { name: 'X-Mochifile-Result-Size', desc: text(m.docs_h_result) },
+  { name: 'X-Mochifile-Resized', desc: text(m.docs_h_resized) },
+  { name: 'X-Mochifile-Remaining', desc: text(m.docs_h_remaining) },
+]
+const errors = [
+  { status: '400', meaning: text(m.docs_e_400), todo: text(m.docs_e_400_do) },
+  { status: '401', meaning: text(m.docs_e_401), todo: text(m.docs_e_401_do) },
+  { status: '413', meaning: text(m.docs_e_413), todo: text(m.docs_e_413_do) },
+  { status: '415', meaning: text(m.docs_e_415), todo: text(m.docs_e_415_do) },
+  { status: '422', meaning: text(m.docs_e_422), todo: text(m.docs_e_422_do) },
+  { status: '429', meaning: text(m.docs_e_429), todo: text(m.docs_e_429_do) },
+  { status: '500', meaning: text(m.docs_e_500), todo: text(m.docs_e_500_do) },
+]
+// README › Home: the planned commands, to be confirmed before anything is published.
+const tools = [
+  {
+    id: 'cli',
+    title: text(m.docs_nav_cli),
+    text: text(m.docs_cli_text),
+    chip: 'npm install -g @mochifile/cli',
+    tile: 'bg-ube-tint text-ube-ink',
+    icon: 'M4 5h16v14H4zM8 10l3 2-3 2M13 15h4',
+    squish: 'rounded-lg-squish-a',
+  },
+  {
+    id: 'mcp',
+    title: text(m.docs_nav_mcp),
+    text: text(m.docs_mcp_text),
+    chip: 'mochifile.com/mcp',
+    tile: 'bg-mango-tint text-mango-ink',
+    icon: 'M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0zM12 18v3',
+    squish: 'rounded-lg-squish-b',
+  },
+  {
+    id: 'chrome',
+    title: text(m.docs_nav_chrome),
+    text: text(m.docs_chrome_text),
+    chip: 'mochifile.com/chrome',
+    tile: 'bg-matcha-tint text-matcha-ink',
+    icon: 'M10 4a2 2 0 1 1 4 0v2h4v4h-2a2 2 0 1 0 0 4h2v4h-4v-2a2 2 0 1 0-4 0v2H6v-4H4a2 2 0 1 1 0-4h2V6h4z',
+    squish: 'rounded-lg-squish-c',
+  },
+]
+
+const heading = 'docs-endpoint flex flex-wrap items-center gap-3'
+const card = 'flex flex-col gap-4 bg-surface-card p-5 sm:p-7'
+const label = 'type-caption tracking-widest text-ink-muted uppercase'
+---
+
+<BaseLayout locale={locale} title={text(m.docs_title)} description={text(m.docs_description)} paths={samePathInAllLocales('docs')}>
+  <div class="docs-page mx-auto flex w-full max-w-content-max flex-col gap-8 pb-10 lg:pt-4">
+    <header class="flex flex-col items-start gap-3">
+      <nav aria-label={text(m.docs_breadcrumb_label)} class="type-body-sm text-ink-muted">
+        <ol class="flex flex-wrap items-center gap-x-2">
+          <li class="flex items-center gap-2">
+            <a href={localePath(locale)} class="inline-flex min-h-target-min items-center rounded-sm underline hover:no-underline focus-ring">{text(m.docs_home)}</a>
+            <span aria-hidden="true">›</span>
+          </li>
+          <li aria-current="page" class="text-ink">{text(m.docs_breadcrumb_current)}</li>
+        </ol>
+      </nav>
+      <p class="flex items-center gap-2">
+        <span class="inline-flex min-h-6 items-center rounded-pill bg-ube-tint px-3 type-caption tracking-wider text-ube-ink uppercase">{text(m.docs_pill_api)}</span>
+        <span class="inline-flex min-h-6 items-center rounded-pill border-chip border-line bg-surface-card px-3 type-caption tracking-wider uppercase">{text(m.docs_pill_version)}</span>
+      </p>
+      <h1 class="type-title text-balance sm:type-display-lg lg:type-display-xl">{text(m.docs_heading)}</h1>
+      <p class="max-w-reading-max type-body text-ink-muted sm:type-body-lg">{text(m.docs_lead)}</p>
+      {/* A real notice, not a placeholder: the API does not exist. Attention colours (design system README › Colour). */}
+      <p class="flex max-w-reading-max items-start gap-3 rounded-md-squish-a bg-warning-tint p-4 type-body-sm text-warning-ink">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 size-6 shrink-0"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7h.01" /></svg>
+        <span>{text(m.docs_notice)}</span>
+      </p>
+    </header>
+
+    {/* Under 1024 px the list of sections is a menu. */}
+    <details class="docs-menu rounded-lg-squish-a bg-surface-card lg:hidden">
+      <summary class="flex min-h-target-primary cursor-pointer list-none items-center justify-between gap-3 rounded-lg-squish-a px-5 type-label-lg focus-ring">
+        {text(m.docs_menu)}
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="docs-menu-chevron size-6 shrink-0"><path d="m6 9 6 6 6-6" /></svg>
+      </summary>
+      <nav aria-label={text(m.docs_nav_label)} class="flex flex-col gap-1 px-2 pb-3">
+        {
+          nav.map((item) => (
+            <a href={`#${item.id}`} class:list={['flex min-h-target-min items-center rounded-md px-3 type-body-sm font-semibold text-ink-muted hover:text-ink focus-ring', item.mono && 'font-mono']}>{item.label}</a>
+          ))
+        }
+      </nav>
+    </details>
+
+    <div class="grid gap-10 lg:grid-cols-[calc(var(--space-16)*3+var(--space-1))_minmax(0,1fr)] lg:items-start">
+      <nav aria-label={text(m.docs_nav_label)} class="docs-nav sticky top-6 hidden flex-col gap-1 lg:flex">
+        {
+          nav.map((item, index) => (
+            <a href={`#${item.id}`} class:list={['docs-nav-link flex min-h-target-min items-center rounded-md px-3 type-body-sm font-semibold text-ink-muted hover:text-ink focus-ring', item.mono && 'font-mono', index === 0 && 'docs-nav-first']}>{item.label}</a>
+          ))
+        }
+      </nav>
+
+      <div class="flex min-w-0 flex-col gap-14">
+        <section id="overview" aria-labelledby="overview-heading" class="flex flex-col gap-4">
+          <h2 id="overview-heading" class="type-label-lg sm:type-title-sm">{text(m.docs_overview_heading)}</h2>
+          <div class:list={[card, 'rounded-lg-squish-a']}>
+            <p>{text(m.docs_overview_base)}</p>
+            <p class="docs-code docs-code-inline"><code>{API_BASE_URL}</code></p>
+            <p class="type-body-sm text-ink-muted">{text(m.docs_overview_base_note)}</p>
+            <ul class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {
+                stats.map((stat) => (
+                  <li class="flex flex-col gap-1 rounded-md-squish-a bg-surface-sunken p-4">
+                    <span class="type-caption tracking-wider text-ink-muted uppercase">{stat.label}</span>
+                    <span class="type-title-sm">—</span>
+                    <span class="type-caption text-ink-muted">{stat.unit}</span>
+                    <span class="type-caption font-bold text-ube-ink">{text(m.docs_stat_pending)}</span>
+                  </li>
+                ))
+              }
+            </ul>
+            <p class="type-body-sm text-ink-muted">{text(m.docs_overview_count)}</p>
+          </div>
+        </section>
+
+        <section id="authentication" aria-labelledby="auth-heading" class="flex flex-col gap-4">
+          <h2 id="auth-heading" class="type-label-lg sm:type-title-sm">{text(m.docs_auth_heading)}</h2>
+          <div class:list={[card, 'rounded-lg-squish-b']}>
+            <p>{text(m.docs_auth_text)}</p>
+            <div class="docs-code">
+              <p class="docs-code-head">{text(m.docs_auth_header_label)}</p>
+              <code set:html={highlightCode('Authorization: Bearer $MOCHIFILE_KEY')} />
+            </div>
+            <p class="flex items-start gap-3 rounded-md-squish-a bg-mango-tint p-4 type-body-sm text-mango-ink">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 size-5 shrink-0"><path d="M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5z" /></svg>
+              <span>{text(m.docs_auth_callout)}</span>
+            </p>
+          </div>
+        </section>
+
+        {
+          [
+            { id: 'compress', method: 'POST', path: '/v1/images/compress', intro: text(m.docs_compress_text), params: compressParams, example: compressExample(text(m.docs_compress_comment)), headers: true, squish: 'rounded-lg-squish-c' },
+            { id: 'convert', method: 'POST', path: '/v1/images/convert', intro: text(m.docs_convert_text), params: convertParams, example: convertExample(text(m.docs_convert_comment)), headers: false, squish: 'rounded-lg-squish-a' },
+          ].map((endpoint) => (
+            <section id={endpoint.id} aria-labelledby={`${endpoint.id}-heading`} class="flex flex-col gap-4">
+              <h2 id={`${endpoint.id}-heading`} class={heading}>
+                <span class="docs-method bg-ube-ink">{endpoint.method}</span>{endpoint.path}
+              </h2>
+              <div class:list={[card, endpoint.squish]}>
+                <p>{endpoint.intro}</p>
+                <h3 class={label}>{text(m.docs_params)}</h3>
+                <div class="docs-table-wrap">
+                  <table role="table" class="docs-table">
+                    <thead role="rowgroup">
+                      <tr role="row">
+                        <th role="columnheader" scope="col">{text(m.docs_col_param)}</th>
+                        <th role="columnheader" scope="col">{text(m.docs_col_default)}</th>
+                        <th role="columnheader" scope="col">{text(m.docs_col_desc)}</th>
+                      </tr>
+                    </thead>
+                    <tbody role="rowgroup">
+                      {endpoint.params.map((param) => (
+                        <tr role="row">
+                          <td role="cell" class="docs-param">{param.name}</td>
+                          <td role="cell" class="docs-default">{param.fallback}</td>
+                          <td role="cell" set:html={inlineCode(param.desc)} />
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <h3 class={label}>{text(m.docs_example)}</h3>
+                <DocsExample id={endpoint.id} example={endpoint.example} label={text(m.docs_tabs_label)} />
+                {
+                  endpoint.headers && (
+                    <>
+                      <h3 class={label}>{text(m.docs_resp_headers)}</h3>
+                      <div class="docs-table-wrap">
+                        <table role="table" class="docs-table">
+                          <thead role="rowgroup">
+                            <tr role="row">
+                              <th role="columnheader" scope="col">{text(m.docs_col_header)}</th>
+                              <th role="columnheader" scope="col">{text(m.docs_col_meaning)}</th>
+                            </tr>
+                          </thead>
+                          <tbody role="rowgroup">
+                            {responseHeaders.map((header) => (
+                              <tr role="row">
+                                <td role="cell" class="docs-param">{header.name}</td>
+                                <td role="cell">{header.desc}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )
+                }
+              </div>
+            </section>
+          ))
+        }
+
+        <section id="pdf-merge" aria-labelledby="pdf-merge-heading" class="flex flex-col gap-4">
+          <h2 id="pdf-merge-heading" class={heading}><span class="docs-method bg-ube-ink">POST</span>/v1/pdfs/merge</h2>
+          <div class:list={[card, 'rounded-lg-squish-b']}>
+            <p>{text(m.docs_pdf_text)}</p>
+            <DocsExample id="pdf-merge" example={mergeExample(text(m.docs_pdf_comment))} label={text(m.docs_tabs_label)} />
+          </div>
+        </section>
+
+        <section id="jobs" aria-labelledby="jobs-heading" class="flex flex-col gap-4">
+          <h2 id="jobs-heading" class={heading}><span class="docs-method bg-matcha-ink">GET</span>/v1/jobs/{'{id}'}</h2>
+          <div class:list={[card, 'rounded-lg-squish-c']}>
+            <p>{text(m.docs_jobs_text)}</p>
+            <DocsExample id="jobs" example={jobsExample} label={text(m.docs_tabs_label)} />
+            <pre class="docs-code"><code set:html={highlightCode(jobsResponse)} /></pre>
+          </div>
+        </section>
+
+        <section id="errors" aria-labelledby="errors-heading" class="flex flex-col gap-4">
+          <h2 id="errors-heading" class="type-label-lg sm:type-title-sm">{text(m.docs_errors_heading)}</h2>
+          <div class="overflow-hidden rounded-lg-squish-a bg-surface-card">
+            <div class="docs-table-wrap">
+              <table role="table" class="docs-table docs-table-errors">
+                <thead role="rowgroup">
+                  <tr role="row">
+                    <th role="columnheader" scope="col">{text(m.docs_col_status)}</th>
+                    <th role="columnheader" scope="col">{text(m.docs_col_meaning)}</th>
+                    <th role="columnheader" scope="col">{text(m.docs_col_what_to_do)}</th>
+                  </tr>
+                </thead>
+                <tbody role="rowgroup">
+                  {errors.map((error) => (
+                    <tr role="row">
+                      <td role="cell" class="font-mono font-bold">{error.status}</td>
+                      <td role="cell" class="font-bold">{error.meaning}</td>
+                      <td role="cell" set:html={inlineCode(error.todo)} />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="tools-heading" class="flex flex-col gap-4">
+          <h2 id="tools-heading" class="type-label-lg sm:type-title-sm">{text(m.docs_tools_heading)}</h2>
+          <ul class="grid gap-4 md:grid-cols-3">
+            {
+              tools.map((tool) => (
+                <li id={tool.id} class:list={['flex flex-col items-start gap-3 bg-surface-card p-5', tool.squish]}>
+                  <span class:list={['flex size-icon-tile items-center justify-center rounded-md-squish-a', tool.tile]}>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6"><path d={tool.icon} /></svg>
+                  </span>
+                  <h3 class="type-label-lg">{tool.title}</h3>
+                  <p class="type-body-sm text-ink-muted">{tool.text}</p>
+                  <p class="mt-auto flex flex-wrap items-center gap-2">
+                    <code class="docs-chip">{tool.chip}</code>
+                    <span class="inline-flex min-h-6 items-center rounded-pill bg-mango-tint px-3 type-caption tracking-wider text-mango-ink uppercase">{text(m.docs_planned)}</span>
+                  </p>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+
+        <section aria-labelledby="help-heading" class="flex flex-col items-center gap-3 rounded-xl-squish-a bg-surface-card p-6 text-center sm:p-10">
+          <img
+            src={mascot144.src}
+            srcset={`${mascot144.src} 144w, ${mascot276.src} 276w`}
+            sizes="72px"
+            alt=""
+            width={276}
+            height={252}
+            loading="lazy"
+            decoding="async"
+            class="h-auto w-[calc(var(--space-16)+var(--space-2))] rounded-md-squish-a"
+          />
+          <h2 id="help-heading" class="type-label-lg sm:type-title-sm">{text(m.docs_help_heading)}</h2>
+          <p class="max-w-reading-max type-body-sm text-ink-muted">{text(m.docs_help_text)}</p>
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <a href="https://github.com/mochifile/mochifile" class="press inline-flex min-h-target-primary items-center justify-center gap-2 rounded-pill border-chip border-border-control bg-surface-card px-6 type-label-lg focus-ring">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="size-button-icon"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
+              {text(m.docs_help_github)}
+            </a>
+            <a href="mailto:hello@mochifile.com" class="press inline-flex min-h-target-primary items-center justify-center rounded-pill bg-action px-6 type-label-lg text-action-ink focus-ring">{text(m.docs_help_email)}</a>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  @reference "../styles/global.css";
+
+  /* Section list: the first entry is current until a link in the list is followed. */
+  .docs-nav-first,
+  .docs-nav-link:focus-visible,
+  .docs-nav-link:active {
+    background-color: var(--ube-tint);
+    color: var(--ube-ink);
+  }
+  .docs-page:has(section:target) .docs-nav-first:not(:focus-visible) {
+    background-color: transparent;
+    color: var(--ink-muted);
+  }
+  .docs-page section[id] {
+    scroll-margin-top: var(--space-6);
+  }
+  .docs-menu[open] .docs-menu-chevron {
+    transform: rotate(180deg);
+  }
+  .docs-menu > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* The heading of an endpoint: a method badge and the path in the code face. */
+  .docs-endpoint {
+    @apply type-label-lg;
+    font-family: var(--family-mono);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+  .docs-method {
+    @apply rounded-sm;
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--space-6);
+    padding: 0 var(--space-2);
+    font-family: var(--family-sans);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--ink-on-inverse);
+  }
+
+  /* Code: the ink block, wrapped so it never scrolls sideways on a phone. */
+  .docs-code {
+    @apply type-code rounded-md-squish-a;
+    background-color: var(--surface-inverse);
+    color: var(--ink-on-inverse);
+    padding: var(--space-4) var(--space-5);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .docs-code-inline {
+    padding: var(--space-3) var(--space-5);
+  }
+  .docs-code-head {
+    @apply type-caption;
+    margin-bottom: var(--space-2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-on-inverse-muted);
+  }
+  .docs-code .code-c {
+    color: var(--ink-on-inverse-muted);
+    font-style: italic;
+  }
+  .docs-code .code-s {
+    color: var(--matcha);
+  }
+  .docs-code code {
+    font: inherit;
+  }
+  /* Inline code in descriptions. */
+  .docs-table code {
+    @apply type-code;
+    background-color: var(--ube-tint);
+    color: var(--ube-ink);
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-2);
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+  }
+  .docs-chip {
+    @apply type-caption;
+    font-family: var(--family-mono);
+    background-color: var(--ube-tint);
+    color: var(--ube-ink);
+    border-radius: var(--radius-sm);
+    padding: var(--space-1) var(--space-2);
+    overflow-wrap: anywhere;
+  }
+
+  /* Tables. Under 600 px each row becomes a block: roles keep the table semantics. */
+  .docs-table-wrap {
+    overflow: hidden;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-md);
+  }
+  .docs-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    @apply type-body-sm;
+  }
+  .docs-table th {
+    @apply type-caption;
+    text-align: left;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    background-color: var(--surface-sunken);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 2px solid var(--line);
+  }
+  .docs-table td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 2px solid var(--line);
+    vertical-align: top;
+  }
+  .docs-table tr:last-child td {
+    border-bottom: 0;
+  }
+  .docs-table .docs-param {
+    font-family: var(--family-mono);
+    font-weight: 500;
+    color: var(--ube-ink);
+    overflow-wrap: anywhere;
+  }
+  .docs-table .docs-default {
+    font-family: var(--family-mono);
+    color: var(--ink-muted);
+  }
+  .docs-table-errors {
+    border-radius: 0;
+  }
+  @media (width < 600px) {
+    .docs-table th {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      padding: 0;
+      border: 0;
+    }
+    .docs-table,
+    .docs-table tbody,
+    .docs-table tr,
+    .docs-table td {
+      display: block;
+      width: 100%;
+    }
+    .docs-table tr {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 2px solid var(--line);
+    }
+    .docs-table tr:last-child {
+      border-bottom: 0;
+    }
+    .docs-table td {
+      padding: var(--space-1) 0;
+      border: 0;
+    }
+  }
+
+  /* The example tabs: the chosen language shows its panel. */
+  .docs-tab:has(:focus-visible) {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .docs-tabs:has(input[value="curl"]:checked) [data-panel]:not([data-panel="curl"]),
+  .docs-tabs:has(input[value="js"]:checked) [data-panel]:not([data-panel="js"]),
+  .docs-tabs:has(input[value="python"]:checked) [data-panel]:not([data-panel="python"]) {
+    display: none;
+  }
+</style>
