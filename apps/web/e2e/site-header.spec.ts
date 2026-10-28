@@ -146,6 +146,8 @@ test('keyboard: Tab order, Enter and Space, Escape and focus restoration', async
   expect(await isOpen(page)).toBe(true)
   await expect(trigger(page)).toBeFocused()
   await page.keyboard.press(TAB)
+  // Firefox first lands on the open menu itself (its own name, "Menu"), then on its first item.
+  if ((await focused(page)).name === 'Menu') await page.keyboard.press(TAB)
   expect(await focused(page)).toMatchObject({ where: 'menu', shown: true })
   expect((await focused(page)).name).toContain('Solutions')
 

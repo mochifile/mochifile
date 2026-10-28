@@ -195,7 +195,8 @@
  * keeps the width its label has in Figtree, and its text sits centred in it: the fallback is
  * narrower, so nothing moves when the font arrives. Measured values, not design tokens: the
  * cell's width (label plus 12px of padding each side) at 1440px, rounded up. Re-measure when a
- * label or a language changes. The language button is only that wide because of its name:
+ * label or a language changes. The Portuguese cells have 6px more than Figtree needs: the fallback
+ * face on Linux draws some of those labels wider, and a cell that grew would shift the cluster. The language button is only that wide because of its name:
  * "English" or "Português (Brasil)".
  */
 @layer components {
@@ -224,24 +225,24 @@
     min-width: 121px;
   }
   :lang(pt) [data-main-nav] [data-shell-link="solutions"] {
-    min-width: 87px;
+    min-width: 93px;
   }
   :lang(pt) [data-main-nav] [data-shell-link="guides"] {
-    min-width: 63px;
+    min-width: 69px;
   }
   :lang(pt) [data-main-nav] [data-shell-link="docs"] {
-    min-width: 59px;
+    min-width: 65px;
   }
   :lang(pt) [data-main-nav] [data-shell-link="pricing"] {
-    min-width: 71px;
+    min-width: 77px;
   }
   :lang(pt) [data-main-nav] [data-shell-link="sign-in"] {
-    min-width: 66px;
+    min-width: 72px;
   }
   :lang(pt) [data-main-nav] [data-shell-link="get-started"] {
-    min-width: 95px;
+    min-width: 101px;
   }
   :lang(pt) [data-language-button] {
-    min-width: 190px;
+    min-width: 196px;
   }
 }

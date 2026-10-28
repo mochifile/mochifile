@@ -229,6 +229,13 @@ test('keyboard: Tab goes through the footer in reading order with a visible focu
   const seen: string[] = []
   const rings: string[] = []
   for (let i = 0; i < expected.length; i++) {
+    // Firefox scrolls a focused element into view smoothly: wait for it to arrive.
+    await page
+      .waitForFunction(() => {
+        const box = document.activeElement?.getBoundingClientRect()
+        return box ? box.top >= 0 && box.bottom <= innerHeight : false
+      })
+      .catch(() => undefined)
     const state = await page.evaluate(() => {
       const el = document.activeElement
       if (!el) return null
