@@ -163,6 +163,11 @@ The 27 PNGs are 33 MB, too heavy to add to a public repository for good. They ar
 (the designer's `new assets` folder, copied to `docs/design-ref/mascot-collection-2026-10/`, beside the older reference,
 which is not tracked either). SHA-256 of each original, so a copy can be verified:
 
+> **Maintenance note.** The designer's `new assets` folder on the Desktop and the untracked copy in
+> `docs/design-ref/` are **not a permanent backup**. The 27 PNGs must later be preserved in a
+> versioned archive (for example a release asset or Git LFS, one archive with its own checksum),
+> so the delivered files can always be regenerated and the art re-exported at other widths.
+
 - `expr-celebrate.png` 1d30c9f8231ac4e606412940d3d4e98a2822a1e11086aee7d3b43cf42d1175a2
 - `expr-confused.png` ca56de63ae548c64baf75d34d16ec7019f3d1ab4ab6591d7c038c05b596b889c
 - `expr-determined.png` 613f8539eb8f83c121de6a05e01cf4ad133c800bd23cbd958677bd13a0ec0611
@@ -196,3 +201,10 @@ which is not tracked either). SHA-256 of each original, so a copy can be verifie
 From an original `X.png`, with sharp (Astro's own image library, run once and not added as a
 dependency): `sharp(X.png).removeAlpha().resize({ width, kernel: 'lanczos3' }).webp({ quality:
 92, smartSubsample: true, effort: 6 })`, with `quality: 96` for `expr-*` at 288 px.
+
+**Toolchain.** All 46 WebP files (23 in `apps/web/src/assets/illustrations`, 16 in its `library/`,
+7 in `packages/tools/compress-image/src/assets`) were generated with **sharp 0.35.5**, which embeds
+**libvips 8.18.7 and libwebp 1.6.0**. The bytes of a lossy WebP depend on the libwebp version, so
+another sharp may give files that differ slightly in bytes (not visibly); regenerate with the same
+version when a byte-for-byte match with the files in the repository matters. The originals'
+SHA-256 are listed above, and the delivered files are the ones in git.
