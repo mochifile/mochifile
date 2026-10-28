@@ -12,8 +12,9 @@ interface Props {
   locale: Locale
   /** The compressor's page for a 50 KB target, when it is published. */
   under50Href: string | undefined
+  askHref?: string | undefined
 }
-const { locale, under50Href } = Astro.props
+const { locale, under50Href, askHref } = Astro.props
 
 const chips = [
   { dot: 'hv2-dot-ube', label: m.hv2_chip_remove_bg({}, { locale }) },
@@ -124,9 +125,17 @@ const checks = [
           </div>
         </div>
       </div>
-      <button type="button" class="hv2-more-room" popovertarget="hv2-soon">
-        <span class="hv2-more-room-lead">{m.hv2_prompt_more_room({}, { locale })}</span> <span class="hv2-link">{m.hv2_prompt_open_ask({}, { locale })}</span>
-      </button>
+      {
+        askHref ? (
+          <a class="hv2-more-room" href={askHref}>
+            <span class="hv2-more-room-lead">{m.hv2_prompt_more_room({}, { locale })}</span> <span class="hv2-link">{m.hv2_prompt_open_ask({}, { locale })}</span>
+          </a>
+        ) : (
+          <button type="button" class="hv2-more-room" popovertarget="hv2-soon">
+            <span class="hv2-more-room-lead">{m.hv2_prompt_more_room({}, { locale })}</span> <span class="hv2-link">{m.hv2_prompt_open_ask({}, { locale })}</span>
+          </button>
+        )
+      }
     </div>
   </div>
 

@@ -15,6 +15,7 @@ import { m } from '@mochifile/i18n/messages'
 import mascot380 from '../assets/pricing/sheet-happy-380.webp'
 import mascot760 from '../assets/pricing/sheet-happy-760.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { pagePaths } from '../lib/pages'
 import {
   formatUsd,
   type Plan,
@@ -38,6 +39,7 @@ const number = (value: number) =>
 const [firstTool] = tools
 const freeTools = firstTool ? toolPaths(firstTool.manifest)[locale] : localePath(locale)
 const soon = m.pricing_coming_soon({}, { locale })
+const architecture = pagePaths('architecture')[locale]
 
 /** Each plan's pill colour, text and features, in the canvas's order. */
 const cards: Array<{ plan: Plan; pill: string; features: string[] }> = [
@@ -314,15 +316,7 @@ const check = 'M5 12.5l4.5 4.5L19 7'
         <span class="prc-small">
           <b>{m.pricing_private_bold({}, { locale })}</b>{' '}
           {m.pricing_private_text({}, { locale })}{' '}
-          <button
-            type="button"
-            popovertarget="pricing-soon"
-            popovertargetaction="show"
-            title={soon}
-            class="prc-link"
-          >
-            {m.pricing_learn_more({}, { locale })}<span class="prc-sr">, {soon}</span>
-          </button>
+          <a href={architecture} class="prc-link">{m.pricing_learn_more({}, { locale })}</a>
         </span>
       </p>
     </section>
@@ -436,8 +430,5 @@ const check = 'M5 12.5l4.5 4.5L19 7'
       </div>
     </section>
 
-    <div id="pricing-soon" popover role="status" class="prc-notice">
-      {m.pricing_notice({}, { locale })}
-    </div>
   </div>
 </BaseLayout>

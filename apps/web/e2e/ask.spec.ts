@@ -29,7 +29,7 @@ const PAGES = {
     trust: ['Private by design', 'No monthly limit'],
     send: /^Send, Coming soon/,
     help: /^Help, Coming soon/,
-    paid: /^Paid plans/,
+    paid: 'Paid plans',
   },
   pt: {
     path: '/pt/pergunte/',
@@ -50,7 +50,7 @@ const PAGES = {
     trust: ['Privacidade desde o projeto', 'Sem limite mensal'],
     send: /^Enviar, Em breve/,
     help: /^Ajuda, Em breve/,
-    paid: /^Os planos pagos/,
+    paid: 'Os planos pagos',
   },
 } as const
 
@@ -115,7 +115,11 @@ for (const [locale, copy] of Object.entries(PAGES)) {
       await expect(page.locator('.ask-media')).toHaveCount(3)
       for (const img of await page.locator('.ask-media').all())
         await expect(img).toHaveAttribute('alt', '')
-      await expect(page.getByRole('button', { name: copy.paid })).toBeVisible()
+      // "Paid plans" leads to the pricing page.
+      await expect(page.getByRole('link', { name: copy.paid })).toHaveAttribute(
+        'href',
+        locale === 'en' ? '/pricing/' : '/pt/precos/',
+      )
     })
 
     test('suggestions, examples and sample languages write a sentence into the box', async ({
@@ -147,7 +151,6 @@ for (const [locale, copy] of Object.entries(PAGES)) {
       for (const control of [
         page.getByRole('button', { name: copy.send }),
         page.getByRole('button', { name: copy.help }),
-        page.getByRole('button', { name: copy.paid }),
         page.getByRole('button', { name: /^“En español”/ }),
         page.getByRole('button', { name: /^“用中文”/ }),
       ]) {

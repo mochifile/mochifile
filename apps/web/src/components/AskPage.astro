@@ -21,6 +21,7 @@ import video320 from '../assets/ask/use-video-320.webp'
 import video640 from '../assets/ask/use-video-640.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { askPaths, exampleLanguages } from '../lib/ask'
+import { pricingPaths } from '../lib/pricing'
 import '../styles/ask.css'
 
 interface Props {
@@ -34,6 +35,7 @@ const t = (key: string): string =>
     { locale },
   ) ?? ''
 const soon = m.ask_coming_soon({}, { locale })
+const pricing = pricingPaths[locale]
 
 /** The suggestion chips: a dot colour (or an icon) and the sentence each one writes. */
 const suggestions = [
@@ -238,13 +240,7 @@ const sampleIn = (sample: Locale) => m.ask_chip_50kb_prompt({}, { locale: sample
         }
       </div>
       <p class="ask-small ask-muted ask-text-center">
-        {m.ask_free_before({}, { locale })}<button
-          type="button"
-          class="ask-link"
-          popovertarget="ask-soon"
-          popovertargetaction="show"
-          title={soon}>{m.ask_free_link({}, { locale })}<span class="ask-sr">, {soon}</span></button
-        >{m.ask_free_after({}, { locale })}
+        {m.ask_free_before({}, { locale })}<a class="ask-link" href={pricing}>{m.ask_free_link({}, { locale })}</a>{m.ask_free_after({}, { locale })}
       </p>
     </section>
 

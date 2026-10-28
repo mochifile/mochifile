@@ -62,7 +62,6 @@ const PAGES = {
 /** Text with no-break spaces turned into plain ones, as `Intl` writes "US$ 1,99". */
 const plain = (text: string | null | undefined) => (text ?? '').replace(/\s+/g, ' ').trim()
 const plan = (page: Page, name: string) => page.locator('[data-plan]').filter({ hasText: name })
-const notice = (page: Page) => page.locator('#pricing-soon:popover-open')
 
 for (const [locale, copy] of Object.entries(PAGES)) {
   test.describe(`pricing (${locale})`, () => {
@@ -178,16 +177,17 @@ for (const [locale, copy] of Object.entries(PAGES)) {
       expect(plain(await availability.getByRole('cell').nth(1).textContent())).toBe(copy.soon)
     })
 
-    test('"Learn more" says coming soon and goes nowhere; the questions open and close', async ({
+    test('"Learn more" leads to the architecture page; the questions open and close', async ({
       page,
+      request,
     }) => {
       await page.goto(copy.path)
-      await page.getByRole('button', { name: new RegExp(copy.learnMore) }).click()
-      await expect(notice(page)).toBeVisible()
-      await expect(notice(page)).toHaveAttribute('role', 'status')
-      expect(new URL(page.url()).pathname).toBe(copy.path)
-      await page.keyboard.press('Escape')
-      await expect(notice(page)).toHaveCount(0)
+      const learn = page.getByRole('link', { name: copy.learnMore })
+      await expect(learn).toHaveAttribute(
+        'href',
+        locale === 'en' ? '/architecture/' : '/pt/arquitetura/',
+      )
+      expect((await request.get((await learn.getAttribute('href')) ?? '')).status()).toBe(200)
 
       const items = page.locator('.prc-faq details')
       await expect(items).toHaveCount(copy.questions)

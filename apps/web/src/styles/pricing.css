@@ -626,39 +626,6 @@ body:has(.prc) {
   border-radius: var(--prc-r-media);
 }
 
-/* ---------- "Coming soon" notice ---------- */
-.prc-notice {
-  position: fixed;
-  inset: auto auto calc(16px + env(safe-area-inset-bottom)) 50%;
-  width: max-content;
-  max-width: 700px;
-  margin: 0;
-  padding: 12px 20px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--surface-page);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 22px;
-  text-align: center;
-  transform: translateX(-50%);
-  box-shadow: var(--prc-shadow-action);
-}
-.prc-notice:popover-open {
-  animation: prc-notice 4s ease-in forwards;
-}
-@keyframes prc-notice {
-  0%,
-  75% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    visibility: hidden;
-  }
-}
-
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
   .prc-grid {

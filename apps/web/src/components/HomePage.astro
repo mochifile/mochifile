@@ -13,7 +13,9 @@
 import type { Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { askPaths } from '../lib/ask'
 import { startCard } from '../lib/home.ts'
+import { pagePaths } from '../lib/pages'
 import { samePathInAllLocales } from '../lib/seo.ts'
 import { tools } from '../lib/tools.ts'
 import HomeAsk from './home/HomeAsk.astro'
@@ -33,8 +35,9 @@ const { locale } = Astro.props
 const start = startCard(tools, locale)
 const toolHref = start?.href
 const under50Href = start?.featured.find((size) => size.bytes === 50_000)?.href
-// The architecture page belongs to the institutional pages (not published yet).
-const architectureHref: string | undefined = undefined
+// Where the privacy card's "How it is built" and the prompt's "Open Ask Mochifile" lead.
+const architectureHref: string | undefined = pagePaths('architecture')[locale]
+const askHref: string | undefined = askPaths[locale]
 ---
 
 <BaseLayout
@@ -44,7 +47,7 @@ const architectureHref: string | undefined = undefined
   paths={samePathInAllLocales('/')}
 >
   <div class="hv2">
-    <HomeHero locale={locale} under50Href={under50Href} />
+    <HomeHero locale={locale} under50Href={under50Href} askHref={askHref} />
     <HomeHub locale={locale} />
     <HomeAsk locale={locale} under50Href={under50Href} />
     <HomePrivacy locale={locale} builtHref={architectureHref} />
