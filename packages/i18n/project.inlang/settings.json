@@ -20,7 +20,8 @@
       "./messages/auth/{locale}.json",
       "./messages/docs/{locale}.json",
       "../tools/_template/messages/{locale}.json",
-      "../tools/compress-image/messages/{locale}.json"
+      "../tools/compress-image/messages/{locale}.json",
+      "./messages/legal/{locale}.json"
     ]
   }
 }

@@ -7,6 +7,7 @@ import { manifest as templateManifest } from '@mochifile/tool-template/manifest'
 import { askPaths } from '../src/lib/ask.ts'
 import { authModes, authSlugs } from '../src/lib/auth.ts'
 import { guidesSection } from '../src/lib/guides.ts'
+import { legalPageIds, legalSlugs } from '../src/lib/legal.ts'
 import { pageIds, pageSlugs } from '../src/lib/pages.ts'
 import { pricingPaths } from '../src/lib/pricing.ts'
 
@@ -30,6 +31,9 @@ const templateSlugs = new Set(
 
 /** Pages of the site that are not tools. Each page PR adds its paths here. */
 const nonToolPaths = new Set<string>([...Object.values(pricingPaths), ...Object.values(askPaths)])
+
+/** Slugs of the legal pages (labelled drafts): in the sitemap, but not tools. */
+const legalPageSlugs = new Set(legalPageIds.flatMap((id) => Object.values(legalSlugs[id])))
 
 /** Slugs of the account pages (sign in, sign up): in the sitemap, but not tools. */
 const accountSlugs = new Set(authModes.flatMap((mode) => Object.values(authSlugs[mode])))
@@ -63,6 +67,7 @@ export async function toolPaths(request: {
         !sitePageSlugs.has(slug) &&
         slug !== 'docs' &&
         !accountSlugs.has(slug) &&
+        !legalPageSlugs.has(slug) &&
         !institutionalSlugs.has(slug)
       )
     })
