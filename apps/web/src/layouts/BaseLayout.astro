@@ -1,6 +1,7 @@
 ---
 import { Font } from 'astro:assets'
 import { type Locale, localeTags } from '@mochifile/i18n'
+import ComingSoonNotice from '../components/ComingSoonNotice.astro'
 import LanguageSuggestion from '../components/LanguageSuggestion.astro'
 import SiteFooter from '../components/SiteFooter.astro'
 import SiteHeader from '../components/SiteHeader.astro'
@@ -21,10 +22,12 @@ const { locale, title, description, paths, noindex = false } = Astro.props
 const site = Astro.site ?? Astro.url
 const canonical = new URL(paths[locale], site).href
 const alternates = buildAlternates(paths, site)
+// V2 is light only (ADR 0030): `data-theme="light"` on <html> switches off the tokens' dark theme,
+// which would otherwise follow the visitor's system setting (`color-scheme` says the same).
 ---
 
 <!doctype html>
-<html lang={localeTags[locale]} dir="ltr">
+<html lang={localeTags[locale]} dir="ltr" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -50,7 +53,7 @@ const alternates = buildAlternates(paths, site)
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={localeTags[locale]} />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="light" />
   </head>
   <body class="flex min-h-dvh flex-col bg-surface-page text-ink antialiased">
     <SiteHeader locale={locale} paths={paths} />
@@ -61,5 +64,7 @@ const alternates = buildAlternates(paths, site)
       <slot />
     </main>
     <SiteFooter locale={locale} paths={paths} />
+    {/* Opened by the "Coming soon" controls outside the menus (ADR 0030). */}
+    <ComingSoonNotice locale={locale} />
   </body>
 </html>

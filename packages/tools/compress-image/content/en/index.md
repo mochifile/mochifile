@@ -1,17 +1,29 @@
 ---
 steps:
-  - "Choose the size limit the site asks for"
-  - "Add your photos: they are compressed right away"
-  - "Download each one, or all of them as a ZIP"
+  - title: "Choose a size"
+    text: "Pick 50 KB, 100 KB or any size the form asks for."
+  - title: "Add your photos and compress"
+    text: "JPG, PNG or WebP, up to 20 at a time and 50 MB each. Press Compress when the list is ready."
+  - title: "Download"
+    text: "Every photo is checked against your limit before you save it, one by one or all in a ZIP."
 faq:
+  - question: "Does compressing lower the quality?"
+    answer: >-
+      A little, and only as much as needed. Mochifile looks for the best quality that still fits
+      your limit. If even the lowest quality we use is too big, it also reduces the pixel size,
+      and tells you when it did.
+  - question: "Are my photos uploaded?"
+    answer: >-
+      No. Everything happens in your browser, so your photos never leave your device. Hidden
+      details such as location and camera model are removed from every result.
   - question: "Is 50 KB the same as 50,000 bytes?"
     answer: >-
       Some sites count 1 KB as 1,000 bytes and others as 1,024 bytes. Results are always at or
       under the smaller number (50,000 bytes for 50 KB), so they pass both.
   - question: "Do I need to press a button to compress?"
     answer: >-
-      No. Each photo is compressed as soon as you add it, with the size and format selected at
-      that moment. If you change them afterwards, press "Compress again with these settings".
+      Yes, once. Add your photos, check the size and format, then press "Compress". The photos
+      are compressed one after another, and you can cancel at any time.
   - question: "Which formats can I add, and which do I get back?"
     answer: >-
       You can add JPG, PNG and WebP photos; HEIC and AVIF files are not accepted here. Results

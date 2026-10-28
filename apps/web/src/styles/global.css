@@ -24,22 +24,22 @@
   --family-display: var(--font-fredoka);
   --family-sans: var(--font-figtree);
   /*
-   * Height of the header row under 1024 px: its tallest items are `target-min`, plus `space-2`
-   * above and below. The phone menu and the phone language suggestion start right below it.
+   * Height of the header row (the `site-header` token, 84px on every screen). The phone menu
+   * and the phone language suggestion start right below it.
    */
-  --site-header-height: calc(var(--target-min) + 2 * var(--space-2));
+  --site-header-height: var(--site-header);
 }
 
 /*
- * The wordmark (Logo.astro, ADR 0024). Each file's proportions are pinned to its master's
- * (960 × 171 and 960 × 173 px), so the box never changes when a copy of another size, rounded
+ * The wordmark (Logo.astro, ADR 0024, ADR 0030). Each file's proportions are pinned to its
+ * master's (1800 × 333 and 1908 × 353 px), so the box never changes when a copy of another size, rounded
  * to whole pixels, arrives: no layout shift.
  */
 [data-wordmark="light"] {
-  aspect-ratio: 960 / 171;
+  aspect-ratio: 1800 / 333;
 }
 [data-wordmark="dark"] {
-  aspect-ratio: 960 / 173;
+  aspect-ratio: 1908 / 353;
 }
 
 /*
@@ -72,6 +72,25 @@
  */
 @media (width < 64rem) {
   body:has([data-site-menu]:popover-open) > :not(header) {
+    visibility: hidden;
+  }
+}
+
+/*
+ * The "Coming soon" notice (ComingSoon.astro) fades out by itself after a few seconds. It stays
+ * open for assistive technology and closes on the next press or Escape; pressing a control
+ * again shows it again from the start. Under reduced motion it still only changes opacity.
+ */
+[data-coming-soon]:popover-open {
+  animation: coming-soon 4s ease-in forwards;
+}
+@keyframes coming-soon {
+  0%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
     visibility: hidden;
   }
 }

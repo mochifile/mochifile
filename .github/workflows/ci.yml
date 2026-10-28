@@ -42,8 +42,13 @@ jobs:
             exit 1
           fi
 
-  e2e:
-    name: E2E (${{ matrix.browser }})
+  # The suite runs in shards: with the V2 pages it is ~430 tests per browser, which no longer fits
+  # Playwright's 12 minute budget in one run (WebKit finished 358 of them before it ended the run).
+  # Each browser's tests are split in three runs of about a third, so every test still runs in
+  # every browser and each run stays far under its budget. The `e2e` job below keeps the names the
+  # repository ruleset requires ("E2E (chromium)" ...).
+  e2e-shard:
+    name: E2E shard (${{ matrix.browser }} ${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # Microsoft's image has the three browsers and their system libraries, so there is no
@@ -57,6 +62,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -97,16 +103,34 @@ jobs:
           # Firefox will not start when $HOME, /github/home in a container job, is not owned by
           # the current user (root); Playwright documents this workaround.
           HOME: /root
-        run: pnpm test:e2e -- --project=${{ matrix.browser }}
+        run: pnpm test:e2e -- --project=${{ matrix.browser }} --shard=${{ matrix.shard }}/3
       # Also uploaded when the job passes, so traces of flaky (retried) tests are kept, and when
       # it is cancelled: `always()` still runs after the job's own timeout, `!cancelled()` does
       # not. test-results/ holds traces only for failed attempts, so it is empty on a clean run.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ always() }}
         with:
-          name: playwright-report-${{ matrix.browser }}
+          name: playwright-report-${{ matrix.browser }}-${{ matrix.shard }}
           path: |
             apps/web/playwright-report/
             apps/web/test-results/
           if-no-files-found: ignore
           retention-days: 7
+
+  # One required check per browser, as before: it passes when every shard of the run passed.
+  e2e:
+    name: E2E (${{ matrix.browser }})
+    needs: e2e-shard
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: All shards passed
+        env:
+          RESULT: ${{ needs.e2e-shard.result }}
+        run: |
+          echo "E2E shards: $RESULT"
+          test "$RESULT" = "success"

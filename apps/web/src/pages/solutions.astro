@@ -1,0 +1,9 @@
+---
+import { localePath } from '@mochifile/i18n'
+import SolutionsPage from '../components/SolutionsPage.astro'
+
+// The slug is translated, like the tools': /solutions/ and /pt/solucoes/.
+const paths = { en: localePath('en', 'solutions'), pt: localePath('pt', 'solucoes') }
+---
+
+<SolutionsPage locale="en" paths={paths} />

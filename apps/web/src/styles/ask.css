@@ -1,0 +1,506 @@
+/*
+ * Ask Mochifile, Mochifile V2 (docs/design-ref/v2, artboard MFFlow). Light theme only.
+ *
+ * Why plain CSS instead of utilities: the canvas uses values the design system does not hold yet
+ * (its README › "Values introduced by the canvas": the deep-ube accent, card lines, soft shadows,
+ * the "mochi squish" radii, 68/40/26 px headings, the 1104 px column). The Tailwind theme only
+ * generates token values, so this file spells them out once, scoped to `.ask`, with names
+ * prefixed `--ask-` so they never clash with the tokens the shell work is adding. When those
+ * values become tokens, replace each `--ask-*` with its token and delete the line here. The
+ * design guard allows raw values in this file only (design-guard.test.ts).
+ *
+ * Breakpoints are the canvas's: 1100 and 640 px.
+ */
+
+/* The page is as wide as the window; the sections inside keep the 1104 px column. */
+body:has(.ask) {
+  overflow-x: clip;
+}
+
+.ask {
+  /*
+   * Light theme only (README › Current design decisions). The shell's tokens follow the system
+   * colour scheme, so the light values the page uses are repeated here, from tokens.json.
+   */
+  --surface-page: #fff7ec;
+  --surface-card: #ffffff;
+  --surface-sunken: #fffbf4;
+  --ink: #1e1b2e;
+  --ink-muted: #5c566b;
+  --border-dashed: #c9bba4;
+  --mango: #ffb627;
+  --strawberry: #ff6f91;
+  --matcha: #8fd16a;
+  --ube: #9b7bea;
+  --focus-ring: #1f5eff;
+
+  --ask-accent: #5b3cc4;
+  --ask-card-line: #efe3d0;
+  --ask-dot-red: #ff5a5a;
+  --ask-dot-green: #7ccf5c;
+  --ask-shadow: 0 1px 0 rgba(30, 27, 46, 0.03), 0 12px 32px -12px rgba(91, 60, 196, 0.16);
+  --ask-shadow-lg: 0 2px 0 rgba(30, 27, 46, 0.03), 0 24px 60px -20px rgba(91, 60, 196, 0.28);
+  --ask-shadow-chip: 0 4px 10px -6px rgba(30, 27, 46, 0.18);
+  --ask-shadow-add: 0 6px 16px -10px rgba(30, 27, 46, 0.4);
+  --ask-shadow-action: 0 10px 24px -10px rgba(30, 27, 46, 0.55);
+  --ask-r-card: 24px 28px 22px 26px;
+  --ask-r-prompt: 28px 32px 26px 30px;
+  --ask-r-small: 14px 16px 13px 15px;
+  --ask-r-media: 22px 26px 20px 24px;
+
+  position: relative;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  margin-top: calc(-1 * var(--space-4));
+  background: var(--surface-page);
+  color: var(--ink);
+  font-family: var(--family-sans);
+  font-size: 16px;
+  line-height: 26px;
+  -webkit-font-smoothing: antialiased;
+}
+@media (min-width: 600px) {
+  .ask {
+    margin-top: calc(-1 * var(--space-6));
+  }
+}
+.ask :where(*, *::before, *::after) {
+  box-sizing: border-box;
+}
+.ask :where(a, button, textarea, input, label):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.ask img {
+  display: block;
+  max-width: 100%;
+}
+
+/* ---------- layout ---------- */
+.ask-w {
+  width: 100%;
+  max-width: 1104px;
+  margin: 0 auto;
+  padding-inline: 32px;
+}
+.ask-top {
+  padding-block: 48px 40px;
+}
+.ask-sec {
+  padding-block: 96px;
+}
+.ask-stack {
+  display: flex;
+  flex-direction: column;
+}
+.ask-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ask-nowrap {
+  flex-wrap: nowrap;
+}
+.ask-center {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.ask-text-center {
+  text-align: center;
+}
+.ask-g4 {
+  gap: 4px;
+}
+.ask-g6 {
+  gap: 6px;
+}
+.ask-g8 {
+  gap: 8px;
+}
+.ask-g12 {
+  gap: 12px;
+}
+.ask-g16 {
+  gap: 16px;
+}
+.ask-g20 {
+  gap: 20px;
+}
+.ask-g24 {
+  gap: 24px;
+}
+.ask-g40 {
+  gap: 40px;
+}
+.ask-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- type ---------- */
+.ask-eyebrow {
+  font-size: 12.5px;
+  line-height: 18px;
+  font-weight: 700;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--ask-accent);
+}
+.ask-h1,
+.ask-h2,
+.ask-h3 {
+  font-family: var(--family-display);
+  font-weight: 700;
+}
+.ask-h1 {
+  font-size: 68px;
+  line-height: 72px;
+  letter-spacing: -1.8px;
+  text-wrap: balance;
+}
+.ask-h2 {
+  font-size: 40px;
+  line-height: 46px;
+  letter-spacing: -0.8px;
+  text-wrap: balance;
+}
+.ask-h3 {
+  padding: 4px 4px 0;
+  font-size: 26px;
+  line-height: 32px;
+  letter-spacing: -0.2px;
+}
+.ask-lead {
+  max-width: 680px;
+  font-size: 19px;
+  line-height: 31px;
+  color: var(--ink-muted);
+}
+.ask-lead--mid {
+  max-width: 640px;
+}
+.ask-small {
+  font-size: 14px;
+  line-height: 21px;
+}
+.ask-muted {
+  color: var(--ink-muted);
+}
+/* The highlighted words: a mango marker stroke, like the hand-made brand sheet. */
+.ask-mark {
+  background: linear-gradient(
+    180deg,
+    transparent 58%,
+    rgba(255, 182, 39, 0.55) 58%,
+    rgba(255, 182, 39, 0.55) 92%,
+    transparent 92%
+  );
+  padding: 0 4px;
+  margin: 0 -4px;
+}
+/* Section underline: a short bar plus the logo's two dots. */
+.ask-uline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 10px;
+}
+.ask-uline i {
+  width: 44px;
+  height: 5px;
+  border-radius: 4px;
+  background: var(--ube);
+}
+.ask-uline b {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ask-dot-red);
+}
+.ask-uline b + b {
+  background: var(--ask-dot-green);
+}
+.ask-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ask-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ask-link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- hero ---------- */
+.ask-hero {
+  max-width: 860px;
+  margin: 0 auto;
+}
+.ask-hero ul {
+  justify-content: center;
+}
+.ask-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--ask-card-line);
+  border-radius: 999px;
+  background: var(--surface-card);
+  box-shadow: var(--ask-shadow-chip);
+  color: var(--ink);
+  font-family: var(--family-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 26px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ask-chip:hover {
+  border-color: var(--ask-accent);
+}
+.ask-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ube);
+}
+.ask-dot--mango {
+  background: var(--mango);
+}
+.ask-dot--ube {
+  background: var(--ube);
+}
+.ask-dot--straw {
+  background: var(--strawberry);
+}
+.ask-dot--matcha {
+  background: var(--matcha);
+}
+.ask-dot--red {
+  background: var(--ask-dot-red);
+}
+
+/* ---------- the prompt box ---------- */
+.ask-box {
+  position: relative;
+  max-width: 900px;
+  margin: 36px auto 0;
+}
+.ask-prompt {
+  padding: 20px;
+  border: 1.5px solid var(--ask-card-line);
+  border-radius: var(--ask-r-prompt);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--ask-shadow-lg);
+}
+.ask-add {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1.5px solid var(--ask-card-line);
+  border-radius: 16px;
+  background: var(--surface-card);
+  box-shadow: var(--ask-shadow-add);
+  color: var(--ask-accent);
+  cursor: pointer;
+}
+.ask-add-text {
+  font-size: 15px;
+}
+/* The picker is the visually hidden input; its label is the button, so show the focus on it. */
+.ask-files:focus-visible + .ask-add {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.ask-input {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  margin: 14px 0 0;
+  padding: 14px 4px;
+  border: 0;
+  border-top: 1.5px solid var(--ask-card-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--family-sans);
+  font-size: 17px;
+  line-height: 26px;
+  resize: none;
+}
+.ask-input::placeholder {
+  color: var(--ink-muted);
+  opacity: 1;
+}
+.ask-suggestions {
+  margin-top: 4px;
+}
+.ask-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+.ask-icon-btn,
+.ask-send {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  cursor: pointer;
+}
+.ask-icon-btn {
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-muted);
+}
+.ask-send {
+  border-radius: 14px;
+  background: var(--ink);
+  color: var(--surface-page);
+}
+.ask-trust {
+  margin-top: 22px;
+  font-weight: 700;
+}
+.ask-trust svg {
+  color: var(--ask-accent);
+}
+.ask-formats {
+  font-weight: 700;
+}
+
+/* ---------- examples ---------- */
+.ask-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 20px;
+}
+.ask-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding: 18px;
+  border: 1.5px solid var(--ask-card-line);
+  border-radius: var(--ask-r-card);
+  background: var(--surface-card);
+  box-shadow: var(--ask-shadow);
+}
+.ask-media {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 3;
+  object-fit: cover;
+  border-radius: var(--ask-r-media);
+}
+.ask-example {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  padding: 0 14px;
+  border: 1.5px solid var(--ask-card-line);
+  border-radius: var(--ask-r-small);
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font-family: var(--family-sans);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.ask-example:hover {
+  border-color: var(--ask-accent);
+}
+.ask-example svg {
+  flex: 0 0 auto;
+  color: var(--ask-accent);
+}
+
+/* ---------- "Coming soon" notice ---------- */
+.ask-notice {
+  position: fixed;
+  inset: auto auto calc(16px + env(safe-area-inset-bottom)) 50%;
+  width: max-content;
+  max-width: 700px;
+  margin: 0;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--surface-page);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  text-align: center;
+  transform: translateX(-50%);
+  box-shadow: var(--ask-shadow-action);
+}
+.ask-notice:popover-open {
+  animation: ask-notice 4s ease-in forwards;
+}
+@keyframes ask-notice {
+  0%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 1100px) {
+  .ask-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .ask-w {
+    padding-inline: 20px;
+  }
+  .ask-sec {
+    padding-block: 64px;
+  }
+  .ask-h1 {
+    font-size: 40px;
+    line-height: 44px;
+    letter-spacing: -0.9px;
+  }
+  .ask-h2 {
+    font-size: 30px;
+    line-height: 35px;
+    letter-spacing: -0.5px;
+  }
+  .ask-lead {
+    font-size: 17px;
+    line-height: 27px;
+  }
+  .ask-prompt {
+    padding: 14px;
+  }
+  .ask-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

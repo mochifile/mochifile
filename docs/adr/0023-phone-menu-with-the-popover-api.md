@@ -3,6 +3,8 @@
 - **Status:** Proposed in [PR #29](https://github.com/mochifile/mochifile/pull/29); Accepted
   when that PR is merged
 - **Date:** 2026-10-26
+- **Amended by:** [ADR 0030](0030-v2-site-shell.md): the menu now lists the V2 links, buttons and
+  languages, and the header is 84px tall; the mechanism below is unchanged
 
 ## Context
 

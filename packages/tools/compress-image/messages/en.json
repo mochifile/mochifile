@@ -112,5 +112,54 @@
   ],
   "compress_image_cancelled_none": "No photo was compressed.",
   "compress_image_compress_more": "Compress more",
-  "compress_image_compress_another": "Compress another"
+  "compress_image_compress_another": "Compress another",
+  "compress_image_target_note": "Each photo comes out at {target} or less. We check it before you download.",
+  "compress_image_format_note": "Keeps the photo's format when possible. If it has to change, the result tells you.",
+  "compress_image_drop_dragging": "Drop to add your photos",
+  "compress_image_start": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Compress {count} photo",
+        "countPlural=other": "Compress {count} photos"
+      }
+    }
+  ],
+  "compress_image_more_photos": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "+ {count} more photo",
+        "countPlural=other": "+ {count} more photos"
+      }
+    }
+  ],
+  "compress_image_preparing_title": "Getting the compressor ready…",
+  "compress_image_preparing_detail": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "It runs here, on your device. {count} photo waiting.",
+        "countPlural=other": "It runs here, on your device. {count} photos waiting."
+      }
+    }
+  ],
+  "compress_image_download_count": "Download {count} (ZIP)",
+  "compress_image_compress_again": "Compress again",
+  "compress_image_unreachable_title": "This photo can't get under {target}.",
+  "compress_image_unreachable_detail": "The smallest we could make is {smallest}.",
+  "compress_image_try_size": "Try {size}",
+  "compress_image_choose_size": "Choose another size",
+  "compress_image_engine_failed_title": "We couldn't load the compressor.",
+  "compress_image_browser_title": "This browser can't run the tool.",
+  "compress_image_browser_text": "It needs features that older browsers do not have. Update your browser or open this page in another up-to-date browser.",
+  "compress_image_heic_note": "HEIC is not supported yet.",
+  "compress_image_download_format": "Download {format}",
+  "compress_image_flattened_title": "The transparent background became white.",
+  "compress_image_tag_flattened": "Transparency filled with white",
+  "compress_image_too_many_title": "You can add up to {maxFiles} photos at a time.",
+  "compress_image_too_many_detail": "Only the first ones were added."
 }

@@ -11,6 +11,17 @@
   "plugin.inlang.messageFormat": {
     "pathPattern": [
       "./messages/{locale}.json",
+      "./messages/pricing/{locale}.json",
+      "./messages/ask/{locale}.json",
+      "./messages/pages/{locale}.json",
+      "./messages/home/{locale}.json",
+      "./messages/solutions/{locale}.json",
+      "./messages/guides/{locale}.json",
+      "./messages/auth/{locale}.json",
+      "./messages/docs/{locale}.json",
+      "./messages/legal/{locale}.json",
+      "./messages/not-found/{locale}.json",
+      "./messages/tool/{locale}.json",
       "../tools/_template/messages/{locale}.json",
       "../tools/compress-image/messages/{locale}.json"
     ]

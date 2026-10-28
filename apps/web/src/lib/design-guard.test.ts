@@ -15,10 +15,18 @@ const ROOTS = ['apps/web/src', 'packages']
 const EXTENSIONS = new Set(['.ts', '.tsx', '.astro', '.css'])
 /** Folders never scanned: dependencies, generated messages, build output. */
 const SKIP_DIRS = new Set(['node_modules', 'paraglide', 'dist', '.astro', 'scripts'])
-/** The only files allowed to hold raw values: the generated tokens and the component constants. */
+/**
+ * The only files allowed to hold raw values: the generated tokens, the component constants and
+ * the stylesheets of the V2 pages (home, pricing, Ask, 404, tool pages; their headers say why).
+ */
 const ALLOWED_FILES = new Set([
   'packages/ui/src/tokens.generated.css',
   'packages/ui/src/component-constants.css',
+  'apps/web/src/styles/pricing.css',
+  'apps/web/src/styles/ask.css',
+  'apps/web/src/styles/home.css',
+  'apps/web/src/styles/not-found.css',
+  'apps/web/src/styles/tool-page-light.css',
 ])
 
 const RULES: Array<{ name: string; pattern: RegExp }> = [

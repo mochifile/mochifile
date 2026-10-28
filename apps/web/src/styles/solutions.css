@@ -1,0 +1,482 @@
+/*
+ * The Solutions page, Mochifile V2 (docs/design-ref/v2, artboard MFSolutions).
+ *
+ * Plain CSS because the canvas uses sizes the token-only Tailwind theme cannot generate (60 and
+ * 40 px headings, the 1104 px column, uneven "squish" corners). It holds no raw colours: every
+ * colour is a token, so the design guard needs no exception. The few canvas colours that are not
+ * tokens yet (accent, card line, dots; README › "Values introduced by the canvas") are read as
+ * `var(--accent, …)`: when the shell work adds those tokens they win, and until then the
+ * fallback is the nearest mix of existing tokens. Nothing here needs to change when they land.
+ *
+ * Responsive rules use the canvas's breakpoints: 1100, 900 (unused here) and 640 px.
+ */
+
+.sol {
+  --sol-accent: var(--accent, color-mix(in srgb, var(--ube) 45%, var(--ube-ink)));
+  --sol-accent-line: color-mix(in srgb, var(--sol-accent) 30%, var(--surface-card));
+  --sol-card-line: var(--card-line, var(--line));
+  --sol-dot-red: var(--dot-red, var(--strawberry));
+  --sol-dot-green: var(--dot-green, var(--matcha));
+  --sol-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 3%, transparent),
+    0 12px 32px -12px color-mix(in srgb, var(--sol-accent) 16%, transparent);
+  --sol-shadow-lg:
+    0 2px 0 color-mix(in srgb, var(--ink) 3%, transparent),
+    0 24px 60px -20px color-mix(in srgb, var(--sol-accent) 28%, transparent);
+  --sol-r-card: 24px 28px 22px 26px;
+  --sol-r-sm: 14px 16px 13px 15px;
+
+  /* Cancels the page's own side padding, so the sections are as wide as the window. */
+  margin-inline: calc(var(--space-4) * -1);
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.sol :is(a, button, summary):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- layout ---------- */
+.sol-w {
+  width: 100%;
+  max-width: 1104px;
+  margin-inline: auto;
+  padding-inline: 32px;
+}
+.sol-w-mid {
+  max-width: 904px;
+}
+.sol-top {
+  padding-top: 40px;
+}
+.sol-sec {
+  padding-block: 96px;
+}
+.sol-stack {
+  display: flex;
+  flex-direction: column;
+}
+.sol-center {
+  align-items: center;
+  text-align: center;
+}
+.sol-g12 {
+  gap: 12px;
+}
+.sol-g16 {
+  gap: 16px;
+}
+.sol-g20 {
+  gap: 20px;
+}
+.sol-g32 {
+  gap: 32px;
+}
+.sol-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.sol-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+/* ---------- type ---------- */
+.sol-h1 {
+  font-family: var(--family-display);
+  font-weight: 700;
+  font-size: 60px;
+  line-height: 64px;
+  letter-spacing: -1.4px;
+  text-wrap: balance;
+}
+.sol-h2 {
+  font-family: var(--family-display);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 46px;
+  letter-spacing: -0.8px;
+  text-wrap: balance;
+}
+.sol-h3 {
+  font-family: var(--family-display);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 32px;
+  letter-spacing: -0.2px;
+}
+.sol-h4 {
+  font-family: var(--family-display);
+  font-weight: 600;
+  font-size: 19px;
+  line-height: 25px;
+}
+.sol-lead {
+  max-width: 680px;
+  font-size: 19px;
+  line-height: 31px;
+  color: var(--ink-muted);
+}
+.sol-note {
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--ink-muted);
+}
+.sol-small {
+  font-size: 14px;
+  line-height: 21px;
+}
+.sol-muted {
+  color: var(--ink-muted);
+}
+.sol-link {
+  color: var(--sol-accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+/* A link that opens the "not available yet" message looks like the others. */
+.sol-link-btn {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+/* A marker stroke under the highlighted word, like the hand-made brand sheet. */
+.sol-mark {
+  background: linear-gradient(
+    180deg,
+    transparent 58%,
+    color-mix(in srgb, var(--mango) 55%, transparent) 58%,
+    color-mix(in srgb, var(--mango) 55%, transparent) 92%,
+    transparent 92%
+  );
+  padding: 0 4px;
+  margin: 0 -4px;
+}
+/* Section underline: a short bar plus the logo's two dots. */
+.sol-uline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 10px;
+}
+.sol-uline i {
+  width: 44px;
+  height: 5px;
+  border-radius: 4px;
+  background: var(--ube);
+}
+.sol-uline b {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sol-dot-red);
+}
+.sol-uline b + b {
+  background: var(--sol-dot-green);
+}
+
+/* ---------- colours of tiles and tags ---------- */
+.sol-tint-mango {
+  background: var(--mango-tint);
+  color: var(--mango-ink);
+}
+.sol-tint-ube {
+  background: var(--ube-tint);
+  color: var(--ube-ink);
+}
+.sol-tint-matcha {
+  background: var(--matcha-tint);
+  color: var(--matcha-ink);
+}
+.sol-tint-strawberry {
+  background: var(--strawberry-tint);
+  color: var(--strawberry-ink);
+}
+
+/* ---------- search (a control that says it is not available yet) ---------- */
+.sol-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  min-height: 48px;
+  margin: 32px auto 0;
+  padding: 0 16px;
+  border: 1.5px solid var(--sol-card-line);
+  border-radius: 999px;
+  background: var(--surface-card);
+  box-shadow: var(--sol-shadow);
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 14.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.sol-search svg {
+  flex: 0 0 auto;
+}
+
+/* ---------- catalogue ---------- */
+.sol-catalog {
+  margin-top: 56px;
+}
+.sol-card {
+  background: var(--surface-card);
+  border: 1.5px solid var(--sol-card-line);
+  border-radius: var(--sol-r-card);
+  box-shadow: var(--sol-shadow);
+}
+.sol-tool {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-height: 196px;
+  padding: 22px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sol-tool-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.sol-tile {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px 14px 11px 13px;
+}
+.sol-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sol-tool-title {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--family-display);
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 25px;
+}
+.sol-tool-text {
+  display: block;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--ink-muted);
+}
+.sol-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: auto;
+  color: var(--sol-accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+/* ---------- text cards, prose, FAQ ---------- */
+.sol-pad {
+  padding: 28px;
+}
+.sol-bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 18px;
+  list-style: disc;
+}
+.sol-bullets li::marker {
+  color: var(--ube);
+}
+.sol-prose-title {
+  margin-top: 32px;
+}
+.sol-faq {
+  display: grid;
+  align-items: start;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.sol-faq-row {
+  border: 1.5px solid var(--sol-card-line);
+  border-radius: 18px 20px 17px 19px;
+  background: var(--surface-card);
+  box-shadow: var(--sol-shadow);
+}
+.sol-faq-row summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 0 20px;
+  font-weight: 700;
+  font-size: 15px;
+  list-style: none;
+  cursor: pointer;
+}
+.sol-faq-row summary::-webkit-details-marker {
+  display: none;
+}
+.sol-faq-row svg {
+  flex: 0 0 auto;
+}
+.sol-faq-row[open] summary {
+  min-height: 0;
+  padding-top: 18px;
+  padding-bottom: 8px;
+}
+.sol-faq-row[open] svg {
+  transform: rotate(180deg);
+}
+.sol-faq-row p {
+  padding: 0 20px 18px;
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--ink-muted);
+}
+.sol-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+.sol-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--surface-page);
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--ink) 55%, transparent);
+  font-family: var(--family-sans);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* ---------- the "not yet" message (Popover API, ADR 0023) ---------- */
+.sol-soon {
+  position: fixed;
+  inset: auto 16px 24px;
+  margin-inline: auto;
+  width: auto;
+  max-width: 420px;
+  padding: 18px 20px;
+  border: 1.5px solid var(--sol-card-line);
+  border-radius: var(--sol-r-card);
+  background: var(--surface-card);
+  color: var(--ink);
+  box-shadow: var(--sol-shadow-lg);
+}
+.sol-soon:not(:popover-open) {
+  display: none;
+}
+.sol-soon:popover-open {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sol-soon-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+.sol-btn-soft {
+  background: var(--surface-card);
+  color: var(--ink);
+  border: 1.5px solid var(--sol-card-line);
+  box-shadow: var(--sol-shadow);
+  min-height: 44px;
+  padding: 0 22px;
+  font-size: 15.5px;
+  text-decoration: none;
+}
+.sol-btn-sm {
+  min-height: 44px;
+  padding: 0 22px;
+  font-size: 15.5px;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 1100px) {
+  .sol-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .sol-w {
+    padding-inline: 20px;
+  }
+  .sol-sec {
+    padding-block: 64px;
+  }
+  .sol-h1 {
+    font-size: 40px;
+    line-height: 44px;
+    letter-spacing: -0.9px;
+  }
+  .sol-h2 {
+    font-size: 30px;
+    line-height: 35px;
+    letter-spacing: -0.5px;
+  }
+  .sol-h3 {
+    font-size: 22px;
+    line-height: 28px;
+  }
+  .sol-lead {
+    font-size: 17px;
+    line-height: 27px;
+  }
+  .sol-grid,
+  .sol-grid-2,
+  .sol-faq {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sol-pad {
+    padding: 22px;
+  }
+}
+
+.sol-about {
+  padding-bottom: 32px;
+}
+.sol-item {
+  display: flex;
+}

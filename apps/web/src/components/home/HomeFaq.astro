@@ -1,0 +1,42 @@
+---
+/**
+ * Frequently asked questions: six native `details` (no script), two columns from 640 px, the
+ * first open as in the design. Every answer states what is true today.
+ */
+import type { Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import Icon from './Icon.astro'
+
+interface Props {
+  locale: Locale
+}
+const { locale } = Astro.props
+const items = [
+  { q: m.hv2_faq_1_q({}, { locale }), a: m.hv2_faq_1_a({}, { locale }) },
+  { q: m.hv2_faq_2_q({}, { locale }), a: m.hv2_faq_2_a({}, { locale }) },
+  { q: m.hv2_faq_3_q({}, { locale }), a: m.hv2_faq_3_a({}, { locale }) },
+  { q: m.hv2_faq_4_q({}, { locale }), a: m.hv2_faq_4_a({}, { locale }) },
+  { q: m.hv2_faq_5_q({}, { locale }), a: m.hv2_faq_5_a({}, { locale }) },
+  { q: m.hv2_faq_6_q({}, { locale }), a: m.hv2_faq_6_a({}, { locale }) },
+]
+---
+
+<section class="hv2-w hv2-sec hv2-stack hv2-g40" aria-labelledby="hv2-faq-title">
+  <div class="hv2-stack hv2-g12 hv2-center">
+    <h2 id="hv2-faq-title" class="hv2-h2">{m.hv2_faq_title({}, { locale })}</h2>
+    <span class="hv2-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+  </div>
+  <div class="hv2-faq">
+    {
+      items.map((item) => (
+        <details class="hv2-faq-row">
+          <summary>
+            <span>{item.q}</span>
+            <Icon d="m6 9 6 6 6-6" />
+          </summary>
+          <p>{item.a}</p>
+        </details>
+      ))
+    }
+  </div>
+</section>

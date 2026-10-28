@@ -1,0 +1,48 @@
+---
+/**
+ * One tool of the catalogue. A published tool is a link to its page; the others are the same
+ * card as a button that opens the "not available yet" message, and say "Coming soon" where the
+ * link says "Open tool". The card's content is the same either way (`Face`).
+ */
+import type { Locale } from '@mochifile/i18n'
+import { type CatalogTool, ICONS, solText } from '../../lib/solutions.ts'
+import Icon from './Icon.astro'
+
+interface Props {
+  entry: CatalogTool
+  href: string | undefined
+  locale: Locale
+}
+const { entry, href, locale } = Astro.props
+const key = entry.id.replaceAll('-', '_')
+const face = {
+  pill: solText(`t_${key}_pill`, locale),
+  title: solText(`t_${key}_title`, locale),
+  text: solText(`t_${key}_text`, locale),
+  action: href ? solText('open_tool', locale) : solText('soon_label', locale),
+}
+---
+
+{
+  href ? (
+    <a class="sol-card sol-tool" href={href} data-tool={entry.id} data-available="true">
+      <span class="sol-tool-top">
+        <span class:list={['sol-tile', `sol-tint-${entry.tile}`]}><Icon d={ICONS[entry.icon]} size={20} stroke={2} /></span>
+        <span class:list={['sol-pill', `sol-tint-${entry.pill}`]}>{face.pill}</span>
+      </span>
+      <span class="sol-tool-title">{face.title}</span>
+      <span class="sol-tool-text">{face.text}</span>
+      <span class="sol-open">{face.action}<Icon d="M5 12h14M13 6l6 6-6 6" size={14} stroke={2.6} /></span>
+    </a>
+  ) : (
+    <button type="button" class="sol-card sol-tool" popovertarget="sol-soon" data-tool={entry.id} data-available="false">
+      <span class="sol-tool-top">
+        <span class:list={['sol-tile', `sol-tint-${entry.tile}`]}><Icon d={ICONS[entry.icon]} size={20} stroke={2} /></span>
+        <span class:list={['sol-pill', `sol-tint-${entry.pill}`]}>{face.pill}</span>
+      </span>
+      <span class="sol-tool-title">{face.title}</span>
+      <span class="sol-tool-text">{face.text}</span>
+      <span class="sol-open">{face.action}<Icon d="M5 12h14M13 6l6 6-6 6" size={14} stroke={2.6} /></span>
+    </button>
+  )
+}

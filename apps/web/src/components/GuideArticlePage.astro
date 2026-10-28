@@ -1,0 +1,199 @@
+---
+import { getEntry, render } from 'astro:content'
+/**
+ * One guide (the "Site final" artboard MFGuide): breadcrumb, topic pill, title, byline, the
+ * mascot, the article, a sticky "On this page" list with a tool card from 1024 px, and the
+ * free-tool band. The article is Markdown (`content/guides/<key>/<locale>.md`) rendered at
+ * build time; the list of headings comes from it. Static HTML, no script.
+ *
+ * The artboard's author and date are placeholders: nothing here has either, so the byline says
+ * it is a Mochifile guide and how long it takes to read, which is counted from the text.
+ * The first heading shows as current in the list, and stops doing so once the visitor follows
+ * a link in it (`:target`); no script tracks the scroll.
+ */
+import { type Locale, localePath } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import sheetWaiting380 from '../assets/brand/sheet-waiting-380.webp'
+import sheetWaiting696 from '../assets/brand/sheet-waiting-696.webp'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { cardImage } from '../lib/card-images'
+import { topicTone } from '../lib/guide-style'
+import { type Guide, guidePaths, guidesIndexPaths } from '../lib/guides'
+import { toolPaths, tools } from '../lib/tools'
+import GuideCta from './GuideCta.astro'
+
+interface Props {
+  guide: Guide
+  locale: Locale
+}
+
+const { guide, locale } = Astro.props
+const meta = guide.meta[locale]
+
+const entry = await getEntry('guides', `${guide.key}/${locale}`)
+if (!entry) throw new Error(`Missing guide ${guide.key} in ${locale}`)
+const { Content, headings } = await render(entry)
+const contents = headings.filter((heading) => heading.depth === 2)
+
+const topicLabel = {
+  quick: m.guides_topic_quick({}, { locale }),
+  forms: m.guides_topic_forms({}, { locale }),
+  formats: m.guides_topic_formats({}, { locale }),
+  performance: m.guides_topic_performance({}, { locale }),
+  privacy: m.guides_topic_privacy({}, { locale }),
+  pdf: m.guides_topic_pdf({}, { locale }),
+  video: m.guides_topic_video({}, { locale }),
+  workflows: m.guides_topic_workflows({}, { locale }),
+}[guide.topic]
+
+// The way to the tool: Compress image, or the size page the guide is about.
+const compress = tools.find(({ manifest }) => manifest.id === 'compress-image')
+const variant = compress?.manifest.variants?.find(({ key }) => key === guide.ctaVariant)
+const toolHref = compress ? toolPaths(compress.manifest)[locale] : localePath(locale)
+const ctaHref = variant ? localePath(locale, variant.meta[locale].slug) : toolHref
+const bytes = variant?.options.targetBytes
+const size = typeof bytes === 'number' ? `${bytes / 1000} KB` : undefined
+const ctaAction = size
+  ? m.guide_cta_action_size({ size }, { locale })
+  : m.guide_cta_action({}, { locale })
+
+const indexPath = guidesIndexPaths()[locale]
+---
+
+<BaseLayout
+  locale={locale}
+  title={`${meta.title} — Mochifile`}
+  description={meta.summary}
+  paths={guidePaths(guide)}
+>
+  <div class="guide-page mx-auto flex w-full max-w-site-inner flex-col gap-10 pb-10 sm:gap-16 lg:pt-4">
+    <div class="grid gap-14 lg:grid-cols-[minmax(0,1fr)_calc(var(--space-16)*3+var(--space-4)*2)]">
+      <article aria-labelledby="guide-title" class="flex min-w-0 max-w-reading-max flex-col items-start gap-6">
+        <nav aria-label={m.guides_breadcrumb_label({}, { locale })} class="type-body-sm text-ink-muted">
+          <ol class="flex flex-wrap items-center gap-x-2">
+            <li class="flex items-center gap-2">
+              <a href={localePath(locale)} class="inline-flex min-h-target-min items-center rounded-sm underline hover:no-underline focus-ring">{m.guides_home({}, { locale })}</a>
+              <span aria-hidden="true">›</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <a href={indexPath} class="inline-flex min-h-target-min items-center rounded-sm underline hover:no-underline focus-ring">{m.guides_breadcrumb_current({}, { locale })}</a>
+              <span aria-hidden="true">›</span>
+            </li>
+            <li aria-current="page" class="text-ink">{topicLabel}</li>
+          </ol>
+        </nav>
+        <span class:list={['inline-flex min-h-6 items-center rounded-pill px-3 type-pill uppercase', topicTone[guide.topic]]}>{topicLabel}</span>
+        <h1 id="guide-title" class="type-page-title-sm text-balance sm:type-page-title">{meta.title}</h1>
+        <p class="type-body-sm text-ink-muted">{m.guide_byline({}, { locale })} · {m.guides_read_min({ minutes: meta.minutes }, { locale })}</p>
+        <img
+          src={sheetWaiting696.src}
+          srcset={`${sheetWaiting380.src} 380w, ${sheetWaiting696.src} 696w`}
+          sizes="(min-width: 764px) 700px, calc(100vw - 32px)"
+          alt=""
+          width={696}
+          height={428}
+          decoding="async"
+          class="h-auto w-full rounded-mascot"
+        />
+        <div class="page-copy guide-copy">
+          <Content />
+        </div>
+      </article>
+
+      <aside aria-label={m.guide_on_this_page({}, { locale })} class="hidden lg:block">
+        <div class="sticky top-6 flex flex-col gap-1">
+          <p class="px-3 pb-2 type-eyebrow text-accent uppercase">{m.guide_on_this_page({}, { locale })}</p>
+          <nav aria-label={m.guide_on_this_page({}, { locale })} class="flex flex-col gap-1">
+            {
+              contents.map((heading, index) => (
+                <a
+                  href={`#${heading.slug}`}
+                  class:list={['guide-toc-link flex min-h-target-min items-center rounded-md px-3 type-body-sm font-semibold text-ink-muted hover:text-ink focus-ring', index === 0 && 'guide-toc-first']}
+                >
+                  {heading.text}
+                </a>
+              ))
+            }
+          </nav>
+          <div class="mt-5 flex flex-col gap-1 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-4">
+            <img {...cardImage('images', '(min-width: 1024px) 220px, 280px')} alt="" loading="lazy" decoding="async" class="h-auto w-full rounded-md-squish-a" />
+            <p class="mt-2 type-body-strong">{m.guide_tool_name({}, { locale })}</p>
+            <p class="type-caption text-ink-muted">{m.guide_tool_text({}, { locale })}</p>
+            <a href={toolHref} class="press mt-2 inline-flex min-h-target-min items-center justify-center rounded-pill bg-action px-4 type-body-strong text-action-ink focus-ring">{m.guide_tool_action({}, { locale })}</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <GuideCta pill={m.guides_cta_pill({}, { locale })} heading={m.guide_cta_heading({}, { locale })} text={m.guide_cta_text({}, { locale })} action={ctaAction} href={ctaHref} mascot="happy" />
+  </div>
+</BaseLayout>
+
+<style is:global>
+  @reference "../styles/global.css";
+
+  /* On this page: the first heading is current until a link in the list is followed. */
+  .guide-toc-first,
+  .guide-toc-link:focus-visible,
+  .guide-toc-link:active {
+    background-color: var(--ube-tint);
+    color: var(--ube-ink);
+  }
+  .guide-page:has(h2:target, h3:target) .guide-toc-first:not(:focus-visible) {
+    background-color: transparent;
+    color: var(--ink-muted);
+  }
+
+  .guide-copy {
+    max-width: none;
+  }
+  .guide-copy > p:first-child {
+    @apply type-body-lg;
+  }
+  .guide-copy h2,
+  .guide-copy h3 {
+    /* The sticky header does not exist, but a heading reached from the list should not touch the edge. */
+    scroll-margin-top: var(--space-6);
+  }
+  .guide-copy a {
+    color: var(--ube-ink);
+    font-weight: 600;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  .guide-copy a:hover {
+    text-decoration-line: none;
+  }
+  .guide-copy a:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  .guide-copy li::marker {
+    color: var(--ube);
+  }
+  .guide-copy ol li::marker {
+    font-weight: 800;
+    color: var(--ink-muted);
+  }
+  .guide-copy li + li {
+    margin-top: var(--space-2);
+  }
+  /* A note card with a shield (a mask, so the icon takes its colour from the token). */
+  .guide-copy blockquote {
+    @apply rounded-md-squish-a;
+    position: relative;
+    background-color: var(--surface-card);
+    padding: var(--space-4) var(--space-5) var(--space-4) var(--space-14);
+  }
+  .guide-copy blockquote::before {
+    content: "";
+    position: absolute;
+    left: var(--space-5);
+    top: var(--space-4);
+    width: var(--space-5);
+    height: var(--space-5);
+    background-color: var(--ube-ink);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+</style>

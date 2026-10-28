@@ -1,0 +1,8 @@
+---
+import { localePath } from '@mochifile/i18n'
+import SolutionsPage from '../../components/SolutionsPage.astro'
+
+const paths = { en: localePath('en', 'solutions'), pt: localePath('pt', 'solucoes') }
+---
+
+<SolutionsPage locale="pt" paths={paths} />

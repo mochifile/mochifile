@@ -1,0 +1,1114 @@
+/*
+ * The home page, Mochifile V2 (docs/design-ref/v2, artboard MFHome). Light theme only.
+ *
+ * Why plain CSS instead of utilities: the canvas uses values the design system does not hold yet
+ * (its README › "Values introduced by the canvas"): the deep-ube accent, card lines, soft
+ * shadows, 60/40 px headings and the 1104 px column. The Tailwind theme only generates token
+ * values, so this file spells them out once, scoped to `.hv2`, with names prefixed `--hv2-` so
+ * they never clash with the tokens the shell work is adding. When those values become tokens,
+ * replace each `--hv2-*` with its token and delete the line here. The design guard allows raw
+ * values in this file only (design-guard.test.ts).
+ *
+ * Responsive rules use the canvas's breakpoints: 1100, 900 and 640 px.
+ */
+
+/* The page is as wide as the window; the sections inside keep the 1104 px column. */
+body:has(.hv2) {
+  overflow-x: clip;
+}
+
+.hv2 {
+  /*
+   * Light theme only (README › Current design decisions). The shell's tokens follow the system
+   * colour scheme, so the light values the page uses are repeated here, from tokens.json.
+   */
+  --surface-page: #fff7ec;
+  --surface-card: #ffffff;
+  --surface-sunken: #fffbf4;
+  --surface-inverse: #1e1b2e;
+  --surface-inverse-raised: #2c2840;
+  --ink: #1e1b2e;
+  --ink-muted: #5c566b;
+  --ink-on-inverse: #fff7ec;
+  --ink-on-inverse-muted: #d9d3e6;
+  --mango: #ffb627;
+  --strawberry: #ff6f91;
+  --matcha: #8fd16a;
+  --ube: #9b7bea;
+  --mango-tint: #fff0d1;
+  --matcha-tint: #e9f7df;
+  --ube-tint: #efe8fc;
+  --mango-ink: #5a3a00;
+  --matcha-ink: #17391f;
+  --ube-ink: #3b2770;
+  --focus-ring: #1f5eff;
+
+  --hv2-accent: #5b3cc4;
+  --hv2-accent-line: #d9cdf6;
+  --hv2-card-line: #efe3d0;
+  --hv2-line: #c9b6f2;
+  --hv2-band: #f7f2ff;
+  --hv2-code-bg: #15121f;
+  --hv2-code-comment: #a79fbb;
+  --hv2-soon-on-ink: #ffd27a;
+  --hv2-dot-red: #ff5a5a;
+  --hv2-shadow: 0 1px 0 rgba(30, 27, 46, 0.03), 0 12px 32px -12px rgba(91, 60, 196, 0.16);
+  --hv2-shadow-lg: 0 2px 0 rgba(30, 27, 46, 0.03), 0 24px 60px -20px rgba(91, 60, 196, 0.28);
+  --hv2-shadow-chip: 0 4px 10px -6px rgba(30, 27, 46, 0.18);
+  --hv2-shadow-dark: 0 18px 36px -18px rgba(30, 27, 46, 0.6);
+  --hv2-r-card: 24px 28px 22px 26px;
+  --hv2-r-sm: 14px 16px 13px 15px;
+  --hv2-r-media: 22px 26px 20px 24px;
+
+  position: relative;
+  width: 100vw;
+  background: var(--surface-page);
+  margin-inline: calc(50% - 50vw);
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.hv2 img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.hv2 :is(a, button, summary, textarea):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- layout ---------- */
+.hv2-w {
+  width: 100%;
+  max-width: 1104px;
+  margin-inline: auto;
+  padding-inline: 32px;
+}
+.hv2-sec {
+  padding-block: 96px;
+}
+.hv2-sec-sm {
+  padding-block: 56px;
+}
+.hv2-band {
+  background: var(--hv2-band);
+  border-block: 1px solid var(--hv2-card-line);
+}
+.hv2-stack {
+  display: flex;
+  flex-direction: column;
+}
+.hv2-center {
+  align-items: center;
+  text-align: center;
+}
+.hv2-g8 {
+  gap: 8px;
+}
+.hv2-g12 {
+  gap: 12px;
+}
+.hv2-g16 {
+  gap: 16px;
+}
+.hv2-g24 {
+  gap: 24px;
+}
+.hv2-g40 {
+  gap: 40px;
+}
+.hv2-g48 {
+  gap: 48px;
+}
+.hv2-split {
+  display: grid;
+  gap: 56px;
+  align-items: center;
+  grid-template-columns: var(--cols, minmax(0, 1fr) minmax(0, 1fr));
+}
+.hv2-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.hv2-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ---------- type ---------- */
+.hv2-eyebrow {
+  font-size: 12.5px;
+  line-height: 18px;
+  font-weight: 700;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--hv2-accent);
+}
+.hv2-eyebrow-sm {
+  font-size: 11px;
+}
+.hv2-h1 {
+  font-family: var(--family-display);
+  font-weight: 700;
+  font-size: 60px;
+  line-height: 64px;
+  letter-spacing: -1.4px;
+  text-wrap: balance;
+}
+.hv2-h2 {
+  font-family: var(--family-display);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 46px;
+  letter-spacing: -0.8px;
+  text-wrap: balance;
+}
+.hv2-h3 {
+  font-family: var(--family-display);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 32px;
+  letter-spacing: -0.2px;
+}
+.hv2-h4 {
+  font-family: var(--family-display);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 25px;
+}
+.hv2-lead {
+  font-size: 19px;
+  line-height: 31px;
+  color: var(--ink-muted);
+}
+.hv2-lead-sm {
+  font-size: 17px;
+  line-height: 28px;
+}
+.hv2-small {
+  font-size: 14px;
+  line-height: 21px;
+}
+.hv2-muted {
+  color: var(--ink-muted);
+}
+.hv2-link {
+  color: var(--hv2-accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+/* A marker stroke under the highlighted words, like the hand-made brand sheet. */
+.hv2-mark {
+  background: linear-gradient(
+    180deg,
+    transparent 58%,
+    rgba(255, 182, 39, 0.55) 58%,
+    rgba(255, 182, 39, 0.55) 92%,
+    transparent 92%
+  );
+  padding: 0 4px;
+  margin: 0 -4px;
+}
+/* Section underline: a short bar plus the logo's two dots. */
+.hv2-uline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 10px;
+}
+.hv2-uline i {
+  width: 44px;
+  height: 5px;
+  border-radius: 4px;
+  background: var(--ube);
+}
+.hv2-uline b {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hv2-dot-red);
+}
+.hv2-uline b + b {
+  background: var(--matcha);
+}
+
+/* ---------- buttons, pills, chips ---------- */
+.hv2-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--family-sans);
+  font-weight: 700;
+  font-size: 15.5px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.hv2-btn-lg {
+  min-height: 52px;
+  padding: 0 28px;
+  font-size: 17px;
+}
+.hv2-btn-primary {
+  background: var(--ink);
+  color: var(--surface-page);
+  box-shadow: 0 10px 24px -10px rgba(30, 27, 46, 0.55);
+}
+.hv2-btn-soft {
+  background: var(--surface-card);
+  color: var(--ink);
+  border: 1.5px solid var(--hv2-card-line);
+  box-shadow: var(--hv2-shadow);
+}
+.hv2-btn-outline {
+  background: var(--surface-card);
+  color: var(--hv2-accent);
+  border: 1.5px solid var(--hv2-accent-line);
+}
+.hv2-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+.hv2-pill-matcha {
+  background: var(--matcha-tint);
+  color: var(--matcha-ink);
+}
+.hv2-pill-mango {
+  background: var(--mango-tint);
+  color: var(--mango-ink);
+}
+.hv2-pill-dark {
+  /* A fixed width, so the pill's left edge stays put when the font arrives. */
+  width: 6.9rem;
+  justify-content: flex-start;
+  background: var(--surface-inverse-raised);
+  color: var(--hv2-soon-on-ink);
+  margin-right: 4px;
+}
+.hv2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--hv2-card-line);
+  border-radius: 999px;
+  background: var(--surface-card);
+  box-shadow: var(--hv2-shadow-chip);
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+.hv2-chip .hv2-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.hv2-dot-mango {
+  background: var(--mango);
+}
+.hv2-dot-ube {
+  background: var(--ube);
+}
+.hv2-dot-straw {
+  background: var(--strawberry);
+}
+.hv2-dot-matcha {
+  background: var(--matcha);
+}
+.hv2-dot-red {
+  background: var(--hv2-dot-red);
+}
+.hv2-code-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 8px;
+  color: var(--ube-ink);
+  font-family: var(--family-mono);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+/* ---------- cards ---------- */
+.hv2-card {
+  background: var(--surface-card);
+  border: 1.5px solid var(--hv2-card-line);
+  border-radius: var(--hv2-r-card);
+  box-shadow: var(--hv2-shadow);
+}
+.hv2-card-lg {
+  box-shadow: var(--hv2-shadow-lg);
+}
+.hv2-card-pad {
+  padding: 28px;
+}
+.hv2-card-privacy {
+  padding: 40px;
+  background: var(--surface-card);
+}
+.hv2-card-cta {
+  padding: 48px 40px;
+}
+.hv2-media {
+  border-radius: var(--hv2-r-media);
+}
+.hv2-divider {
+  height: 1px;
+  border: 0;
+  background: var(--hv2-card-line);
+}
+
+.hv2-lead-max {
+  max-width: 640px;
+}
+.hv2-center-text {
+  text-align: center;
+}
+.hv2-grid-stretch {
+  align-items: stretch;
+}
+.hv2-privacy-split {
+  --cols: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 40px;
+}
+.hv2-cta-split {
+  --cols: minmax(0, 1.3fr) minmax(0, 0.7fr);
+  gap: 32px;
+}
+.hv2-example-title {
+  padding: 4px 4px 0;
+}
+
+/* ---------- hero ---------- */
+.hv2-nowrap {
+  flex-wrap: nowrap;
+}
+.hv2-g4 {
+  gap: 4px;
+}
+.hv2-cli-link {
+  /* A fixed width with the arrow at its end: the arrow never moves when the font arrives. */
+  width: 15rem;
+  justify-content: space-between;
+}
+.hv2-self-start {
+  align-self: flex-start;
+}
+.hv2-prompt-wrap {
+  position: relative;
+  z-index: 1;
+  margin-top: 40px;
+}
+.hv2-prompt-hint {
+  font-size: 15px;
+}
+.hv2-prompt-chips {
+  /*
+   * Equal cells, as many per row as fit: where each chip starts depends on the width of the
+   * list, never on how wide the font draws a label (a layout shift when Figtree arrives).
+   */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  margin-top: 4px;
+}
+.hv2-prompt-chips .hv2-chip {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 6px 10px;
+  line-height: 18px;
+  white-space: normal;
+}
+.hv2-hero-rule {
+  margin: 48px 0 24px;
+}
+.hv2-hero {
+  padding-top: 40px;
+  padding-bottom: 56px;
+}
+.hv2-hero-split {
+  --cols: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 48px;
+}
+.hv2-checks {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.hv2-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+.hv2-check svg {
+  flex: 0 0 auto;
+  color: var(--matcha-ink);
+  margin-top: 1px;
+}
+
+/* The CLI install box. The operating-system tabs are radio buttons: no script. */
+.hv2-install {
+  align-self: flex-start;
+  width: 100%;
+  max-width: 480px;
+  margin: 0;
+  min-width: 0;
+  border: 0;
+  padding: 12px;
+  border-radius: 20px 22px 19px 21px;
+  background: var(--surface-inverse);
+  color: var(--ink-on-inverse);
+  box-shadow: var(--hv2-shadow-dark);
+}
+.hv2-install-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.hv2-os-tabs {
+  /* Three equal tabs: where each starts never depends on how wide the font draws a label. */
+  display: grid;
+  grid-template-columns: repeat(3, 4.6rem);
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface-inverse-raised);
+}
+.hv2-os {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  color: var(--ink-on-inverse-muted);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hv2-os:has(input:checked) {
+  background: var(--surface-page);
+  color: var(--ink);
+}
+.hv2-os:has(input:focus-visible) {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.hv2-os-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.hv2-install-code {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  border-radius: 14px;
+  background: var(--hv2-code-bg);
+  font-family: var(--family-mono);
+  font-size: 14px;
+  line-height: 24px;
+}
+.hv2-cmd {
+  min-width: 0;
+  white-space: pre-wrap;
+}
+.hv2-cmd-win {
+  display: none;
+}
+.hv2-install:has(#hv2-os-win:checked) .hv2-cmd-unix {
+  display: none;
+}
+.hv2-install:has(#hv2-os-win:checked) .hv2-cmd-win {
+  display: block;
+}
+.hv2-cmd .p {
+  color: var(--mango);
+}
+.hv2-cmd .c {
+  color: var(--hv2-code-comment);
+}
+.hv2-copy {
+  flex: 0 0 auto;
+  min-height: 44px;
+  min-width: 64px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--surface-inverse-raised);
+  color: var(--ink-on-inverse);
+  font-family: var(--family-sans);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  cursor: not-allowed;
+}
+
+/* The Ask prompt box (a concept: nothing is processed). */
+.hv2-prompt {
+  padding: 20px;
+  border: 1.5px solid var(--hv2-card-line);
+  border-radius: 28px 32px 26px 30px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--hv2-shadow-lg);
+}
+.hv2-prompt-add {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border: 1.5px solid var(--hv2-card-line);
+  border-radius: 16px;
+  background: var(--surface-card);
+  color: var(--hv2-accent);
+  box-shadow: 0 6px 16px -10px rgba(30, 27, 46, 0.4);
+  cursor: pointer;
+}
+.hv2-prompt-input {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  margin-top: 14px;
+  padding: 14px 4px;
+  border: 0;
+  border-top: 1.5px solid var(--hv2-card-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  line-height: 26px;
+  resize: none;
+}
+.hv2-prompt-input::placeholder {
+  color: var(--ink-muted);
+  opacity: 1;
+}
+.hv2-prompt-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.hv2-icon-btn,
+.hv2-send {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  cursor: pointer;
+}
+.hv2-icon-btn {
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-muted);
+}
+.hv2-send {
+  border-radius: 14px;
+  background: var(--ink);
+  color: var(--surface-page);
+}
+.hv2-more-room-lead {
+  /* Fixed width with the text at its end, so the link keeps its place in either font. */
+  min-width: 8rem;
+  text-align: left;
+}
+.hv2-more-room .hv2-link {
+  /* Wide enough for the link in either language, so its start never depends on the font. */
+  display: inline-block;
+  min-width: 10rem;
+  text-align: left;
+}
+.hv2-more-room {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  align-self: flex-end;
+  font-size: 14px;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+/* Phones: the line is left-aligned under the prompt, one part per row, so nothing depends on a width. */
+@media (max-width: 400px) {
+  .hv2-more-room {
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: stretch;
+    gap: 0;
+  }
+}
+
+/* ---------- hub ---------- */
+.hv2-hub {
+  position: relative;
+  width: 100%;
+  max-width: 780px;
+  height: 340px;
+  margin: 0 auto;
+}
+.hv2-hub-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.hv2-hub-line {
+  stroke: var(--hv2-line);
+  stroke-width: 1.5;
+}
+.hv2-hub-request {
+  fill: var(--ube);
+}
+.hv2-hub-result {
+  fill: var(--mango);
+}
+.hv2-hub-node {
+  position: absolute;
+  left: calc(var(--ax) * 1%);
+  top: calc(var(--ay) * 1%);
+  transform: translate(-50%, -50%);
+}
+.hv2-hub-node .hv2-chip {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ube-ink);
+}
+.hv2-hub-label {
+  position: absolute;
+  top: -8px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--ink-muted);
+}
+.hv2-hub-core {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.hv2-hub-core img {
+  width: 104px;
+  border-radius: 26px;
+  box-shadow:
+    0 0 0 10px rgba(155, 123, 234, 0.14),
+    0 22px 50px -14px rgba(91, 60, 196, 0.6);
+  animation: hv2-pulse 1.3s ease-in-out infinite;
+}
+.hv2-hub-core span {
+  font-size: 10.5px;
+  line-height: 15px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+.hv2-hub-static {
+  display: none;
+}
+/* Where each surface sits (percent of the hub) and when its dots start. */
+.hv2-n-cli {
+  --ax: 28;
+  --ay: 14;
+  --delay: 0s;
+}
+.hv2-n-local {
+  --ax: 18;
+  --ay: 46;
+  --delay: 0.43s;
+}
+.hv2-n-chrome {
+  --ax: 26;
+  --ay: 80;
+  --delay: 0.86s;
+}
+.hv2-n-web {
+  --ax: 72;
+  --ay: 14;
+  --delay: 1.29s;
+}
+.hv2-n-hosted {
+  --ax: 82;
+  --ay: 46;
+  --delay: 1.72s;
+}
+.hv2-n-api {
+  --ax: 74;
+  --ay: 80;
+  --delay: 2.15s;
+}
+
+/*
+ * The dots, placed with container-relative lengths so they follow the lines at any width. A
+ * request goes from the surface to the engine (ube); the result comes back (mango) half a cycle
+ * later. SVG <animate> is not used: Firefox writes inline styles for it, which the CSP blocks.
+ * The hub is a size container only from 641 px, where it has a fixed height (below that the
+ * dots are hidden and the hub is a list).
+ */
+.hv2-hub-flow {
+  --bx: 50;
+  --by: 46;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.hv2-flow-request {
+  background: var(--ube);
+  animation: hv2-request 2.6s linear var(--delay) infinite;
+}
+.hv2-flow-result {
+  background: var(--mango);
+  animation: hv2-result 2.6s linear calc(var(--delay) + 1.3s) infinite;
+}
+@keyframes hv2-request {
+  0% {
+    translate: calc(var(--ax) * 1cqw) calc(var(--ay) * 1cqh);
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    translate: calc(var(--bx) * 1cqw) calc(var(--by) * 1cqh);
+    opacity: 0;
+  }
+}
+@keyframes hv2-result {
+  0% {
+    translate: calc(var(--bx) * 1cqw) calc(var(--by) * 1cqh);
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    translate: calc(var(--ax) * 1cqw) calc(var(--ay) * 1cqh);
+    opacity: 0;
+  }
+}
+@media (min-width: 641px) {
+  .hv2-hub {
+    container-type: size;
+  }
+}
+.hv2-l-once {
+  left: 27%;
+}
+.hv2-l-none {
+  left: 77%;
+}
+@keyframes hv2-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 10px rgba(155, 123, 234, 0.14),
+      0 22px 50px -14px rgba(91, 60, 196, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 0 16px rgba(155, 123, 234, 0.22),
+      0 22px 50px -14px rgba(91, 60, 196, 0.6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv2-hub-flow {
+    display: none;
+  }
+  .hv2-hub-static {
+    display: inline;
+  }
+  .hv2-hub-core img {
+    animation: none;
+  }
+}
+
+.hv2-surface {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hv2-surface-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hv2-surface-code {
+  margin-top: 6px;
+}
+
+/* ---------- ask examples ---------- */
+.hv2-example {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding: 18px;
+}
+.hv2-example-img {
+  width: 100%;
+  aspect-ratio: 5 / 3;
+  object-fit: cover;
+}
+.hv2-example-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  padding: 0 14px;
+  border: 1.5px solid var(--hv2-card-line);
+  border-radius: var(--hv2-r-sm);
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.hv2-example-btn svg {
+  flex: 0 0 auto;
+  color: var(--hv2-accent);
+}
+
+/* ---------- FAQ (details: no script) ---------- */
+.hv2-faq {
+  display: grid;
+  align-items: start;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.hv2-faq-row {
+  border: 1.5px solid var(--hv2-card-line);
+  border-radius: 18px 20px 17px 19px;
+  background: var(--surface-card);
+  box-shadow: var(--hv2-shadow);
+}
+.hv2-faq-row summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 0 20px;
+  font-weight: 700;
+  font-size: 15px;
+  list-style: none;
+  cursor: pointer;
+}
+.hv2-faq-row summary::-webkit-details-marker {
+  display: none;
+}
+.hv2-faq-row svg {
+  flex: 0 0 auto;
+}
+.hv2-faq-row[open] summary {
+  min-height: 0;
+  padding-top: 18px;
+  padding-bottom: 8px;
+}
+.hv2-faq-row[open] svg {
+  transform: rotate(180deg);
+}
+.hv2-faq-row p {
+  padding: 0 20px 18px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  font-size: 15px;
+  line-height: 24px;
+}
+
+/* ---------- the "not yet" message (Popover API, ADR 0023) ---------- */
+.hv2-soon {
+  position: fixed;
+  inset: auto 16px 24px;
+  margin-inline: auto;
+  width: auto;
+  max-width: 420px;
+  padding: 18px 20px;
+  border: 1.5px solid var(--hv2-card-line);
+  border-radius: var(--hv2-r-card);
+  background: var(--surface-card);
+  color: var(--ink);
+  box-shadow: var(--hv2-shadow-lg);
+}
+.hv2-soon:not(:popover-open) {
+  display: none;
+}
+.hv2-soon:popover-open {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hv2-soon .hv2-row {
+  margin-top: 8px;
+}
+
+/* ---------- responsive ---------- */
+/*
+ * From 901 px the two hero columns start at the top and the prompt sits 160 px below it: the
+ * canvas centres it, which puts it there at 1440 px, but then it moved whenever the text face
+ * changed the height of the left column (a layout shift when Figtree arrives).
+ */
+@media (min-width: 901px) {
+  .hv2-hero-split {
+    align-items: start;
+  }
+  .hv2-prompt-wrap {
+    margin-top: 160px;
+  }
+}
+@media (max-width: 1100px) {
+  .hv2-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hv2-checks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .hv2-split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+}
+@media (max-width: 640px) {
+  .hv2-w {
+    padding-inline: 20px;
+  }
+  .hv2-sec {
+    padding-block: 64px;
+  }
+  .hv2-sec-sm {
+    padding-block: 40px;
+  }
+  .hv2-h1 {
+    font-size: 40px;
+    line-height: 44px;
+    letter-spacing: -0.9px;
+  }
+  .hv2-h2 {
+    font-size: 30px;
+    line-height: 35px;
+    letter-spacing: -0.5px;
+  }
+  .hv2-h3 {
+    font-size: 22px;
+    line-height: 28px;
+  }
+  .hv2-lead {
+    font-size: 17px;
+    line-height: 27px;
+  }
+  .hv2-grid,
+  .hv2-checks,
+  .hv2-faq {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hv2-install-code {
+    flex-direction: column;
+    font-size: 12.5px;
+    line-height: 21px;
+  }
+  .hv2-copy {
+    align-self: flex-start;
+  }
+  .hv2-prompt {
+    padding: 14px;
+  }
+  .hv2-card-pad {
+    padding: 22px;
+  }
+  .hv2-surface {
+    padding: 22px;
+  }
+  /* The hub becomes a list: the lines and their labels are hidden, the nodes flow. */
+  .hv2-hub {
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .hv2-hub-lines,
+  .hv2-hub-label,
+  .hv2-hub-flow {
+    display: none;
+  }
+  .hv2-hub-node {
+    position: static;
+    transform: none;
+  }
+  .hv2-hub-core {
+    position: static;
+    transform: none;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .hv2-hub-core img {
+    width: 84px;
+  }
+  .hv2-hero-mascot {
+    width: 170px;
+    align-self: center;
+  }
+}

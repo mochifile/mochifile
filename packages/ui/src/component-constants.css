@@ -13,30 +13,50 @@
   /* ToolCard README: "min height 124px". */
   --spacing-tool-card-min: 124px;
   /*
-   * Widths of the header language pill, so its position never depends on how wide a font
-   * draws the label (the right-aligned links moved 3 px when Figtree replaced the fallback).
-   * Measured layout values, not design tokens: the pill's natural width in Figtree, rounded up.
-   * Under 1024 px the code, "EN" 71.5 px and "PT" 69 px; from 1024 px the name, "English"
-   * 109 px and "Português" 130 px, each with its own width so neither gets a wider pill than
-   * the artboard's. Re-measure when adding a language.
+   * Header wordmark width (ADR 0030): the official lettering (1800 × 333 px) at the canvas's
+   * 28px height is 151px wide, above the brand book's 96px minimum.
    */
-  --spacing-language-link-phone: 72px;
-  --spacing-language-link-en: 112px;
-  --spacing-language-link-pt: 132px;
+  --spacing-logo: 151px;
   /*
-   * Header and footer wordmark widths, above the brand book's 96px minimum (README › Logo):
-   * 120px fits beside the language pill and the menu button at 320px. From 600px the wordmark is 184px wide, 32.8px
-   * tall, as tall as the 200px lockup it replaced (ADR 0024), and its clear space, the height
-   * of the "o" (0.715 of the wordmark's height, 23.5px), fits the header's 24px gap and the
-   * footer's 24px margin.
+   * Site V2 shell measurements, read from the canvas (docs/design-ref/v2, mf.css): the footer's link columns, rows and badges, and the pills' side padding.
+   * Section gap 96px ("sections 96 px apart" in the V2 README); the footer ends 48px below.
    */
-  --spacing-logo-phone: 120px;
-  --spacing-logo: 184px;
+  --spacing-footer-column: 200px;
+  --spacing-footer-link: 36px;
+  --spacing-menu-row: 56px;
+  --spacing-badge: 52px;
+  --spacing-target-lg: 52px;
+  --spacing-pill-sm: 18px;
+  --spacing-link-x: 10px;
+  --spacing-chip: 14px;
+  --spacing-badge-gap: 10px;
+  --spacing-badge-start: 14px;
+  --spacing-badge-end: 18px;
+  --spacing-section: 96px;
+  --spacing-footer-end: 48px;
+  --spacing-ask-gap: 6px;
+  /* Content widths of inner pages (V2 canvas `.w` 1104, `.w-mid` 904 and `.w-narrow` 784 px, less their 32px gutters). */
+  --container-site-inner: 1040px;
+  --container-mid: 840px;
+  --container-narrow: 720px;
+  /*
+   * Soft shadows of the V2 canvas (mf.css). They tint with ube (cards) or ink (primary pill and
+   * chips) and replace v1's "no drop shadows" for these surfaces only (ADR 0030).
+   */
+  --shadow-card: 0 1px 0 rgba(30, 27, 46, 0.03), 0 12px 32px -12px rgba(91, 60, 196, 0.16);
+  --shadow-lift: 0 2px 0 rgba(30, 27, 46, 0.03), 0 24px 60px -20px rgba(91, 60, 196, 0.28);
+  --shadow-action: 0 10px 24px -10px rgba(30, 27, 46, 0.55);
+  --shadow-chip: 0 4px 10px -6px rgba(30, 27, 46, 0.18);
 }
 
 /* Button README: secondary "2.5px ink outline"; Dropzone README: "2.5px dashed" border. */
 @utility border-strong {
   border-width: 2.5px;
+}
+
+/* Site V2 canvas (mf.css): 1.5px hairline borders on cards, soft buttons, chips and badges. */
+@utility border-hairline {
+  border-width: 1.5px;
 }
 
 /* SizeChip README: "2px border-control" / "2px ink border". */
@@ -93,23 +113,50 @@
   border-radius: 52px 46px 54px 48px;
 }
 
+/* Site V2 canvas (mf.css): the "mochi squish" corners of cards, small parts and the mascot. */
+@utility rounded-card {
+  border-radius: 24px 28px 22px 26px;
+}
+@utility rounded-small {
+  border-radius: 14px 16px 13px 15px;
+}
+@utility rounded-mascot {
+  border-radius: 22px 26px 20px 24px;
+}
+
 /*
- * Height reserved for the tool panel (padding included) before its client-only tool renders,
- * so the page below does not shift (layout shift fix, see apps/web ToolPage). A measured
- * layout height, not a design token. Tallest compress-image panel, English and Portuguese:
- * 473 px at 360–599 px wide, with the options as a compact list (PR 8); 606 px at 600–1023 px;
- * 441 px from 1024 px. Each value below adds a margin for text that renders wider on other
- * systems. At 320 px the panel is 529 px (710 px before the compact list), 17 px over: a
- * larger reserve would leave every common phone with a gap under the tool. Checked at 360
- * and 390 px by apps/web/e2e/layout-shift.spec.ts; recalibrate whenever the panel changes.
+ * Height reserved for the tool panel's card (padding and border included) before its client-only
+ * tool renders, so the page below does not shift (layout shift fix, see apps/web ToolPage). A
+ * measured layout height, not a design token. Tallest compress-image panel in the V2 card (18 px
+ * of padding on phones, 28 px from 600 px; options above the drop area on one column, side by
+ * side from 901 px), English and Portuguese: 1063 px at 320 px, 950 at 360, 906 at 375, 876 at
+ * 390, 854 at 412, 802 at 428 and 480, 780 at 540, 774 from 680 to 899 px, and 454 from 901 px.
+ * Each step below holds the panel's height at the start of its range plus a margin of 25 to 45
+ * px for text that renders wider on other systems; between two steps the reserve is the taller
+ * one's, so it is never short, and a phone shows a gap rather than a jump. Under 360 px the
+ * panel is taller than the reserve's step (a phone that narrow is rare). Checked at 360 and
+ * 390 px by apps/web/e2e/layout-shift.spec.ts; recalibrate whenever the panel or the card
+ * around it changes.
  */
 @utility tool-reserve {
-  min-height: 512px;
-  @media (width >= 600px) {
-    min-height: 648px;
+  min-height: 1070px;
+  @media (width >= 360px) {
+    min-height: 990px;
   }
-  @media (width >= 64rem) {
-    min-height: 480px;
+  @media (width >= 390px) {
+    min-height: 925px;
+  }
+  @media (width >= 412px) {
+    min-height: 895px;
+  }
+  @media (width >= 428px) {
+    min-height: 845px;
+  }
+  @media (width >= 540px) {
+    min-height: 820px;
+  }
+  @media (width >= 901px) {
+    min-height: 490px;
   }
 }
 
@@ -157,5 +204,56 @@
     &:active:not(:disabled) {
       transform: none;
     }
+  }
+}
+
+/*
+ * Header cell widths (ADR 0030). The header's links are right-aligned, so
+ * when Figtree replaces its fallback face the cluster moved 7px (a layout shift). Each cell
+ * keeps the width its label has in Figtree, and its text sits centred in it: the fallback is
+ * narrower, so nothing moves when the font arrives. Measured values, not design tokens: the
+ * cell's width (label plus 12px of padding each side) at 1440px, rounded up. Re-measure when a
+ * label changes. The Portuguese cells have 6px more than Figtree needs: the fallback
+ * face on Linux draws some of those labels wider, and a cell that grew would shift the cluster.
+ */
+@layer components {
+  [data-main-nav] [data-shell-link] {
+    justify-content: center;
+  }
+  :lang(en) [data-main-nav] [data-shell-link="solutions"] {
+    min-width: 88px;
+  }
+  :lang(en) [data-main-nav] [data-shell-link="guides"] {
+    min-width: 72px;
+  }
+  :lang(en) [data-main-nav] [data-shell-link="docs"] {
+    min-width: 59px;
+  }
+  :lang(en) [data-main-nav] [data-shell-link="pricing"] {
+    min-width: 72px;
+  }
+  :lang(en) [data-main-nav] [data-shell-link="sign-in"] {
+    min-width: 71px;
+  }
+  :lang(en) [data-main-nav] [data-shell-link="get-started"] {
+    min-width: 110px;
+  }
+  :lang(pt) [data-main-nav] [data-shell-link="solutions"] {
+    min-width: 93px;
+  }
+  :lang(pt) [data-main-nav] [data-shell-link="guides"] {
+    min-width: 69px;
+  }
+  :lang(pt) [data-main-nav] [data-shell-link="docs"] {
+    min-width: 65px;
+  }
+  :lang(pt) [data-main-nav] [data-shell-link="pricing"] {
+    min-width: 77px;
+  }
+  :lang(pt) [data-main-nav] [data-shell-link="sign-in"] {
+    min-width: 72px;
+  }
+  :lang(pt) [data-main-nav] [data-shell-link="get-started"] {
+    min-width: 101px;
   }
 }

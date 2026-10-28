@@ -1,0 +1,36 @@
+---
+import { type Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+
+/**
+ * A control for something the site shows but has not built yet (ADR 0030, "visual first"): it
+ * looks like the link it will become and answers a press with a small "Coming soon" notice
+ * (`ComingSoonNotice`), never with a made-up result. It is a native button that opens a
+ * declarative popover, so it needs no script (AGENTS.md rule 5), and says "coming soon" in its
+ * accessible name before it is pressed. Without the Popover API the press does nothing, and the
+ * tooltip and the name still say why.
+ */
+interface Props {
+  locale: Locale
+  /** Id of the notice to open; inside a popover it must be a notice in that same popover. */
+  notice?: string
+  class?: string
+  /** Hooks for tests. */
+  'data-shell-link'?: string
+}
+
+const { locale, notice = 'coming-soon', class: className, ...rest } = Astro.props
+const soon = m.coming_soon({}, { locale })
+---
+
+<button
+  type="button"
+  popovertarget={notice}
+  popovertargetaction="show"
+  title={soon}
+  data-coming-soon-trigger
+  class={className}
+  {...rest}
+>
+  <slot /><span class="sr-only">, {soon}</span>
+</button>

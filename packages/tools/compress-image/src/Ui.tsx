@@ -5,26 +5,25 @@ import { m } from '@mochifile/i18n/messages'
 import { type ToolOptions, validateFiles } from '@mochifile/tool-kit'
 import { createToolClient } from '@mochifile/tool-kit/client'
 import {
-  BatchStatus,
-  type BatchStatusTone,
   downloadZip,
-  FileTile,
-  ImageIcon,
-  isBlockTone,
-  OptionList,
-  OptionRow,
+  FileName,
   preloadZip,
   type QueueItem,
-  ResultRow,
-  StateBlock,
   errorMessage as sharedErrorMessage,
   summarizeQueue,
   useFileQueue,
   usePrepareOnIntent,
 } from '@mochifile/tool-ui'
-import { Button, Dropzone, Notice, ProgressBar, Segmented, SizeChips, Tag } from '@mochifile/ui'
-import { useEffect, useMemo, useState } from 'react'
+import { type DragEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react'
+import celebrate from './assets/expr-celebrate.webp'
+import determined from './assets/expr-determined.webp'
+import excited from './assets/expr-excited.webp'
+import normal from './assets/expr-normal.webp'
+import sad from './assets/expr-sad.webp'
+import smiling from './assets/expr-smiling.webp'
+import squishing from './assets/expr-squishing.webp'
 import { type CompressImageOptions, manifest } from './manifest.ts'
+import './panel.css'
 import { formatSize, MAX_TARGET, MIN_TARGET, PRESETS, parseTarget, type SizeUnit } from './sizes.ts'
 
 /** One client per page; the worker starts on the first sign of intent, not on page load. */
@@ -35,6 +34,9 @@ const client = createToolClient(
 
 const FORMAT_LABEL: Record<EncodableFormat, string> = { jpeg: 'JPG', png: 'PNG', webp: 'WebP' }
 const OUTPUT_FORMATS = ['original', 'jpeg', 'webp'] as const satisfies readonly OutputFormat[]
+
+/** How many rows a list shows before it is staged ("+ 18 more photos"). */
+const STAGED_ROWS = 5
 
 type Item = QueueItem<CompressImageOptions, CompressMeta>
 
@@ -57,6 +59,22 @@ function initialSettings(options: ToolOptions | undefined): CompressImageOptions
   }
 }
 
+/** What the tool needs from the browser: a worker, WebAssembly and object URLs. */
+function browserCanRun(): boolean {
+  return (
+    typeof Worker !== 'undefined' &&
+    typeof WebAssembly !== 'undefined' &&
+    typeof URL !== 'undefined' &&
+    typeof URL.createObjectURL === 'function' &&
+    typeof File !== 'undefined'
+  )
+}
+
+/** An imported picture: its URL and pixel size, so the box is reserved before it loads. */
+type Picture = { src: string; width: number; height: number }
+
+type Tone = 'plain' | 'working' | 'ready' | 'attention' | 'cancelled'
+
 export default function CompressImageUi({ locale, initialOptions }: Props) {
   const initial = useMemo(() => initialSettings(initialOptions), [initialOptions])
   const initialPreset = PRESETS.find((preset) => preset.bytes === initial.targetBytes)
@@ -67,6 +85,20 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
   const [customUnit, setCustomUnit] = useState<SizeUnit>('kb')
   const [format, setFormat] = useState<OutputFormat>(initial.format)
   const [tooMany, setTooMany] = useState(false)
+  // Photos are listed first and compressed when the person says so ("Compress 3 photos").
+  const [started, setStarted] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const runnable = useMemo(browserCanRun, [])
+
+  // The mascots the panel shows later are fetched now, so nothing is requested once photos have
+  // been chosen (the same rule as the compressor's code). Not on Save-Data.
+  useEffect(() => {
+    const connection = (navigator as { connection?: { saveData?: boolean } }).connection
+    if (connection?.saveData) return
+    for (const picture of [determined, squishing, celebrate, smiling, sad, excited]) {
+      new Image().src = picture.src
+    }
+  }, [])
   const {
     rootRef,
     state: engine,
@@ -82,9 +114,9 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
     CompressImageOptions,
     CompressMeta
   >({
-    // Files wait until the compressor has loaded, so none fails only because it is missing,
-    // and nothing is fetched after a file is chosen.
-    paused: engine !== 'ready',
+    // Files wait until the compressor has loaded and the person has started, so none fails only
+    // because the code is missing, and nothing is fetched after a file is chosen.
+    paused: engine !== 'ready' || !started,
     maxFiles: manifest.limits.maxFiles,
     validate: (file) => validateFiles([file], manifest),
     run: async (item, context) => {
@@ -97,22 +129,24 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
   const preset = PRESETS.find((p) => p.key === targetChoice)
   const custom = targetChoice === 'custom' ? parseTarget(customText, customUnit) : undefined
   const targetBytes = preset ? preset.bytes : custom?.ok ? custom.bytes : undefined
+  const customInvalid = custom?.ok === false && customText !== ''
 
   const addFiles = (files: File[]) => {
-    if (targetBytes === undefined) return
+    if (targetBytes === undefined || files.length === 0) return
     prepare()
     setTooMany(add(files, { targetBytes, format }).tooMany)
   }
 
   const clearFiles = () => {
     clear()
+    setStarted(false)
     setTooMany(false)
   }
 
-  // Focus goes where the person can carry on, never to <body>: to "Continue" after a cancel
-  // (launch specification › accessibility), to the next file's remove button after a removal,
-  // and to "Choose photos" (the dropzone's file input) once the compressor loads after
-  // "Try again".
+  // Focus goes where the person can carry on, never to <body>: to the next file's remove button
+  // after a removal, to "Choose photos" after the list is cleared or once the compressor loads
+  // after "Try again", to the size chosen after "Choose another size", and to what comes first
+  // (Cancel, else the result's actions) once the photos are on their way.
   const [focusTarget, setFocusTarget] = useState<string | null>(null)
   useEffect(() => {
     if (focusTarget === null) return
@@ -131,6 +165,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
     const index = items.findIndex((item) => item.id === id)
     const neighbour = items[index + 1] ?? items[index - 1]
     remove(id)
+    if (!neighbour) setStarted(false)
     setFocusTarget(neighbour ? `[data-remove="${neighbour.id}"]` : 'input[type="file"]')
   }
 
@@ -144,30 +179,61 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
   useEffect(() => {
     if (retried && engine === 'ready') {
       setRetried(false)
-      setFocusTarget('input[type="file"]')
+      setFocusTarget('[data-focus-start]')
     }
   }, [retried, engine])
 
   const summary = summarizeQueue(items)
+  const queuedIds = items.filter((item) => item.status === 'queued').map((item) => item.id)
   const cancelledIds = items.filter((item) => item.status === 'cancelled').map((item) => item.id)
-  // The list's state above its rows (proposal v1.1 › Result banner): preparing, then working
-  // with counts for a batch, then one banner when it is finished. A single photo gets a banner
-  // for its result; while it works, fails or is cancelled its row says it all.
+  const startable = items.filter(
+    (item) => item.error?.code !== 'unsupported-type' && item.error?.code !== 'file-too-large',
+  )
+
+  /** "Compress 3 photos": applies the options as they are now, then lets the queue run. */
+  const begin = () => {
+    if (targetBytes === undefined) return
+    prepare()
+    requeue(new Set(queuedIds), { targetBytes, format })
+    setStarted(true)
+    setFocusTarget('[data-cancel], [data-after-run]')
+  }
+
+  // "Choose another size" puts the photos back in the list, ready for new options. The queue
+  // restarts only once the render has paused it, or it would run before the options show.
+  const [restage, setRestage] = useState(0)
+  const restaged = useRef(0)
+  useEffect(() => {
+    if (restage === restaged.current || started) return
+    restaged.current = restage
+    requeue(new Set(startable.map((item) => item.id)))
+    setFocusTarget('input[name="cp-size"]:checked')
+  })
+  const chooseAnotherSize = () => {
+    setStarted(false)
+    setRestage((count) => count + 1)
+  }
+
+  // The list's state above its rows: preparing, then working with counts for a batch, then one
+  // banner when it is finished.
   const batch = summary.total > 1
   const only = summary.total === 1 ? items[0] : undefined
   const onlyResult = only?.status === 'done' ? only.result : undefined
-  const preparing = summary.pending > 0 && engine === 'loading'
-  const batchTone: BatchStatusTone =
-    preparing || (busy && batch && engine === 'ready')
+  const onlyUnreachable =
+    only?.status === 'error' && only.error?.code === 'target-unreachable' ? only : undefined
+  const preparing = started && summary.pending > 0 && engine === 'loading'
+  const tone: Tone = !started
+    ? 'plain'
+    : preparing || busy
       ? 'working'
-      : busy
-        ? 'plain'
-        : !batch
-          ? onlyResult
-            ? 'ready'
-            : 'plain'
-          : summary.cancelled > 0
-            ? 'cancelled'
+      : summary.cancelled > 0
+        ? 'cancelled'
+        : onlyUnreachable
+          ? 'attention'
+          : only
+            ? onlyResult
+              ? 'ready'
+              : 'plain'
             : summary.failed > 0
               ? 'attention'
               : 'ready'
@@ -177,8 +243,8 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
       { before: formatSize(before, locale), after: formatSize(after, locale) },
       { locale },
     )
-  const [batchTitle, batchDetail] = ((): [string, string] => {
-    if (batchTone === 'working') {
+  const [bannerTitle, bannerDetail] = ((): [string, string] => {
+    if (tone === 'working') {
       const count = batch
         ? m.compress_image_progress_count(
             { done: String(summary.done), total: String(summary.total) },
@@ -186,10 +252,13 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
           )
         : ''
       return preparing
-        ? [m.compress_image_preparing({}, { locale }), count]
+        ? [
+            m.compress_image_preparing_title({}, { locale }),
+            m.compress_image_preparing_detail({ count: summary.pending }, { locale }),
+          ]
         : [m.compress_image_working_title({}, { locale }), count]
     }
-    if (batchTone === 'ready' && only && onlyResult) {
+    if (tone === 'ready' && only && onlyResult) {
       const { meta } = onlyResult
       const target = formatSize(only.settings.targetBytes, locale)
       if (meta.outcome === 'already-under') {
@@ -218,7 +287,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
           : sizes(only.file.size, onlyResult.blob.size),
       ]
     }
-    if (batchTone === 'ready') {
+    if (tone === 'ready') {
       // One target for the whole batch says "fit 50 KB"; mixed targets, only that it is done.
       const targets = new Set(done.map((item) => item.settings.targetBytes))
       const [target] = targets
@@ -237,7 +306,19 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
       ]
     }
     // Portuguese plural rules count 0 as "one", so "none ready" has sentences of its own.
-    if (batchTone === 'attention') {
+    if (tone === 'attention' && onlyUnreachable) {
+      return [
+        m.compress_image_unreachable_title(
+          { target: formatSize(onlyUnreachable.settings.targetBytes, locale) },
+          { locale },
+        ),
+        m.compress_image_unreachable_detail(
+          { smallest: formatSize(smallestOf(onlyUnreachable), locale) },
+          { locale },
+        ),
+      ]
+    }
+    if (tone === 'attention') {
       return summary.done === 0
         ? [
             m.compress_image_batch_none({}, { locale }),
@@ -251,7 +332,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
             m.compress_image_batch_mixed_detail({ rest }, { locale }),
           ]
     }
-    if (batchTone === 'cancelled') {
+    if (tone === 'cancelled') {
       return [
         m.compress_image_batch_cancelled({}, { locale }),
         summary.done === 0
@@ -261,26 +342,28 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
     }
     return ['', '']
   })()
-  // Full width on phones inside the tool panel, as every button there (Button README).
-  const batchButton = 'w-full sm:w-auto'
-  const batchSecondary = isBlockTone(batchTone) ? 'secondary-on-block' : 'secondary'
-  // "Compress more" clears the finished list and returns to "Choose photos" (launch
-  // specification › accessibility); while photos are processed, "Clear list" stops them.
+  // The banner's picture: the mascot squishes while working and celebrates a clean batch.
+  const bannerImage =
+    tone === 'working'
+      ? preparing
+        ? determined
+        : squishing
+      : tone === 'ready'
+        ? batch
+          ? celebrate
+          : smiling
+        : tone === 'attention'
+          ? onlyUnreachable
+            ? sad
+            : determined
+          : undefined
+
+  // "Compress more" clears the finished list and returns to "Choose photos"; while photos are
+  // processed, "Clear list" stops them.
   const compressMore = () => {
     clearFiles()
     setFocusTarget('input[type="file"]')
   }
-
-  const stale =
-    targetBytes !== undefined &&
-    items.some(
-      (item) =>
-        item.status !== 'queued' &&
-        item.status !== 'working' &&
-        item.error?.code !== 'unsupported-type' &&
-        item.error?.code !== 'file-too-large' &&
-        (item.settings.targetBytes !== targetBytes || item.settings.format !== format),
-    )
 
   const downloadAll = async () => {
     await downloadZip(
@@ -320,326 +403,806 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
   }
 
   const hasWebp = items.some((item) => item.file.type === 'image/webp')
+  const heicRefused = items.some(
+    (item) => item.error?.code === 'unsupported-type' && /\.hei[cf]$/i.test(item.file.name),
+  )
+
+  // The next preset that holds what the photo needs: "Try 100 KB".
+  const tryPreset = onlyUnreachable
+    ? PRESETS.find((p) => p.bytes >= smallestOf(onlyUnreachable))
+    : undefined
+  const tryAgainWith = (bytes: number, key: string) => {
+    if (!only) return
+    setTargetChoice(key)
+    requeue(new Set([only.id]), { targetBytes: bytes })
+    setFocusTarget('[data-cancel], [data-after-run]')
+  }
+
+  // The primary download of a finished banner: one file, or all of them in a ZIP.
+  const downloadAction = (() => {
+    if (done.length === 0) return null
+    if (done.length === 1) {
+      const result = done[0]?.result
+      if (!result) return null
+      const label =
+        batch || !result.meta.converted
+          ? m.compress_image_download({}, { locale })
+          : m.compress_image_download_format(
+              { format: FORMAT_LABEL[result.meta.format] },
+              { locale },
+            )
+      return (
+        <a
+          data-after-run
+          className="cp-btn cp-btn-lg cp-btn-primary"
+          href={result.url}
+          download={result.name}
+          aria-label={m.compress_image_download_named({ name: result.name }, { locale })}
+        >
+          {label}
+        </a>
+      )
+    }
+    return (
+      <button
+        type="button"
+        data-after-run
+        className="cp-btn cp-btn-lg cp-btn-primary"
+        onClick={() => void downloadAll()}
+      >
+        {done.length === summary.total
+          ? m.compress_image_download_all({}, { locale })
+          : m.compress_image_download_count({ count: String(done.length) }, { locale })}
+      </button>
+    )
+  })()
+
+  // Drag, drop and paste work wherever the person is in the panel.
+  const takeFiles = (files: File[]) => addFiles(files)
+  const takeRef = useRef(takeFiles)
+  takeRef.current = takeFiles
+  useEffect(() => {
+    const onPaste = (event: ClipboardEvent) => {
+      const files = Array.from(event.clipboardData?.files ?? [])
+      // Text pasted into a field is left alone; only files are taken.
+      if (files.length === 0) return
+      event.preventDefault()
+      takeRef.current(files)
+    }
+    document.addEventListener('paste', onPaste)
+    return () => document.removeEventListener('paste', onPaste)
+  }, [])
+  const hasFiles = (event: DragEvent) => Array.from(event.dataTransfer.types).includes('Files')
+
+  if (!runnable) {
+    return (
+      <div className="cp">
+        <CenterState
+          image={sad}
+          title={m.compress_image_browser_title({}, { locale })}
+          text={m.compress_image_browser_text({}, { locale })}
+        />
+      </div>
+    )
+  }
+
+  const showOptions = !started && !(items.length > 0 && queuedIds.length === 0)
+  const listOnly = items.length > 0 && !started && queuedIds.length === 0
+  const staged = !started && items.length > STAGED_ROWS
+  const rows = staged ? items.slice(0, STAGED_ROWS) : items
+  const targetNote =
+    targetBytes === undefined
+      ? ''
+      : m.compress_image_target_note({ target: formatSize(targetBytes, locale) }, { locale })
+
+  const list = (
+    <ul className="cp-list" aria-label={m.compress_image_list_label({}, { locale })}>
+      {rows.map((item) => (
+        <PhotoRow
+          key={item.id}
+          item={item}
+          locale={locale}
+          started={started}
+          fitsTag={tone === 'plain' || tone === 'working' || tone === 'cancelled'}
+          stageMessage={stageMessage}
+          errorText={errorMessage(item)}
+          onRemove={() => removeFile(item.id)}
+        />
+      ))}
+    </ul>
+  )
+
+  const tooManyNotice = tooMany && (
+    <div className="cp-notice" role="alert">
+      <WarningIcon />
+      <span className="cp-notice-body">
+        <b>
+          {m.compress_image_too_many_title(
+            { maxFiles: String(manifest.limits.maxFiles) },
+            { locale },
+          )}
+        </b>
+        <span className="cp-small">{m.compress_image_too_many_detail({}, { locale })}</span>
+      </span>
+    </div>
+  )
+
+  const engineBlock = engineFailed && (
+    <CenterState
+      image={sad}
+      title={m.compress_image_engine_failed_title({}, { locale })}
+      text={m.compress_image_engine_failed({}, { locale })}
+      action={
+        <button
+          type="button"
+          data-focus-start
+          className="cp-btn cp-btn-lg cp-btn-primary"
+          onClick={retryEngine}
+        >
+          {m.compress_image_engine_retry({}, { locale })}
+        </button>
+      }
+    />
+  )
 
   return (
-    <div ref={rootRef} className="flex flex-col gap-8" data-engine={engine}>
-      {/* Phones: one column. Desktop: options on the left, the dropzone in the wider column. */}
-      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-5 lg:items-start lg:gap-8">
-        <div className="flex flex-col gap-5 lg:col-span-2">
-          {/*
-            Under 600 px the options are a compact list ("Maximum size · 50 KB · Change") that
-            opens each one in place, so "Choose photos" stays high on the screen (launch
-            specification › tool page); from 600 px they show as before.
-          */}
-          <OptionList className="sm:gap-5">
-            <OptionRow
-              label={m.compress_image_custom_label({}, { locale })}
-              value={
-                preset
-                  ? formatSize(preset.bytes, locale)
-                  : targetBytes !== undefined
-                    ? formatSize(targetBytes, locale)
-                    : m.compress_image_target_custom({}, { locale })
-              }
-              change={m.compress_image_change({}, { locale })}
+    // Drop target only: the same photos can be added with the real file input and by paste.
+    // biome-ignore lint/a11y/noStaticElementInteractions: see above
+    <div
+      ref={rootRef}
+      className="cp"
+      data-engine={engine}
+      data-dragging={dragging || undefined}
+      onDragOver={(event) => {
+        if (!hasFiles(event)) return
+        event.preventDefault()
+        setDragging(true)
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false)
+      }}
+      onDrop={(event) => {
+        if (!hasFiles(event)) return
+        event.preventDefault()
+        setDragging(false)
+        takeFiles(Array.from(event.dataTransfer.files))
+      }}
+    >
+      {engineFailed && items.length === 0 ? (
+        engineBlock
+      ) : (
+        <>
+          {engineFailed && engineBlock}
+          {items.length > 0 && started && (
+            <section
+              aria-label={m.compress_image_list_label({}, { locale })}
+              className="cp-col cp-g16"
             >
-              <div className="flex flex-col gap-3">
-                <SizeChips
-                  legend={m.compress_image_target_legend({}, { locale })}
-                  legendClassName="max-sm:sr-only"
-                  headingLevel={2}
-                  value={targetChoice}
-                  onChange={setTargetChoice}
-                  // Image tools use the mango block (design system README › Colour).
-                  block="mango"
-                  options={[
-                    ...PRESETS.map((p) => ({
-                      value: p.key as string,
-                      label: formatSize(p.bytes, locale),
-                    })),
-                    {
-                      value: 'custom',
-                      label: m.compress_image_target_custom({}, { locale }),
-                    },
-                  ]}
-                />
-                {targetChoice === 'custom' && (
-                  <div className="flex flex-wrap items-end gap-3">
-                    <label className="flex flex-col gap-1">
-                      <span className="type-body-sm font-semibold">
-                        {m.compress_image_custom_label({}, { locale })}
-                      </span>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={customText}
-                        onChange={(event) => setCustomText(event.currentTarget.value)}
-                        aria-invalid={custom?.ok === false && customText !== ''}
-                        aria-describedby="compress-image-custom-error"
-                        size={6}
-                        className="min-h-target-min rounded-md border-chip border-border-control bg-surface-page px-3 focus-ring"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className="type-body-sm font-semibold">
-                        {m.compress_image_custom_unit_label({}, { locale })}
-                      </span>
-                      <select
-                        value={customUnit}
-                        onChange={(event) => setCustomUnit(event.currentTarget.value as SizeUnit)}
-                        className="min-h-target-min rounded-md border-chip border-border-control bg-surface-page px-3 focus-ring"
+              <Banner
+                tone={tone}
+                image={bannerImage}
+                title={bannerTitle}
+                detail={bannerDetail}
+                meter={
+                  tone === 'working' && (
+                    <Meter
+                      label={bannerTitle}
+                      value={
+                        preparing
+                          ? undefined
+                          : batch
+                            ? summary.done / summary.total
+                            : (only?.progress ?? 0)
+                      }
+                    />
+                  )
+                }
+                actions={
+                  <>
+                    {tone === 'working' && (
+                      <button
+                        type="button"
+                        data-cancel
+                        className="cp-btn cp-btn-ghost"
+                        onClick={cancelAll}
                       >
-                        <option value="kb">KB</option>
-                        <option value="mb">MB</option>
-                      </select>
-                    </label>
-                    <p
-                      id="compress-image-custom-error"
-                      className="basis-full type-body-sm font-semibold text-danger"
-                    >
-                      {custom?.ok === false && customText !== ''
-                        ? custom.reason === 'invalid'
-                          ? m.compress_image_custom_error_invalid({}, { locale })
-                          : m.compress_image_custom_error_range(
-                              {
-                                min: formatSize(MIN_TARGET, locale),
-                                max: formatSize(MAX_TARGET, locale),
-                              },
+                        {m.compress_image_cancel({}, { locale })}
+                      </button>
+                    )}
+                    {tone === 'ready' && (
+                      <>
+                        {downloadAction}
+                        <button
+                          type="button"
+                          className="cp-btn cp-btn-lg cp-btn-ghost"
+                          onClick={compressMore}
+                        >
+                          {batch
+                            ? m.compress_image_compress_more({}, { locale })
+                            : m.compress_image_compress_another({}, { locale })}
+                        </button>
+                      </>
+                    )}
+                    {tone === 'attention' && onlyUnreachable && (
+                      <>
+                        {tryPreset && (
+                          <button
+                            type="button"
+                            data-after-run
+                            className="cp-btn cp-btn-lg cp-btn-primary"
+                            onClick={() => tryAgainWith(tryPreset.bytes, tryPreset.key)}
+                          >
+                            {m.compress_image_try_size(
+                              { size: formatSize(tryPreset.bytes, locale) },
                               { locale },
-                            )
-                        : ''}
-                    </p>
+                            )}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          data-after-run
+                          className="cp-btn cp-btn-lg cp-btn-ghost"
+                          onClick={chooseAnotherSize}
+                        >
+                          {m.compress_image_choose_size({}, { locale })}
+                        </button>
+                      </>
+                    )}
+                    {tone === 'attention' && !onlyUnreachable && (
+                      <>
+                        {downloadAction}
+                        <button
+                          type="button"
+                          className="cp-btn cp-btn-lg cp-btn-ghost"
+                          onClick={compressMore}
+                        >
+                          {m.compress_image_compress_again({}, { locale })}
+                        </button>
+                      </>
+                    )}
+                    {tone === 'cancelled' && (
+                      <>
+                        {downloadAction}
+                        {/* Continues with the settings the files were added with. */}
+                        <button
+                          type="button"
+                          data-continue
+                          className="cp-btn cp-btn-lg cp-btn-ghost"
+                          onClick={() => requeue(new Set(cancelledIds))}
+                        >
+                          {m.compress_image_rerun({}, { locale })}
+                        </button>
+                        {done.length === 0 && (
+                          <button type="button" className="cp-btn cp-btn-lg" onClick={compressMore}>
+                            {m.compress_image_clear({}, { locale })}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </>
+                }
+              />
+              {done.map(
+                (item) =>
+                  item.result?.meta.flattenedTransparency && (
+                    <div key={item.id} className="cp-notice" role="status">
+                      <WarningIcon />
+                      <span className="cp-notice-body">
+                        <b>{m.compress_image_flattened_title({}, { locale })}</b>
+                        <span className="cp-small">
+                          {m.compress_image_flattened({}, { locale })}
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        className="cp-btn cp-btn-soft"
+                        disabled={busy}
+                        onClick={() => requeue(new Set([item.id]), { format: 'webp' })}
+                      >
+                        {m.compress_image_keep_transparency({}, { locale })}
+                      </button>
+                    </div>
+                  ),
+              )}
+              {tooManyNotice}
+              {list}
+            </section>
+          )}
+
+          {items.length > 0 && !started && listOnly && (
+            <div className="cp-col cp-g16">
+              {list}
+              {heicRefused && (
+                <p className="cp-note">{m.compress_image_heic_note({}, { locale })}</p>
+              )}
+            </div>
+          )}
+
+          {started && heicRefused && (
+            <p className="cp-note">{m.compress_image_heic_note({}, { locale })}</p>
+          )}
+
+          {showOptions && (
+            <>
+              {/* Phones: one column. From 900 px: options on the left, drop area or list on the right. */}
+              <div className="cp-grid">
+                <div className="cp-col cp-g24">
+                  <fieldset className="cp-step">
+                    <legend>
+                      <h2 className="cp-h-sm">{m.compress_image_target_legend({}, { locale })}</h2>
+                    </legend>
+                    <div className="cp-chips">
+                      {[
+                        ...PRESETS.map((p) => ({
+                          value: p.key as string,
+                          label: formatSize(p.bytes, locale),
+                        })),
+                        { value: 'custom', label: m.compress_image_target_custom({}, { locale }) },
+                      ].map((option) => (
+                        <label key={option.value} className="cp-chip">
+                          <input
+                            type="radio"
+                            name="cp-size"
+                            value={option.value}
+                            checked={targetChoice === option.value}
+                            onChange={() => setTargetChoice(option.value)}
+                          />
+                          {option.label}
+                        </label>
+                      ))}
+                    </div>
+                    {targetChoice === 'custom' && (
+                      <div className="cp-custom">
+                        <label className="cp-custom-label" htmlFor="cp-custom-input">
+                          {m.compress_image_custom_label({}, { locale })}
+                        </label>
+                        <div className="cp-field-row">
+                          <input
+                            id="cp-custom-input"
+                            type="text"
+                            inputMode="decimal"
+                            className="cp-input"
+                            value={customText}
+                            onChange={(event) => setCustomText(event.currentTarget.value)}
+                            aria-invalid={customInvalid}
+                            aria-describedby="cp-custom-error"
+                          />
+                          <span className="cp-unit">
+                            <select
+                              aria-label={m.compress_image_custom_unit_label({}, { locale })}
+                              value={customUnit}
+                              onChange={(event) =>
+                                setCustomUnit(event.currentTarget.value as SizeUnit)
+                              }
+                            >
+                              <option value="kb">KB</option>
+                              <option value="mb">MB</option>
+                            </select>
+                            <ChevronIcon />
+                          </span>
+                        </div>
+                        <p id="cp-custom-error" role="alert" className="cp-error">
+                          {customInvalid && <AlertIcon />}
+                          {customInvalid && custom?.ok === false
+                            ? custom.reason === 'invalid'
+                              ? m.compress_image_custom_error_invalid({}, { locale })
+                              : m.compress_image_custom_error_range(
+                                  {
+                                    min: formatSize(MIN_TARGET, locale),
+                                    max: formatSize(MAX_TARGET, locale),
+                                  },
+                                  { locale },
+                                )
+                            : ''}
+                        </p>
+                      </div>
+                    )}
+                    {targetNote && <span className="cp-small cp-muted">{targetNote}</span>}
+                  </fieldset>
+
+                  <fieldset className="cp-step">
+                    <legend>
+                      <h2 className="cp-h-sm">{m.compress_image_format_legend({}, { locale })}</h2>
+                    </legend>
+                    <div className="cp-chips">
+                      {[
+                        {
+                          value: 'original' as const,
+                          label: m.compress_image_format_original({}, { locale }),
+                        },
+                        {
+                          value: 'jpeg' as const,
+                          label: m.compress_image_format_jpeg({}, { locale }),
+                        },
+                        {
+                          value: 'webp' as const,
+                          label: m.compress_image_format_webp({}, { locale }),
+                        },
+                      ].map((option) => (
+                        <label key={option.value} className="cp-chip">
+                          <input
+                            type="radio"
+                            name="cp-format"
+                            value={option.value}
+                            checked={format === option.value}
+                            onChange={() => setFormat(option.value)}
+                          />
+                          {option.label}
+                        </label>
+                      ))}
+                    </div>
+                    <span className="cp-small cp-muted">
+                      {m.compress_image_format_note({}, { locale })}
+                    </span>
+                  </fieldset>
+                  {hasWebp && format !== 'jpeg' && (
+                    <div className="cp-notice" role="status">
+                      <WarningIcon />
+                      <span className="cp-notice-body cp-small">
+                        {m.compress_image_webp_hint({}, { locale })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {items.length === 0 ? (
+                  <Drop
+                    locale={locale}
+                    dragging={dragging}
+                    disabled={targetBytes === undefined}
+                    onFiles={addFiles}
+                  />
+                ) : (
+                  <div className="cp-col cp-g12">
+                    {tooManyNotice}
+                    {list}
+                    {staged && (
+                      <span className="cp-more">
+                        {m.compress_image_more_photos(
+                          { count: items.length - STAGED_ROWS },
+                          { locale },
+                        )}
+                      </span>
+                    )}
+                    <div className="cp-actions">
+                      <button
+                        type="button"
+                        data-focus-start
+                        className="cp-btn cp-btn-lg cp-btn-primary cp-btn-block-phone"
+                        disabled={targetBytes === undefined}
+                        onClick={begin}
+                      >
+                        {m.compress_image_start({ count: queuedIds.length }, { locale })}
+                      </button>
+                      <button type="button" className="cp-btn cp-btn-lg" onClick={compressMore}>
+                        {m.compress_image_clear({}, { locale })}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
-            </OptionRow>
-            <OptionRow
-              label={m.compress_image_format_row({}, { locale })}
-              value={
-                format === 'jpeg'
-                  ? m.compress_image_format_jpeg({}, { locale })
-                  : format === 'webp'
-                    ? m.compress_image_format_webp({}, { locale })
-                    : m.compress_image_format_original({}, { locale })
-              }
-              change={m.compress_image_change({}, { locale })}
-            >
-              <Segmented
-                legend={m.compress_image_format_legend({}, { locale })}
-                legendClassName="max-sm:sr-only"
-                headingLevel={2}
-                value={format}
-                onChange={setFormat}
-                options={[
-                  {
-                    value: 'original',
-                    label: m.compress_image_format_original({}, { locale }),
-                    hint: m.compress_image_format_original_hint({}, { locale }),
-                  },
-                  {
-                    value: 'jpeg',
-                    label: m.compress_image_format_jpeg({}, { locale }),
-                    hint: m.compress_image_format_jpeg_hint({}, { locale }),
-                  },
-                  {
-                    value: 'webp',
-                    label: m.compress_image_format_webp({}, { locale }),
-                    hint: m.compress_image_format_webp_hint({}, { locale }),
-                  },
-                ]}
-              />
-            </OptionRow>
-          </OptionList>
-          {/* Outside the row, so it shows even while the format row is closed on a phone. */}
-          {hasWebp && format !== 'jpeg' && (
-            <Notice tone="warning">{m.compress_image_webp_hint({}, { locale })}</Notice>
+              <p className="cp-privacy">
+                <LockIcon />
+                <span>{m.compress_image_privacy_note({}, { locale })}</span>
+              </p>
+            </>
           )}
-        </div>
+        </>
+      )}
+    </div>
+  )
+}
 
-        <div className="flex flex-col gap-3 lg:col-span-3">
-          <Dropzone
-            onFiles={addFiles}
-            multiple
-            accept={manifest.accepts.join(',')}
-            disabled={targetBytes === undefined}
-            stepLabel={m.compress_image_drop_step({}, { locale })}
-            stepHeadingLevel={2}
-            label={m.compress_image_drop_label({}, { locale })}
-            hint={m.compress_image_drop_hint(
+/** The smallest size the worker could reach, from the error's details (0 when unknown). */
+function smallestOf(item: Item): number {
+  return Number(item.error?.details?.smallestBytes ?? 0)
+}
+
+function Banner({
+  tone,
+  image,
+  title,
+  detail,
+  meter,
+  actions,
+}: {
+  tone: Tone
+  image: Picture | undefined
+  title: string
+  detail: string
+  meter?: ReactNode
+  actions: ReactNode
+}) {
+  // One element across every tone, so its status text stays a single live region: each change
+  // is announced once and focus never moves by itself.
+  return (
+    <div data-tone={tone} data-ready={tone === 'ready' || undefined} className="cp-banner">
+      {image && (
+        <img src={image.src} alt="" width={image.width} height={image.height} className="cp-expr" />
+      )}
+      <div className="cp-banner-body">
+        <div role="status" className="cp-col empty:sr-only">
+          {title && <span className="cp-h-md">{title}</span>}
+          {detail && <span className="cp-detail">{detail}</span>}
+        </div>
+        {meter}
+      </div>
+      <div className="cp-actions">{actions}</div>
+    </div>
+  )
+}
+
+function Meter({ label, value }: { label: string; value: number | undefined }) {
+  // Native <progress>: accessible by default and styled without inline styles, which the CSP
+  // forbids. Without a value the work cannot be measured (preparing): a sliding bar, no number.
+  if (value === undefined) {
+    return (
+      <span className="cp-meter" role="progressbar" aria-label={label}>
+        <span className="cp-indet" />
+      </span>
+    )
+  }
+  const percent = Math.round(Math.min(1, Math.max(0, value)) * 100)
+  return (
+    <progress className="cp-progress" max={100} value={percent} aria-label={label}>
+      {percent}%
+    </progress>
+  )
+}
+
+function CenterState({
+  image,
+  title,
+  text,
+  action,
+}: {
+  image: Picture
+  title: string
+  text: string
+  action?: ReactNode
+}) {
+  return (
+    <div className="cp-center" role="alert">
+      <img src={image.src} alt="" width={image.width} height={image.height} className="cp-expr" />
+      <span className="cp-h-md">{title}</span>
+      <span className="cp-muted">{text}</span>
+      {action}
+    </div>
+  )
+}
+
+function Drop({
+  locale,
+  dragging,
+  disabled,
+  onFiles,
+}: {
+  locale: Locale
+  dragging: boolean
+  disabled: boolean
+  onFiles: (files: File[]) => void
+}) {
+  const id = useId()
+  const labelId = useId()
+  const hintId = useId()
+  return (
+    <label
+      htmlFor={id}
+      className="cp-drop"
+      data-dragging={dragging || undefined}
+      data-disabled={disabled || undefined}
+    >
+      {dragging ? (
+        <>
+          <img
+            src={excited.src}
+            alt=""
+            width={excited.width}
+            height={excited.height}
+            className="cp-expr"
+          />
+          <span className="cp-h-md">{m.compress_image_drop_dragging({}, { locale })}</span>
+        </>
+      ) : (
+        <>
+          <img
+            src={normal.src}
+            alt=""
+            width={normal.width}
+            height={normal.height}
+            className="cp-expr"
+          />
+          <span {...{ role: 'heading', 'aria-level': 2 }} className="cp-h-md">
+            {m.compress_image_drop_step({}, { locale })}
+          </span>
+          <span
+            id={labelId}
+            data-primary-action
+            className="cp-btn cp-btn-lg cp-btn-primary cp-drop-button"
+          >
+            <UploadIcon />
+            {m.compress_image_drop_label({}, { locale })}
+          </span>
+          <span id={hintId} className="cp-small cp-muted">
+            {m.compress_image_drop_hint(
               {
                 maxFiles: String(manifest.limits.maxFiles),
                 maxSize: formatSize(manifest.limits.maxFileSizeBytes, locale),
               },
               { locale },
             )}
-            pasteHint={m.compress_image_paste_hint({}, { locale })}
-          />
-          <p className="type-body-sm text-ink-muted">
-            {m.compress_image_privacy_note({}, { locale })}
-          </p>
-          {tooMany && (
-            <div role="alert">
-              <Notice tone="warning">
-                {m.compress_image_too_many(
-                  { maxFiles: String(manifest.limits.maxFiles) },
-                  { locale },
-                )}
-              </Notice>
-            </div>
-          )}
-          {/*
-            All that is known is that the compressor did not load, so that is all it says
-            (design-system proposal v1.1 › discrepancies): no guess about the connection or the
-            browser. Files added meanwhile wait, and adding files also tries again.
-          */}
-          {engineFailed && (
-            <StateBlock
-              mascot="error"
-              action={
-                <Button variant="secondary" className="w-full sm:w-fit" onClick={retryEngine}>
-                  {m.compress_image_engine_retry({}, { locale })}
-                </Button>
-              }
-            >
-              {m.compress_image_engine_failed({}, { locale })}
-            </StateBlock>
-          )}
-        </div>
-      </div>
-
-      {items.length > 0 && (
-        <section
-          aria-label={m.compress_image_list_label({}, { locale })}
-          className="flex flex-col gap-4"
-        >
-          <BatchStatus
-            tone={batchTone}
-            title={batchTitle}
-            {...(batchDetail ? { detail: batchDetail } : {})}
-            progress={
-              batchTone === 'working' &&
-              (preparing ? (
-                <ProgressBar label={batchTitle} />
-              ) : (
-                <ProgressBar value={summary.done / summary.total} label={batchDetail} />
-              ))
-            }
-            actions={
-              <>
-                {busy && (
-                  <Button variant={batchSecondary} className={batchButton} onClick={cancelAll}>
-                    {m.compress_image_cancel({}, { locale })}
-                  </Button>
-                )}
-                {!busy && cancelledIds.length > 0 && (
-                  // Continues with the settings the files were added with.
-                  <Button
-                    data-continue
-                    className={batchButton}
-                    onClick={() => requeue(new Set(cancelledIds))}
-                  >
-                    {m.compress_image_continue({}, { locale })}
-                  </Button>
-                )}
-                {!busy && stale && (
-                  <Button
-                    className={batchButton}
-                    onClick={() =>
-                      requeue(
-                        new Set(
-                          items
-                            .filter(
-                              (item) =>
-                                item.error?.code !== 'unsupported-type' &&
-                                item.error?.code !== 'file-too-large',
-                            )
-                            .map((item) => item.id),
-                        ),
-                        targetBytes === undefined ? {} : { targetBytes, format },
-                      )
-                    }
-                  >
-                    {m.compress_image_rerun({}, { locale })}
-                  </Button>
-                )}
-                {done.length > 1 && !busy && (
-                  <Button className={batchButton} onClick={() => void downloadAll()}>
-                    {m.compress_image_download_all({}, { locale })}
-                  </Button>
-                )}
-                {busy ? (
-                  <Button variant={batchSecondary} className={batchButton} onClick={clearFiles}>
-                    {m.compress_image_clear({}, { locale })}
-                  </Button>
-                ) : (
-                  <Button variant={batchSecondary} className={batchButton} onClick={compressMore}>
-                    {batch
-                      ? m.compress_image_compress_more({}, { locale })
-                      : m.compress_image_compress_another({}, { locale })}
-                  </Button>
-                )}
-              </>
-            }
-          />
-
-          <ul className="flex flex-col gap-4">
-            {items.map((item, index) => (
-              <ResultRow
-                key={item.id}
-                item={item}
-                index={index}
-                labels={{
-                  waiting: m.compress_image_status_waiting({}, { locale }),
-                  cancelled: m.compress_image_cancelled({}, { locale }),
-                  download: m.compress_image_download({}, { locale }),
-                  downloadNamed: (name) => m.compress_image_download_named({ name }, { locale }),
-                  progressLabel: (name) => m.compress_image_progress_label({ name }, { locale }),
-                  remove: m.compress_image_remove({}, { locale }),
-                  removeNamed: (name) => m.compress_image_remove_named({ name }, { locale }),
-                }}
-                onRemove={() => removeFile(item.id)}
-                icon={
-                  <FileTile tint="mango">
-                    <ImageIcon />
-                  </FileTile>
-                }
-                // The batch status above shows the mascot whenever it is a block.
-                mascot={batchTone === 'plain'}
-                formatBytes={(bytes) => formatSize(bytes, locale)}
-                sizeSummary={(before, after) =>
-                  m.compress_image_sizes(
-                    { before: formatSize(before, locale), after: formatSize(after, locale) },
-                    { locale },
-                  )
-                }
-                stageMessage={stageMessage}
-                errorMessage={errorMessage}
-                resultDetails={
-                  item.result && <ResultDetails item={item} result={item.result} locale={locale} />
-                }
-                resultActions={
-                  item.result?.meta.flattenedTransparency && (
-                    <Button
-                      variant="secondary"
-                      className="w-full sm:w-auto"
-                      disabled={busy}
-                      onClick={() => requeue(new Set([item.id]), { format: 'webp' })}
-                    >
-                      {m.compress_image_keep_transparency({}, { locale })}
-                    </Button>
-                  )
-                }
-              />
-            ))}
-          </ul>
-        </section>
+          </span>
+          <span className="cp-small cp-muted cp-only-desk">
+            {m.compress_image_paste_hint({}, { locale })}
+          </span>
+        </>
       )}
-    </div>
+      <input
+        id={id}
+        type="file"
+        data-focus-start
+        aria-labelledby={labelId}
+        aria-describedby={hintId}
+        accept={manifest.accepts.join(',')}
+        multiple
+        disabled={disabled}
+        onChange={(event) => {
+          const files = Array.from(event.currentTarget.files ?? [])
+          if (files.length > 0) onFiles(files)
+          // Allow choosing the same file again.
+          event.currentTarget.value = ''
+        }}
+      />
+    </label>
   )
 }
 
-function ResultDetails({
+function PhotoRow({
   item,
+  locale,
+  started,
+  fitsTag,
+  stageMessage,
+  errorText,
+  onRemove,
+}: {
+  item: Item
+  locale: Locale
+  started: boolean
+  fitsTag: boolean
+  stageMessage: (stage: string | undefined) => string
+  errorText: string
+  onRemove: () => void
+}) {
+  const result = item.status === 'done' ? item.result : undefined
+  const unreachable = item.error?.code === 'target-unreachable'
+  const failed = item.status === 'error' && !unreachable
+  const smallest = unreachable ? smallestOf(item) : 0
+  const before = formatSize(item.file.size, locale)
+  const removeLabel = m.compress_image_remove_named({ name: item.file.name }, { locale })
+  const removeButton = (
+    <button
+      type="button"
+      className="cp-icon-btn"
+      aria-label={removeLabel}
+      data-remove={item.id}
+      onClick={onRemove}
+    >
+      <XIcon />
+    </button>
+  )
+  return (
+    <li
+      className="cp-item"
+      data-status={item.status}
+      {...(failed ? { 'data-failed': '' } : {})}
+      {...(unreachable || result?.meta.flattenedTransparency ? { 'data-attention': '' } : {})}
+    >
+      <span className={`cp-tile ${failed ? 'cp-tile-danger' : 'cp-tile-mango'}`} aria-hidden="true">
+        {failed ? <XIcon size={22} stroke={2.6} /> : <ImageIcon />}
+      </span>
+      <span className="cp-col cp-grow">
+        <FileName name={item.file.name} className="cp-name" />
+        <span className="cp-facts">
+          {result ? (
+            <>
+              <span className="cp-mono">
+                <s>{before}</s> → <b>{formatSize(result.blob.size, locale)}</b>
+              </span>
+              <ResultTags item={item} result={result} locale={locale} fitsTag={fitsTag} />
+            </>
+          ) : unreachable ? (
+            <span className="cp-mono">
+              <s>{before}</s> → <b>{formatSize(smallest, locale)}</b>
+            </span>
+          ) : (
+            <span className="cp-mono">{before}</span>
+          )}
+        </span>
+        {item.status === 'working' && (
+          <Meter
+            label={m.compress_image_progress_label({ name: item.file.name }, { locale })}
+            value={item.progress > 0 ? item.progress : undefined}
+          />
+        )}
+        {item.status === 'error' && (
+          <span className={failed ? 'cp-note cp-note-danger' : 'cp-note'} role="alert">
+            {errorText}
+          </span>
+        )}
+        {result && <ResultNotes item={item} result={result} locale={locale} />}
+      </span>
+      {result ? (
+        <a
+          className="cp-icon-btn"
+          href={result.url}
+          download={result.name}
+          aria-label={m.compress_image_download_named({ name: result.name }, { locale })}
+        >
+          <DownloadIcon />
+        </a>
+      ) : item.status === 'queued' && started ? (
+        <span className="cp-wait">{m.compress_image_status_waiting({}, { locale })}</span>
+      ) : item.status === 'working' ? (
+        <span className="cp-wait" aria-live="polite">
+          {stageMessage(item.stage)}
+        </span>
+      ) : item.status === 'cancelled' ? (
+        <span className="cp-wait">{m.compress_image_cancelled({}, { locale })}</span>
+      ) : (
+        removeButton
+      )}
+    </li>
+  )
+}
+
+function ResultTags({
+  item,
+  result,
+  locale,
+  fitsTag,
+}: {
+  item: Item
+  result: NonNullable<Item['result']>
+  locale: Locale
+  fitsTag: boolean
+}) {
+  const { meta } = result
+  const target = formatSize(item.settings.targetBytes, locale)
+  // Short facts as tags, one plain note for what needs a sentence. The resize note does not say
+  // why: the 16 MP memory cap also shrinks photos that fit.
+  return (
+    <>
+      {meta.outcome === 'already-under' ? (
+        <span className="cp-tag cp-tag-ube">
+          {m.compress_image_tag_already_under({ target }, { locale })}
+        </span>
+      ) : (
+        fitsTag && (
+          <span className="cp-tag cp-tag-matcha">
+            {m.compress_image_tag_fits({ target }, { locale })}
+          </span>
+        )
+      )}
+      <span className="cp-tag cp-tag-matcha">{m.compress_image_tag_metadata({}, { locale })}</span>
+      {meta.converted && item.settings.format === 'original' && (
+        <span className="cp-tag cp-tag-ube">
+          {m.compress_image_converted({ format: FORMAT_LABEL[meta.format] }, { locale })}
+        </span>
+      )}
+      {meta.flattenedTransparency && (
+        <span className="cp-tag cp-tag-mango">
+          {m.compress_image_tag_flattened({}, { locale })}
+        </span>
+      )}
+      {meta.resized && (
+        <span className="cp-tag cp-tag-mango">{m.compress_image_tag_resized({}, { locale })}</span>
+      )}
+    </>
+  )
+}
+
+function ResultNotes({
   result,
   locale,
 }: {
@@ -649,42 +1212,13 @@ function ResultDetails({
 }) {
   const { meta } = result
   const size = (width: number, height: number) => `${width} × ${height}`
-  const target = formatSize(item.settings.targetBytes, locale)
-  // Short facts as tags, one plain note for what needs a sentence (launch specification › 1.8).
-  // The resize note does not say why: the 16 MP memory cap also shrinks photos that fit.
   return (
     <>
-      <ul className="flex flex-wrap gap-2">
-        <li>
-          {meta.outcome === 'already-under' ? (
-            <Tag tone="info">{m.compress_image_tag_already_under({ target }, { locale })}</Tag>
-          ) : (
-            <Tag tone="success">{m.compress_image_tag_fits({ target }, { locale })}</Tag>
-          )}
-        </li>
-        <li>
-          <Tag tone="success">{m.compress_image_tag_metadata({}, { locale })}</Tag>
-        </li>
-        {meta.converted && item.settings.format === 'original' && (
-          <li>
-            <Tag>
-              {m.compress_image_converted({ format: FORMAT_LABEL[meta.format] }, { locale })}
-            </Tag>
-          </li>
-        )}
-        {meta.resized && (
-          <li>
-            <Tag tone="warning">{m.compress_image_tag_resized({}, { locale })}</Tag>
-          </li>
-        )}
-      </ul>
       {meta.outcome === 'already-under' && (
-        <p className="type-body-sm text-ink-muted">
-          {m.compress_image_already_under_note({}, { locale })}
-        </p>
+        <span className="cp-note">{m.compress_image_already_under_note({}, { locale })}</span>
       )}
       {meta.resized && (
-        <p className="type-body-sm text-ink-muted">
+        <span className="cp-note">
           {m.compress_image_resized(
             {
               from: size(meta.originalWidth, meta.originalHeight),
@@ -692,11 +1226,57 @@ function ResultDetails({
             },
             { locale },
           )}
-        </p>
-      )}
-      {meta.flattenedTransparency && (
-        <Notice tone="warning">{m.compress_image_flattened({}, { locale })}</Notice>
+        </span>
       )}
     </>
   )
 }
+
+interface IconProps {
+  size?: number
+  stroke?: number
+}
+
+function Svg({ d, size, stroke }: { d: string; size: number; stroke: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d={d} />
+    </svg>
+  )
+}
+
+const ImageIcon = ({ size = 22, stroke = 2 }: IconProps) => (
+  <Svg d="M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5" size={size} stroke={stroke} />
+)
+const XIcon = ({ size = 18, stroke = 2.4 }: IconProps) => (
+  <Svg d="M6 6l12 12M18 6 6 18" size={size} stroke={stroke} />
+)
+const DownloadIcon = ({ size = 20, stroke = 2.4 }: IconProps) => (
+  <Svg d="M12 4v12M7 11l5 5 5-5M5 20h14" size={size} stroke={stroke} />
+)
+const UploadIcon = ({ size = 22, stroke = 2.4 }: IconProps) => (
+  <Svg d="M12 16V4M7 9l5-5 5 5M5 20h14" size={size} stroke={stroke} />
+)
+const LockIcon = ({ size = 18, stroke = 2 }: IconProps) => (
+  <Svg d="M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5z" size={size} stroke={stroke} />
+)
+const WarningIcon = ({ size = 22, stroke = 2.4 }: IconProps) => (
+  <Svg d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" size={size} stroke={stroke} />
+)
+const AlertIcon = ({ size = 18, stroke = 2.4 }: IconProps) => (
+  <Svg d="M12 8v5M12 17h.01M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" size={size} stroke={stroke} />
+)
+const ChevronIcon = ({ size = 14, stroke = 2.6 }: IconProps) => (
+  <Svg d="m6 9 6 6 6-6" size={size} stroke={stroke} />
+)

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { ANSWER_MAX, pageCopySchema, QUESTION_MAX, STEP_MAX } from './page-copy.ts'
+import {
+  ANSWER_MAX,
+  pageCopySchema,
+  QUESTION_MAX,
+  STEP_MAX,
+  STEP_TEXT_MAX,
+  stepParts,
+} from './page-copy.ts'
 
 const faq = [{ question: 'Does my file leave my device?', answer: 'No.' }]
 
@@ -7,6 +14,16 @@ describe('pageCopySchema', () => {
   it('accepts steps and a FAQ', () => {
     const copy = { steps: ['Choose', 'Add', 'Download'], faq }
     expect(pageCopySchema.parse(copy)).toEqual(copy)
+  })
+
+  it('accepts steps with a sentence under their title, mixed with plain ones', () => {
+    const copy = { steps: [{ title: 'Choose a size', text: 'Pick 50 KB.' }, 'Add'], faq }
+    expect(pageCopySchema.parse(copy)).toEqual(copy)
+    expect(stepParts({ title: 'Choose a size', text: 'Pick 50 KB.' })).toEqual({
+      title: 'Choose a size',
+      text: 'Pick 50 KB.',
+    })
+    expect(stepParts('Add')).toEqual({ title: 'Add', text: undefined })
   })
 
   it('accepts copy with neither, so a page without them still builds', () => {
@@ -22,6 +39,12 @@ describe('pageCopySchema', () => {
     ['five steps', { steps: ['1', '2', '3', '4', '5'] }],
     ['an empty step', { steps: ['Choose', '  '] }],
     ['a long step', { steps: ['Choose', 'x'.repeat(STEP_MAX + 1)] }],
+    ['a step with no sentence', { steps: [{ title: 'Choose' }, 'Add'] }],
+    [
+      'a long step sentence',
+      { steps: [{ title: 'Choose', text: 'x'.repeat(STEP_TEXT_MAX + 1) }, 'Add'] },
+    ],
+    ['an unknown step field', { steps: [{ title: 'Choose', text: 'Pick.', icon: 'x' }, 'Add'] }],
     ['an empty FAQ', { faq: [] }],
     ['seven questions', { faq: Array.from({ length: 7 }, () => faq[0]) }],
     ['a question without an answer', { faq: [{ question: 'Why?', answer: '' }] }],
