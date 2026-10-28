@@ -143,3 +143,80 @@ test('a guide article has the artboard H1: 60 px, 40 px on a phone', async ({ pa
     expect(await fontSize(page, 'main h1'), path).toBe('40px')
   }
 })
+
+const OWN_404 = /status of 404|404 \(Not Found\)/i
+const NOT_FOUND = [
+  {
+    path: '/does-not-exist/',
+    lang: 'en',
+    tools: '/solutions/',
+    title: 'Page not found — Mochifile',
+  },
+  {
+    path: '/pt/nao-existe/',
+    lang: 'pt',
+    tools: '/pt/solucoes/',
+    title: 'Página não encontrada — Mochifile',
+  },
+] as const
+
+for (const { path, lang, tools, title } of NOT_FOUND) {
+  test(`the 404 page for ${path} is the V2 page: real 404, noindex, headers, light, "See all tools" → ${tools}`, async ({
+    page,
+    request,
+    pageErrors,
+  }) => {
+    const response = await page.goto(path)
+    // The browser logs the page's own 404 status; nothing else may be logged.
+    pageErrors.splice(0, pageErrors.length, ...pageErrors.filter((error) => !OWN_404.test(error)))
+    expect(response?.status()).toBe(404)
+    // Security headers from _headers reach the 404 page too.
+    const headers = response?.headers() ?? {}
+    expect(headers['x-frame-options']).toBe('DENY')
+    expect(headers['content-security-policy']).toContain("frame-ancestors 'none'")
+    expect(headers['content-security-policy']).toContain("script-src 'self'")
+    await expect(page).toHaveTitle(title)
+    await expect(page.locator('html')).toHaveAttribute('lang', lang)
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex')
+    await expect(page.locator('link[rel="canonical"]')).toHaveCount(0)
+    // "See all tools" goes to Solutions, a page that exists.
+    const all = page.getByRole('main').getByRole('link').last()
+    await expect(all).toHaveAttribute('href', tools)
+    expect((await request.get(tools)).status()).toBe(200)
+
+    // V2 scale and tokens: 60 px H1 (40 on a phone), accent eyebrow, shadowed buttons, mascot radius.
+    await page.setViewportSize({ width: 1440, height: 900 })
+    expect(await fontSize(page, 'main h1')).toBe('60px')
+    expect(
+      await page
+        .locator('main .type-eyebrow')
+        .first()
+        .evaluate((el) => getComputedStyle(el).color),
+    ).toBe(ACCENT)
+    expect(
+      await page.locator('[data-primary-action]').evaluate((el) => getComputedStyle(el).boxShadow),
+    ).not.toBe('none')
+    expect(
+      await page
+        .locator('main img')
+        .first()
+        .evaluate((el) => getComputedStyle(el).borderTopLeftRadius),
+    ).toBe('22px')
+    await page.setViewportSize({ width: 390, height: 844 })
+    expect(await fontSize(page, 'main h1')).toBe('40px')
+  })
+
+  test(`the 404 page for ${path} stays light under a dark system theme`, async ({
+    page,
+    pageErrors,
+  }) => {
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await page.goto(path)
+    pageErrors.splice(0, pageErrors.length, ...pageErrors.filter((error) => !OWN_404.test(error)))
+    const colours = await page.locator('.nf').evaluate((el) => {
+      const style = getComputedStyle(el)
+      return [style.backgroundColor, style.color]
+    })
+    expect(colours).toEqual(['rgb(255, 247, 236)', 'rgb(30, 27, 46)'])
+  })
+}

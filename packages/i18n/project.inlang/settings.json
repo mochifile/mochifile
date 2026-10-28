@@ -19,9 +19,10 @@
       "./messages/guides/{locale}.json",
       "./messages/auth/{locale}.json",
       "./messages/docs/{locale}.json",
+      "./messages/legal/{locale}.json",
+      "./messages/not-found/{locale}.json",
       "../tools/_template/messages/{locale}.json",
-      "../tools/compress-image/messages/{locale}.json",
-      "./messages/legal/{locale}.json"
+      "../tools/compress-image/messages/{locale}.json"
     ]
   }
 }

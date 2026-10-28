@@ -1,0 +1,37 @@
+/*
+ * The 404 pages, Mochifile V2 (docs/design-ref/v2, artboard MFNotFound). Light theme only.
+ *
+ * Typography, buttons, shadows and the mascot's radius are the V2 tokens (ADR 0030). The one
+ * thing a utility cannot do is keep the page light when the visitor's system is dark: the
+ * shell's tokens follow the system colour scheme, so, as the home, pricing and Ask pages do,
+ * the light values the page uses are repeated here, from tokens.json, on a full-width wrapper.
+ * The design guard allows raw values in this file only (design-guard.test.ts).
+ */
+body:has(.nf) {
+  overflow-x: clip;
+}
+
+.nf {
+  --surface-page: #fff7ec;
+  --surface-card: #ffffff;
+  --ink: #1e1b2e;
+  --ink-muted: #5c566b;
+  --action: #1e1b2e;
+  --action-ink: #fff7ec;
+  --accent: #5b3cc4;
+  --card-line: #efe3d0;
+  --mango: #ffb627;
+  --focus-ring: #1f5eff;
+
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  margin-top: calc(-1 * var(--space-4));
+  padding-inline: var(--space-4);
+  background: var(--surface-page);
+  color: var(--ink);
+}
+@media (min-width: 600px) {
+  .nf {
+    margin-top: calc(-1 * var(--space-6));
+  }
+}
