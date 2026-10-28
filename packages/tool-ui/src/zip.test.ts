@@ -6,150 +6,11 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { crc32 as nodeCrc32 } from 'node:zlib'
 import { afterAll, describe, expect, it } from 'vitest'
-import { createZip, type ZipFile, zipEntries } from './zip.ts'
-
-/** Deterministic bytes, so a failure can be reproduced. */
-function bytes(length: number, seed = 1): Uint8Array<ArrayBuffer> {
-  const out = new Uint8Array(length)
-  let x = seed
-  for (let i = 0; i < length; i += 1) {
-    x = (Math.imul(x, 1664525) + 1013904223) >>> 0
-    out[i] = x >>> 24
-  }
-  return out
-}
-
-const file = (name: string, data: Uint8Array<ArrayBuffer>, type = ''): ZipFile => ({
-  name,
-  blob: new Blob([data], { type }),
-})
-
-interface ReadEntry {
-  name: string
-  flags: number
-  method: number
-  crc: number
-  size: number
-  time: number
-  date: number
-  madeBy: number
-  externalAttributes: number
-  data: Buffer
-}
-
-/**
- * A reader written for these tests, from the format's specification and without the code under
- * test: it checks the end record, the directory, every local header against its directory entry,
- * and that the pieces follow each other with no gaps.
- */
-function readZip(zip: Buffer): ReadEntry[] {
-  const end = zip.length - 22
-  expect(zip.readUInt32LE(end)).toBe(0x06054b50)
-  expect(zip.readUInt16LE(end + 20)).toBe(0) // no comment, so the record is the last 22 bytes
-  const count = zip.readUInt16LE(end + 10)
-  expect(zip.readUInt16LE(end + 8)).toBe(count)
-  const directorySize = zip.readUInt32LE(end + 12)
-  const directoryOffset = zip.readUInt32LE(end + 16)
-  expect(directoryOffset + directorySize).toBe(end)
-
-  const entries: ReadEntry[] = []
-  let at = directoryOffset
-  let expectedLocal = 0
-  for (let i = 0; i < count; i += 1) {
-    expect(zip.readUInt32LE(at)).toBe(0x02014b50)
-    const nameLength = zip.readUInt16LE(at + 28)
-    expect(zip.readUInt16LE(at + 30)).toBe(0) // extra field
-    expect(zip.readUInt16LE(at + 32)).toBe(0) // comment
-    const name = zip.subarray(at + 46, at + 46 + nameLength).toString('utf8')
-    const crc = zip.readUInt32LE(at + 16)
-    const size = zip.readUInt32LE(at + 24)
-    expect(zip.readUInt32LE(at + 20), 'compressed size of a stored file').toBe(size)
-    const localOffset = zip.readUInt32LE(at + 42)
-    expect(localOffset, `${name} follows the previous file`).toBe(expectedLocal)
-
-    expect(zip.readUInt32LE(localOffset)).toBe(0x04034b50)
-    expect(zip.readUInt16LE(localOffset + 6)).toBe(zip.readUInt16LE(at + 8)) // flags
-    expect(zip.readUInt16LE(localOffset + 8)).toBe(0) // stored
-    expect(zip.readUInt32LE(localOffset + 14)).toBe(crc)
-    expect(zip.readUInt32LE(localOffset + 18)).toBe(size)
-    expect(zip.readUInt32LE(localOffset + 22)).toBe(size)
-    expect(zip.readUInt16LE(localOffset + 26)).toBe(nameLength)
-    expect(zip.readUInt16LE(localOffset + 28)).toBe(0)
-    expect(zip.subarray(localOffset + 30, localOffset + 30 + nameLength).toString('utf8')).toBe(
-      name,
-    )
-    const dataStart = localOffset + 30 + nameLength
-    expectedLocal = dataStart + size
-
-    entries.push({
-      name,
-      flags: zip.readUInt16LE(at + 8),
-      method: zip.readUInt16LE(at + 10),
-      crc,
-      size,
-      time: zip.readUInt16LE(at + 12),
-      date: zip.readUInt16LE(at + 14),
-      madeBy: zip.readUInt16LE(at + 4),
-      externalAttributes: zip.readUInt32LE(at + 38),
-      data: zip.subarray(dataStart, dataStart + size),
-    })
-    at += 46 + nameLength
-  }
-  expect(at, 'the directory has no unread bytes').toBe(end)
-  expect(expectedLocal, 'the last file ends where the directory starts').toBe(directoryOffset)
-  return entries
-}
+import { bytes, file, readZip } from './testing/zip-testing.ts'
+import { checkZipLimits, createZip, type ZipFile, zipEntries } from './zip.ts'
 
 const build = async (files: ZipFile[], when?: Date) =>
-  Buffer.from(await (await createZip(zipEntries(files, when))).arrayBuffer())
-
-describe('zipEntries', () => {
-  it('numbers duplicate names without colliding with names already in the batch', () => {
-    const blob = new Blob(['image'])
-    expect(
-      zipEntries([
-        { name: 'photo.jpg', blob },
-        { name: 'photo (2).jpg', blob },
-        { name: 'photo.jpg', blob },
-        { name: 'photo.jpg', blob },
-      ]).map((entry) => entry.name),
-    ).toEqual(['photo.jpg', 'photo (2).jpg', 'photo (3).jpg', 'photo (4).jpg'])
-  })
-
-  it('numbers names with no extension, and before the last extension otherwise', () => {
-    const blob = new Blob([])
-    expect(
-      zipEntries([
-        { name: 'README', blob },
-        { name: 'README', blob },
-        { name: 'a.tar.gz', blob },
-        { name: 'a.tar.gz', blob },
-      ]).map((entry) => entry.name),
-    ).toEqual(['README', 'README (2)', 'a.tar.gz', 'a.tar (2).gz'])
-  })
-
-  it('never lets a name point to a folder, and never leaves an empty name', () => {
-    const blob = new Blob([])
-    const names = [
-      '../../etc/passwd',
-      'C:\\Users\\me\\photo.jpg',
-      '/abs.jpg',
-      '..',
-      '.',
-      '',
-      'tab\there\n.jpg',
-    ]
-    expect(zipEntries(names.map((name) => ({ name, blob }))).map((entry) => entry.name)).toEqual([
-      '.._.._etc_passwd',
-      'C:_Users_me_photo.jpg',
-      '_abs.jpg',
-      'file',
-      'file (2)',
-      'file (3)',
-      'tab_here_.jpg',
-    ])
-  })
-})
+  Buffer.from(await (await createZip(files, when)).arrayBuffer())
 
 describe('createZip', () => {
   it('builds a valid archive of one file, with its bytes, size and CRC', async () => {
@@ -190,7 +51,7 @@ describe('createZip', () => {
   })
 
   it('does not depend on the type of each Blob, and marks the archive as a ZIP', async () => {
-    const zip = await createZip(zipEntries([file('x.jpg', bytes(5), 'text/plain')]))
+    const zip = await createZip([file('x.jpg', bytes(5), 'text/plain')])
     expect(zip.type).toBe('application/zip')
     expect(readZip(Buffer.from(await zip.arrayBuffer()))[0]?.size).toBe(5)
   })
@@ -274,7 +135,7 @@ describe('createZip', () => {
   })
 
   describe('when it cannot make the archive', () => {
-    const entry = (blob: Blob) => ({ name: 'x.bin', blob, lastModified: new Date() })
+    const entry = (blob: Blob) => ({ name: 'x.bin', blob })
     const withSlice = (slice: () => unknown) =>
       Object.assign(new Blob([bytes(10)]), { slice }) as unknown as Blob
 
@@ -290,19 +151,55 @@ describe('createZip', () => {
       await expect(createZip([entry(short)])).rejects.toThrow('could not be read completely')
     })
 
-    it('rejects a file of 4 GiB or more, which would need ZIP64', async () => {
-      const huge = { size: 2 ** 32 } as unknown as Blob
+    it('rejects a file of 4 GiB or more, which would need ZIP64, before reading anything', async () => {
+      const huge = {
+        size: 2 ** 32,
+        slice: () => expect.unreachable('read a file'),
+      } as unknown as Blob
       await expect(createZip([entry(huge)])).rejects.toThrow(RangeError)
     })
 
-    it('rejects more than 65,534 files, and names over 65,535 bytes', async () => {
+    it('rejects more than 65,534 files before reading anything', async () => {
       const blob = new Blob([])
-      const many = Array.from({ length: 0xffff }, () => entry(blob))
+      const many = Array.from({ length: 0xffff }, (_, i) => ({ name: `${i}.bin`, blob }))
       await expect(createZip(many)).rejects.toThrow('Too many files')
-      await expect(createZip([{ ...entry(blob), name: 'a'.repeat(0x10000) }])).rejects.toThrow(
-        'too long',
-      )
     })
+  })
+})
+
+describe('checkZipLimits', () => {
+  // Every size and offset is a 32-bit field and 0xFFFFFFFF is the ZIP64 marker: the files, their
+  // headers (30 + 46 bytes and the name twice) and the directory must end by 0xFFFFFFFE.
+  const MAX = 0xffff_fffe
+
+  it('accepts the largest single file that fits, and refuses one byte more', () => {
+    const nameBytes = 10
+    const largest = MAX - (30 + nameBytes) - (46 + nameBytes)
+    expect(() => checkZipLimits([{ size: largest, nameBytes }])).not.toThrow()
+    expect(() => checkZipLimits([{ size: largest + 1, nameBytes }])).toThrow(RangeError)
+  })
+
+  it('counts every file and every header, not only the biggest file', () => {
+    const half = Math.floor(MAX / 2) - 200
+    expect(() =>
+      checkZipLimits([
+        { size: half, nameBytes: 5 },
+        { size: half, nameBytes: 5 },
+      ]),
+    ).not.toThrow()
+    expect(() =>
+      checkZipLimits([
+        { size: half, nameBytes: 5 },
+        { size: half + 400, nameBytes: 5 },
+      ]),
+    ).toThrow(RangeError)
+  })
+
+  it('accepts 65,534 files and refuses 65,535', () => {
+    const files = (count: number) =>
+      Array.from({ length: count }, () => ({ size: 0, nameBytes: 5 }))
+    expect(() => checkZipLimits(files(0xfffe))).not.toThrow()
+    expect(() => checkZipLimits(files(0xffff))).toThrow('Too many files')
   })
 })
 
@@ -326,9 +223,10 @@ const sample = (): ZipFile[] => [
 ]
 
 async function writeSample() {
-  const entries = zipEntries(sample())
+  const files = sample()
+  const entries = zipEntries(files)
   const path = join(directory, `${Math.random().toString(36).slice(2)}.zip`)
-  writeFileSync(path, Buffer.from(await (await createZip(entries)).arrayBuffer()))
+  writeFileSync(path, Buffer.from(await (await createZip(files)).arrayBuffer()))
   return { path, entries }
 }
 

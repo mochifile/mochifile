@@ -39,13 +39,41 @@ We will build the ZIP ourselves, as a Blob of parts, and drop `client-zip`.
   (`crc32.ts`, tested against Node's `zlib.crc32`). Knowing the CRC and size beforehand, the local
   header is complete and no data descriptor is needed.
 - **Format.** Stored entries, UTF-8 names (flag bit 11), MS-DOS timestamps, Unix permissions
-  `rw-r--r--`, no extra fields. No ZIP64: `createZip` throws a `RangeError`, without producing a
-  file, for more than 65,534 entries, a file or an archive of 4 GiB or more, or a name over 65,535
-  bytes. Today's limits (20 files of up to 50 MB each in, and results of similar size) are far
-  below them. If a tool ever needs more, ZIP64 is the follow-up, tested with real tools.
-- **Names.** Duplicates are numbered as before (`a.jpg`, `a (2).jpg`). New: `/`, `\` and control
-  characters become `_` and an empty name, `.` or `..` becomes `file`, so a name can never point to
-  a folder when the ZIP is extracted. File names come from people's own files.
+  `rw-r--r--`, no extra fields. No ZIP64. Every size and offset in the headers is a 32-bit field
+  whose largest usable value is 0xFFFFFFFE (0xFFFFFFFF means "see the ZIP64 record"), and the entry
+  count is a 16-bit field with the same reserved value. So `createZip` accepts at most 65,534
+  files, and only if the files, their headers and the central directory together end by byte
+  4,294,967,294. For one big file that is a little under 4 GiB: its size plus 76 bytes plus twice
+  its name's length in bytes (the two headers). Otherwise it throws a `RangeError`, **before
+  reading any file** and without producing an archive. Today's limits (20 files of up to 50 MB
+  each in, and results of similar size) are far below this. If a tool ever needs more, ZIP64 is the
+  follow-up, tested with real tools.
+- **Names (added after the first review).** The first version kept names as they were, apart from
+  numbering exact repeats; a review showed that two different names can be the same file for the
+  person extracting, and one overwrote the other in every extractor tried. `createZip` now names
+  the entries itself, through `zipEntries`, so no caller can skip it. For each file, in order:
+  1. *Clean.* `/` and `\`, the characters Windows refuses (`: * ? " < > |`; a `:` makes an
+     alternate data stream there) and control characters become `_`; unpaired surrogates become
+     U+FFFD; dots and spaces at the end are removed (Windows does, so `a.` and `a` would meet);
+     an empty name, `.` and `..` become `file`; a name whose part before the first dot is a
+     Windows device (`CON`, `PRN`, `AUX`, `NUL`, `COM0`–`COM9`, `LPT0`–`LPT9`, also with the
+     superscript digits, in any case, with any extension) gets a `_` in front. The result cannot
+     point to a folder, inside or outside the one extracted to.
+  2. *Cut* to 255 UTF-8 bytes, by characters, keeping an extension of up to 16 bytes. The format
+     allows 65,535 bytes, but the file systems people extract to allow 255 per name, and extractors
+     fail on longer ones. A name over the limit used to be an error, now it is shortened.
+  3. *Compare.* Two names are the same file if they are equal after Unicode canonical
+     normalization (NFC), upper-casing, lower-casing and NFC again. That joins `Photo.JPG` and
+     `photo.jpg`, `é` as one character and as `e` + a combining accent (macOS), `Å` and the
+     angstrom sign, and `ß` and `SS`, `σ` `ς` `Σ`, the Kelvin sign (some tables join them, some
+     do not). It joins more than any one system does, which only costs a number on a name that
+     did not need one.
+  4. *Number.* A name the same as an earlier one gets ` (2)`, ` (3)`… before its extension
+     (`photo.jpg`, `photo (2).jpg`), the first number that no entry has, so numbering never makes a
+     new collision, and the result is the same for the same list in the same order. The names are
+     otherwise kept in their own form (an NFD name stays NFD), and a name that is already safe and
+     different is not touched. The number is made to fit the 255 bytes.
+
 - **Failures.** A file that cannot be read, or gives fewer bytes than its size, rejects
   `createZip`, and `downloadZip` creates no URL and clicks nothing. A ZIP that is wrong is never
   offered.
@@ -89,15 +117,16 @@ What the table says, and does not say:
   size, in Chromium 0.3 to 0.4. What accumulates is not the archive (the Blobs are referenced) but
   the `ArrayBuffer`s the CRC reads, which wait for the garbage collector: after the 1 GB and 2 GB
   runs WebKit was back at its starting memory, and the 100 MB run kept all 100 MB because no
-  collection had been needed yet. The slice size does not change it (256 KiB to 8 MiB: 247–278 MB at
-  460 MB in WebKit; 256 KiB is 45% slower, 8 MiB more than doubles the stall, 2 MiB was kept).
+  collection had been needed yet. The slice size does not change it (256 KiB to 8 MiB: 247–278 MB
+  at 460 MB in WebKit; 256 KiB is 45% slower, 8 MiB more than doubles the stall, 2 MiB was kept).
   Reading with `blob.stream()` is worse in WebKit (415–438 MB).
 - **Releasing each slice with `ArrayBuffer.prototype.transfer(0)` was tried and rejected.** In
   WebKit it cuts the 460 MB case from 258 MB to 6 MB, but in Chromium it raised it to +944 MB in
-  three out of three runs (the browser process held about one more copy of the archive). A trick that helps one
-  engine and hurts another, and needs engine detection, is not simpler than the problem.
-- **JavaScript heap** (Chromium only, `performance.memory`, peak during the call): 30–32 MB with the
-  old version and 36–38 MB with the new one. The slices are `ArrayBuffer`s, which are not counted
+  three out of three runs (the browser process held about one more copy of the archive). A trick
+  that helps one engine and hurts another, and needs engine detection, is not simpler than the
+  problem.
+- **JavaScript heap** (Chromium only, `performance.memory`, peak during the call): 30–32 MB with
+  the old version and 36–38 MB with the new one. The slices are `ArrayBuffer`s, which are not counted
   there. WebKit does not expose it.
 - **2 GB in Chromium is inconclusive.** The headless shell could not read back its own 2 GB of
   in-memory Blobs, without any ZIP involved (`NotReadableError` at 48 MB into the first file); the
@@ -117,6 +146,17 @@ What the table says, and does not say:
   (which are in memory as Blobs anyway). The honest limit on a phone is unknown until one is
   measured; a cap on a batch's total size, or building the ZIP per group of files, are the next
   levers and need those numbers.
+- **What the names do not promise.** The policy covers the common ways two entries meet on
+  Windows, macOS and Linux file systems; it does not claim every file system. Not handled: Unicode
+  code points some systems ignore in names (HFS+ drops some default-ignorable ones, such as zero
+  width joiners), compatibility equivalents (fullwidth letters stay different, as they are on
+  disk), the rest of the Windows reserved words (`CLOCK$`, `CONIN$`), a path that is too long for
+  Windows (260 characters in total: only one name is limited), names that look alike but are
+  different (a right-to-left override character is kept), and a person's own folder already
+  holding files of those names (extractors ask or overwrite as they always do). Names inside the
+  ZIP can differ from the ones of the individual downloads (`Screenshot 14:31.png` is
+  `Screenshot 14_31.png` in the ZIP); the individual download keeps its own name. Which of two
+  files gets the number depends on their order in the list.
 - **The CRC runs on the page's main thread**, in slices (3–4 ms of stall measured at 460 MB, 1 GB
   and 2 GB). Moving it to a worker is possible (Blobs are posted by reference) but costs a second
   worker bundle for a few milliseconds; revisit if a slower device shows jank.
@@ -128,4 +168,6 @@ What the table says, and does not say:
   new code, about 1.2 KB, is part of the tool's own chunk instead of loading on intent).
 - A ZIP writer of our own is a small piece of code to maintain. It writes one fixed shape of
   archive, and it is covered by a reader written separately in the tests, by Node's CRC-32, and
-  by `unzip` and Python when they are installed (CI runners and developer machines).
+  by `unzip` and Python when they are installed (CI runners and developer machines). The names are
+  also tested by extracting archives of colliding names with `unzip`, `ditto`, `bsdtar` and Python
+  (the first three where they exist), on a case- and normalization-insensitive volume on macOS.
