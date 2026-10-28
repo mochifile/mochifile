@@ -1,0 +1,39 @@
+---
+/**
+ * One guide in the list (MFGuides "guide-card"): its topic pill, title, summary and the time
+ * to read it. A published guide is a link; a draft has the same card, marked as a draft, and
+ * leads nowhere. No date: nothing is published with one yet.
+ */
+interface Props {
+  href: string | undefined
+  topic: string
+  tone: string
+  title: string
+  summary: string
+  meta: string
+  draftNote: string | undefined
+  squish: string
+  id: string
+}
+
+const { href, topic, tone, title, summary, meta, draftNote, squish, id } = Astro.props
+const Tag = href ? 'a' : 'article'
+---
+
+<Tag
+  href={href}
+  aria-labelledby={href ? id : undefined}
+  class:list={['group/card flex h-full w-full flex-col gap-3 bg-surface-card p-5', squish, href && 'focus-ring']}
+>
+  <span class:list={['inline-flex min-h-6 items-center self-start rounded-pill px-3 type-caption tracking-wider uppercase', tone]}>{topic}</span>
+  <h3 id={id} class:list={['type-label-lg', href && 'group-hover/card:underline']}>{title}</h3>
+  <p class="type-body-sm text-ink-muted">{summary}</p>
+  <span class="mt-auto flex items-center justify-between gap-3 pt-2 type-caption text-ink-muted">
+    <span>{meta}{draftNote && <> · {draftNote}</>}</span>
+    {
+      href && (
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0 text-ube-ink"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+      )
+    }
+  </span>
+</Tag>

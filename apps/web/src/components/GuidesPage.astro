@@ -1,0 +1,241 @@
+---
+import { getCollection } from 'astro:content'
+/**
+ * The guides list (the "Site final" artboard MFGuides): breadcrumb, title, the featured guide,
+ * the two picks, a filter (a field and one chip per topic), every guide, "show more" and the
+ * free-tool band. Static HTML, no script:
+ * - The topic chips are radio buttons; `:has()` hides the cards of the other topics, so the
+ *   filter works with the keyboard and needs no JavaScript.
+ * - The field cannot filter without a script. Typing in it says so and points to the chips;
+ *   it never pretends to search.
+ * - "Show more guides" has nothing more to show: it says so, in a notice (the Popover API; plain
+ *   text where it is missing).
+ * Guides without an article yet show as drafts and lead nowhere. No dates and no authors.
+ */
+import { type Locale, localePath } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import sheetSquish380 from '../assets/brand/sheet-squish-380.webp'
+import sheetSquish700 from '../assets/brand/sheet-squish-700.webp'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { cardSquish, topicTone } from '../lib/guide-style'
+import {
+  buildGuides,
+  type Guide,
+  type GuideTopic,
+  guidePaths,
+  guidesIndexPaths,
+  guideTopics,
+  publishedGuides,
+} from '../lib/guides'
+import { toolPaths, tools } from '../lib/tools'
+import GuideCard from './GuideCard.astro'
+import GuideCta from './GuideCta.astro'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+
+const guides = buildGuides(await getCollection('guides'))
+const published = publishedGuides(guides)
+const hero = guides.find((guide) => guide.spotlight === 'hero' && !guide.draft)
+const picks = guides.filter((guide) => guide.spotlight === 'pick' && !guide.draft)
+
+const topicLabel: Record<GuideTopic, string> = {
+  quick: m.guides_topic_quick({}, { locale }),
+  forms: m.guides_topic_forms({}, { locale }),
+  formats: m.guides_topic_formats({}, { locale }),
+  performance: m.guides_topic_performance({}, { locale }),
+  privacy: m.guides_topic_privacy({}, { locale }),
+  pdf: m.guides_topic_pdf({}, { locale }),
+  video: m.guides_topic_video({}, { locale }),
+  workflows: m.guides_topic_workflows({}, { locale }),
+}
+const minutes = (guide: Guide) =>
+  m.guides_read_min({ minutes: guide.meta[locale].minutes }, { locale })
+const compress = tools.find(({ manifest }) => manifest.id === 'compress-image')
+const compressHref = compress ? toolPaths(compress.manifest)[locale] : localePath(locale)
+const chips: Array<{ key: string; label: string }> = [
+  { key: 'all', label: m.guides_topic_all({}, { locale }) },
+  ...guideTopics.map((key) => ({ key, label: topicLabel[key] })),
+]
+const arrow = 'M5 12h14M13 6l6 6-6 6'
+---
+
+<BaseLayout locale={locale} title={m.guides_title({}, { locale })} description={m.guides_description({}, { locale })} paths={guidesIndexPaths()}>
+  <div class="guides-page mx-auto flex w-full max-w-content-max flex-col gap-10 pb-10 sm:gap-16 lg:pt-4">
+    <header class="flex flex-col items-start gap-4">
+      <nav aria-label={m.guides_breadcrumb_label({}, { locale })} class="type-body-sm text-ink-muted">
+        <ol class="flex flex-wrap items-center gap-x-2">
+          <li class="flex items-center gap-2">
+            <a href={localePath(locale)} class="inline-flex min-h-target-min items-center rounded-sm underline hover:no-underline focus-ring">{m.guides_home({}, { locale })}</a>
+            <span aria-hidden="true">›</span>
+          </li>
+          <li aria-current="page" class="text-ink">{m.guides_breadcrumb_current({}, { locale })}</li>
+        </ol>
+      </nav>
+      <p class="type-caption tracking-widest text-ube-ink uppercase">{m.guides_eyebrow({ count: published.length }, { locale })}</p>
+      <h1 class="type-title text-balance sm:type-display-lg lg:type-display-xl">{m.guides_heading_before({}, { locale })}<span class="guides-mark">{m.guides_heading_mark({}, { locale })}</span></h1>
+      <span aria-hidden="true" class="flex items-center gap-2">
+        <span class="block h-1 w-10 rounded-pill bg-ube"></span>
+        <span class="block size-2 rounded-pill bg-strawberry"></span>
+        <span class="block size-2 rounded-pill bg-matcha"></span>
+      </span>
+      <p class="max-w-reading-max type-body text-ink-muted sm:type-body-lg">{m.guides_lead({}, { locale })}</p>
+    </header>
+
+    {
+      hero && (
+        <section aria-labelledby="guides-featured" class="flex flex-col gap-6">
+          <h2 id="guides-featured" class="type-label-lg sm:type-title-sm">{m.guides_featured_heading({}, { locale })}</h2>
+          <a
+            href={guidePaths(hero)[locale]}
+            aria-labelledby="guides-hero-title"
+            class="group/hero grid items-center gap-8 rounded-xl-squish-a bg-surface-inverse p-6 text-ink-on-inverse focus-ring sm:p-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]"
+          >
+            <span class="flex flex-col items-start gap-4">
+              <span class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex min-h-6 items-center rounded-pill bg-mango px-3 type-caption tracking-wider text-ink-on-block uppercase">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="mr-1 size-4"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z" /></svg>
+                  {m.guides_featured_badge({}, { locale })}
+                </span>
+                <span class="inline-flex min-h-6 items-center rounded-pill bg-surface-inverse-raised px-3 type-caption tracking-wider text-ink-on-inverse uppercase">{topicLabel[hero.topic]}</span>
+                <span class="type-caption text-ink-on-inverse-muted">{minutes(hero)}</span>
+              </span>
+              <span id="guides-hero-title" class="type-title text-balance group-hover/hero:underline sm:type-display-lg">{hero.meta[locale].title}</span>
+              <span class="type-body text-ink-on-inverse-muted sm:type-body-lg">{hero.meta[locale].summary}</span>
+              <span class="mt-2 inline-flex min-h-target-primary items-center justify-center gap-2 rounded-pill bg-mango px-6 type-label-lg text-ink-on-block">
+                {m.guides_read_guide({}, { locale })}
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-button-icon"><path d={arrow} /></svg>
+              </span>
+            </span>
+            <img
+              src={sheetSquish700.src}
+              srcset={`${sheetSquish380.src} 380w, ${sheetSquish700.src} 700w`}
+              sizes="(min-width: 1024px) 336px, 70vw"
+              alt=""
+              width={1100}
+              height={651}
+              decoding="async"
+              class="hidden h-auto w-full rounded-lg-squish-a sm:block"
+            />
+          </a>
+          {picks.length > 0 && (
+            <ul class="grid gap-4 sm:grid-cols-2">
+              {picks.map((guide, index) => (
+                <li>
+                  <GuideCard
+                    href={guidePaths(guide)[locale]}
+                    topic={topicLabel[guide.topic]}
+                    tone={topicTone[guide.topic]}
+                    title={guide.meta[locale].title}
+                    summary={guide.meta[locale].summary}
+                    meta={minutes(guide)}
+                    draftNote={undefined}
+                    squish={cardSquish[index % cardSquish.length] ?? ''}
+                    id={`guides-pick-${guide.key}`}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )
+    }
+
+    <section aria-label={m.guides_list_label({}, { locale })} class="guides-filter flex flex-col gap-6">
+      <div class="group/search mx-auto flex w-full max-w-[calc(var(--reading-max)*3/4)] flex-col gap-2">
+        <label class="guides-search grid min-h-target-primary grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 rounded-pill border-chip border-border-control bg-surface-card px-4 py-2">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6 shrink-0 text-ink-muted"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" /></svg>
+          <span class="sr-only">{m.guides_search_placeholder({}, { locale })}</span>
+          {/*
+            The hint is a span, not the placeholder: it wraps on a phone, where a placeholder is
+            cut off. The placeholder is one space, so `:placeholder-shown` still tells when the
+            field is empty.
+          */}
+          <input type="search" autocomplete="off" placeholder=" " aria-describedby="guides-search-note" class="peer col-start-2 row-start-1 min-w-0 bg-transparent type-body text-ink outline-none" />
+          <span aria-hidden="true" class="pointer-events-none col-start-2 row-start-1 type-body-sm text-ink-muted peer-[:not(:placeholder-shown)]:hidden">{m.guides_search_placeholder({}, { locale })}</span>
+        </label>
+        <p id="guides-search-note" role="status" class="hidden text-center type-body-sm text-ink-muted group-has-[input:not(:placeholder-shown)]/search:block">{m.guides_search_note({}, { locale })}</p>
+      </div>
+      <fieldset class="flex flex-wrap justify-center gap-2">
+        <legend class="sr-only">{m.guides_topics_legend({}, { locale })}</legend>
+        {
+          chips.map((chip) => (
+            <label class="guides-chip press inline-flex min-h-target-min cursor-pointer items-center rounded-pill border-chip border-border-control bg-surface-card px-4 type-body-sm has-[:checked]:border-ink has-[:checked]:bg-action has-[:checked]:font-bold has-[:checked]:text-action-ink">
+              <input type="radio" name="guides-topic" value={chip.key} checked={chip.key === 'all'} class="sr-only" />
+              {chip.label}
+            </label>
+          ))
+        }
+      </fieldset>
+      <ul class="grid gap-4 sm:grid-cols-2">
+        {
+          guides.map((guide, index) => (
+            <li data-topic={guide.topic}>
+              <GuideCard
+                href={guide.draft ? undefined : guidePaths(guide)[locale]}
+                topic={topicLabel[guide.topic]}
+                tone={topicTone[guide.topic]}
+                title={guide.meta[locale].title}
+                summary={guide.meta[locale].summary}
+                meta={guide.draft ? m.guides_draft({}, { locale }) : minutes(guide)}
+                draftNote={guide.draft ? m.guides_draft_note({}, { locale }) : undefined}
+                squish={cardSquish[index % cardSquish.length] ?? ''}
+                id={`guides-card-${guide.key}`}
+              />
+            </li>
+          ))
+        }
+      </ul>
+      <div class="flex justify-center">
+        <button type="button" popovertarget="guides-no-more" class="press inline-flex min-h-target-primary items-center justify-center rounded-pill border-chip border-border-control bg-surface-card px-6 type-label-lg focus-ring">{m.guides_show_more({}, { locale })}</button>
+      </div>
+      {/* Not a result: it says there is nothing more. A toast where the Popover API exists, text where it does not. */}
+      <div
+        id="guides-no-more"
+        popover="auto"
+        role="status"
+        class="rounded-lg-squish-a bg-ube-tint p-4 text-ube-ink with-popover:fixed with-popover:inset-x-4 with-popover:top-auto with-popover:bottom-4 with-popover:mx-auto with-popover:my-0 with-popover:w-auto with-popover:max-w-reading-max with-popover:border-chip with-popover:border-ube popover-open:block"
+      >
+        <div class="flex items-start gap-3">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="mt-0.5 size-6 shrink-0"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>
+          <p class="min-w-0 flex-1 type-body-sm">{m.guides_no_more({}, { locale })}</p>
+          <button type="button" popovertarget="guides-no-more" popovertargetaction="hide" aria-label={m.guides_notice_close({}, { locale })} class="press -m-2 hidden size-target-min shrink-0 items-center justify-center rounded-pill focus-ring with-popover:flex">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-6"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <GuideCta pill={m.guides_cta_pill({}, { locale })} heading={m.guides_cta_heading({}, { locale })} text={m.guides_cta_text({}, { locale })} action={m.guides_cta_action({}, { locale })} href={compressHref} mascot="squish" />
+  </div>
+</BaseLayout>
+
+<style is:global>
+  /* The marker under "guides": a flat band behind the lower part of the word, no gradient. */
+  .guides-mark {
+    text-decoration: underline;
+    text-decoration-color: var(--mango);
+    text-decoration-thickness: 0.3em;
+    text-underline-offset: -0.15em;
+    text-decoration-skip-ink: none;
+  }
+  .guides-search:has(:focus-visible),
+  .guides-chip:has(:focus-visible) {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  /* The topic filter: the chosen chip hides the cards of every other topic. */
+  .guides-filter:has(input[value="quick"]:checked) li[data-topic]:not([data-topic="quick"]),
+  .guides-filter:has(input[value="forms"]:checked) li[data-topic]:not([data-topic="forms"]),
+  .guides-filter:has(input[value="formats"]:checked) li[data-topic]:not([data-topic="formats"]),
+  .guides-filter:has(input[value="performance"]:checked) li[data-topic]:not([data-topic="performance"]),
+  .guides-filter:has(input[value="privacy"]:checked) li[data-topic]:not([data-topic="privacy"]),
+  .guides-filter:has(input[value="pdf"]:checked) li[data-topic]:not([data-topic="pdf"]),
+  .guides-filter:has(input[value="video"]:checked) li[data-topic]:not([data-topic="video"]),
+  .guides-filter:has(input[value="workflows"]:checked) li[data-topic]:not([data-topic="workflows"]) {
+    display: none;
+  }
+</style>

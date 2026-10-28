@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { type Locale, localePath, locales } from '@mochifile/i18n'
 import { MAIN_PAGE_KEY, type ToolManifest } from '@mochifile/tool-kit'
 import { manifest as templateManifest } from '@mochifile/tool-template/manifest'
+import { guidesSection } from '../src/lib/guides.ts'
 
 /**
  * Tool pages for checks that must hold on every page: they come from the sitemap, so new
@@ -23,7 +24,7 @@ const templateSlugs = new Set(
     .map((meta) => meta.slug),
 )
 
-/** Tool pages of the sitemap: everything but the home pages and the template tool. */
+/** Tool pages of the sitemap: everything but the home pages, the guides and the template tool. */
 export async function toolPaths(request: {
   get: (url: string) => Promise<{ text(): Promise<string> }>
 }) {
@@ -31,6 +32,9 @@ export async function toolPaths(request: {
   return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
     .map((match) => new URL(match[1] ?? '').pathname)
     .filter((path) => {
+      if (Object.values(guidesSection).some((section) => path.split('/').includes(section))) {
+        return false
+      }
       const slug = path.split('/').filter(Boolean).at(-1)
       return slug !== undefined && slug !== 'pt' && !templateSlugs.has(slug)
     })
