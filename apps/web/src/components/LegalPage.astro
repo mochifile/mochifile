@@ -340,6 +340,7 @@ const icon = 'size-6 shrink-0'
 
   /* Tables, as in the API reference; under 600 px each row becomes a block. */
   .legal-table-wrap {
+    position: relative;
     overflow: hidden;
   }
   .legal-table {
@@ -382,6 +383,8 @@ const icon = 'size-6 shrink-0'
   @media (width < 600px) {
     .legal-table thead {
       position: absolute;
+      top: 0;
+      left: 0;
       width: 1px;
       height: 1px;
       overflow: hidden;
