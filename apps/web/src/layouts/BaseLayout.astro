@@ -39,9 +39,10 @@ const alternates = buildAlternates(paths, site)
     {/* Only the display face is preloaded: it draws the H1, the largest text on tool pages. */}
     <Font cssVariable="--font-fredoka" preload />
     <Font cssVariable="--font-figtree" />
-    {/* The final logo's icons (docs/design-system/assets/Logos): SVG for modern browsers,
-        pixel-drawn PNGs for the rest, the app icon on a mango square. */}
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+    {/* The icons are the "m" app icon of the V2 Home (ADR 0032), resampled from the artboard's
+        raster and never redrawn, so there is no SVG: PNGs from 16 to 48 px for tabs and
+        shortcuts, the 180 px touch icon and the 512 px manifest icon. */}
+    <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
