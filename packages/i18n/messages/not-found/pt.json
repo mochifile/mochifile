@@ -1,0 +1,11 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "notfound_title": "Página não encontrada — Mochifile",
+  "notfound_description": "Esta página não existe. Seus arquivos estão seguros: nada foi enviado.",
+  "notfound_label": "Erro 404",
+  "notfound_heading_before": "Esta página ",
+  "notfound_heading_mark": "saiu por aí.",
+  "notfound_text": "O link pode estar antigo, ou o endereço pode ter um erro de digitação. Seus arquivos estão seguros: nada foi enviado.",
+  "notfound_home": "Ir para o início",
+  "notfound_tools": "Ver todas as ferramentas"
+}
