@@ -6,9 +6,7 @@
  */
 import type { Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import useImages from '../../assets/home/use-images.webp'
-import usePdf from '../../assets/home/use-pdf.webp'
-import useVideo from '../../assets/home/use-video.webp'
+import { type CardImage, cardImage } from '../../lib/card-images'
 import Icon from './Icon.astro'
 
 interface Props {
@@ -21,7 +19,7 @@ const { locale, under50Href } = Astro.props
 const cards = [
   {
     id: 'images',
-    image: useImages,
+    image: 'images' as CardImage,
     title: m.hv2_ask_images({}, { locale }),
     examples: [
       { label: m.hv2_ask_images_1({}, { locale }), href: under50Href },
@@ -32,7 +30,7 @@ const cards = [
   },
   {
     id: 'pdfs',
-    image: usePdf,
+    image: 'pdf' as CardImage,
     title: m.hv2_ask_pdfs({}, { locale }),
     examples: [
       { label: m.hv2_ask_pdfs_1({}, { locale }) },
@@ -43,7 +41,7 @@ const cards = [
   },
   {
     id: 'video',
-    image: useVideo,
+    image: 'video' as CardImage,
     title: m.hv2_ask_video({}, { locale }),
     examples: [
       { label: m.hv2_ask_video_1({}, { locale }) },
@@ -54,7 +52,7 @@ const cards = [
   },
 ] as {
   id: string
-  image: ImageMetadata
+  image: CardImage
   title: string
   examples: { label: string; href?: string | undefined }[]
 }[]
@@ -70,7 +68,7 @@ const cards = [
     {
       cards.map((card) => (
         <li class="hv2-card hv2-example" aria-labelledby={`hv2-ask-${card.id}`}>
-          <img src={card.image.src} width={card.image.width} height={card.image.height} alt="" loading="lazy" decoding="async" class="hv2-media hv2-example-img" />
+          <img {...cardImage(card.image)} alt="" loading="lazy" decoding="async" class="hv2-media hv2-example-img" />
           <h3 id={`hv2-ask-${card.id}`} class="hv2-h3 hv2-example-title">{card.title}</h3>
           <ul class="hv2-stack hv2-g8">
             {

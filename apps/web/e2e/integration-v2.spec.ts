@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from './fixtures.ts'
+import { expect, projectContextOptions, test } from './fixtures.ts'
 
 /**
  * What the V2 integration (integration/v2) fixes after the independent review: the header cells
@@ -377,4 +377,102 @@ for (const { path, notice } of ACCOUNT_PAGES) {
     await expect(page.locator('#auth-unavailable:popover-open')).toBeVisible()
     expect(requests).toEqual([])
   })
+}
+
+/** Every FAQ starts closed (the first question too) and opens from the keyboard. */
+const FAQ_PAGES = [
+  '/',
+  '/pt/',
+  '/pricing/',
+  '/pt/precos/',
+  '/solutions/',
+  '/pt/solucoes/',
+  '/compress-image/',
+  '/pt/comprimir-imagem/',
+  '/compress-image-to-50kb/',
+  '/pt/comprimir-imagem-para-50kb/',
+] as const
+
+for (const path of FAQ_PAGES) {
+  test(`${path}: every FAQ question starts closed and opens with the keyboard`, async ({
+    page,
+    browserName,
+  }) => {
+    await page.goto(path)
+    const items = page.locator('details:not(.docs-menu)')
+    expect(await items.count(), 'questions').toBeGreaterThanOrEqual(3)
+    await expect(page.locator('details[open]')).toHaveCount(0)
+    // Nothing is open at the start, whatever the width.
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect(page.locator('details[open]')).toHaveCount(0)
+
+    // Reach the first question with Tab and open and close it with Enter and Space.
+    const first = items.first().locator('summary')
+    await first.focus()
+    await expect(first).toBeFocused()
+    await page.keyboard.press('Enter')
+    await expect(items.first()).toHaveAttribute('open', '')
+    await expect(page.locator('details[open]')).toHaveCount(1)
+    await page.keyboard.press('Space')
+    await expect(items.first()).not.toHaveAttribute('open', '')
+    expect(browserName).toBeTruthy()
+  })
+}
+
+/**
+ * The category cards' illustrations (Home and Ask): the approved art is 354-366 px wide and nothing
+ * larger exists, so each has a 2x file made from it. A Retina screen must be served that file, and
+ * the box must be reserved by the image's own size.
+ */
+for (const { path, selector } of [
+  { path: '/', selector: '.hv2-example-img' },
+  { path: '/ask/', selector: '.ask-media' },
+  { path: '/pt/pergunte/', selector: '.ask-media' },
+] as const) {
+  for (const scale of [1, 2] as const) {
+    for (const width of [1440, 390] as const) {
+      test(`${path} card images at DPR ${scale}, ${width} px: the sharper file for Retina, sized in advance`, async ({
+        testBrowser,
+      }) => {
+        const context = await testBrowser.newContext({
+          ...projectContextOptions(),
+          viewport: { width, height: 900 },
+          deviceScaleFactor: scale,
+        })
+        try {
+          const page = await context.newPage()
+          await page.goto(path)
+          const images = page.locator(selector)
+          await expect(images).toHaveCount(3)
+          for (const image of await images.all()) {
+            await image.scrollIntoViewIfNeeded()
+            await expect(image).toHaveJSProperty('complete', true)
+            const info = await image.evaluate(async (el) => {
+              const img = el as HTMLImageElement
+              // The pixels of the file the browser chose (naturalWidth is in CSS px with `sizes`).
+              const bitmap = await createImageBitmap(await (await fetch(img.currentSrc)).blob())
+              return {
+                shown: img.getBoundingClientRect().width,
+                pixels: bitmap.width,
+                current: img.currentSrc,
+                srcset: img.srcset,
+                attrs: [img.getAttribute('width'), img.getAttribute('height')],
+              }
+            })
+            // Two candidates; the box is reserved by the image's own width and height.
+            expect(info.srcset.split(',').length).toBe(2)
+            expect(Number(info.attrs[0])).toBeGreaterThan(300)
+            expect(Number(info.attrs[1])).toBeGreaterThan(200)
+            // A 2x screen gets the doubled file, a 1x screen the original pixels.
+            expect(info.current).toMatch(scale === 2 ? /-2x\./ : /-1x\./)
+            expect(info.pixels).toBe(Number(info.attrs[0]) * scale)
+            // The file has at least the screen's pixels for the box, on a desktop and on a phone.
+            expect(info.pixels).toBeGreaterThanOrEqual(Math.floor(info.shown * scale))
+          }
+        } finally {
+          await context.close()
+        }
+      })
+    }
+  }
 }

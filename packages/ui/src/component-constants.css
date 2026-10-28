@@ -18,11 +18,9 @@
    */
   --spacing-logo: 151px;
   /*
-   * Site V2 shell measurements, read from the canvas (docs/design-ref/v2, mf.css): the language
-   * menu's width, the footer's link columns, rows and badges, and the pills' side padding.
+   * Site V2 shell measurements, read from the canvas (docs/design-ref/v2, mf.css): the footer's link columns, rows and badges, and the pills' side padding.
    * Section gap 96px ("sections 96 px apart" in the V2 README); the footer ends 48px below.
    */
-  --spacing-language-menu: 240px;
   --spacing-footer-column: 200px;
   --spacing-footer-link: 36px;
   --spacing-menu-row: 56px;
@@ -210,14 +208,13 @@
 }
 
 /*
- * Header cell widths (ADR 0030). The header's links and language button are right-aligned, so
+ * Header cell widths (ADR 0030). The header's links are right-aligned, so
  * when Figtree replaces its fallback face the cluster moved 7px (a layout shift). Each cell
  * keeps the width its label has in Figtree, and its text sits centred in it: the fallback is
  * narrower, so nothing moves when the font arrives. Measured values, not design tokens: the
  * cell's width (label plus 12px of padding each side) at 1440px, rounded up. Re-measure when a
- * label or a language changes. The Portuguese cells have 6px more than Figtree needs: the fallback
- * face on Linux draws some of those labels wider, and a cell that grew would shift the cluster. The language button is only that wide because of its name:
- * "English" or "Português (Brasil)".
+ * label changes. The Portuguese cells have 6px more than Figtree needs: the fallback
+ * face on Linux draws some of those labels wider, and a cell that grew would shift the cluster.
  */
 @layer components {
   [data-main-nav] [data-shell-link] {
@@ -241,9 +238,6 @@
   :lang(en) [data-main-nav] [data-shell-link="get-started"] {
     min-width: 110px;
   }
-  :lang(en) [data-language-button] {
-    min-width: 121px;
-  }
   :lang(pt) [data-main-nav] [data-shell-link="solutions"] {
     min-width: 93px;
   }
@@ -261,8 +255,5 @@
   }
   :lang(pt) [data-main-nav] [data-shell-link="get-started"] {
     min-width: 101px;
-  }
-  :lang(pt) [data-language-button] {
-    min-width: 196px;
   }
 }

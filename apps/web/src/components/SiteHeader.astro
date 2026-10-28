@@ -1,24 +1,23 @@
 ---
 /**
- * The site header with its "Skip to content" link, the language menu and the phone menu
- * (V2 canvas: MFHeader, MFMenuMobile; ADR 0023, ADR 0030).
+ * The site header with its "Skip to content" link and the phone menu (V2 canvas: MFHeader,
+ * MFMenuMobile; ADR 0023, ADR 0030).
  *
- * From 1024 px the header shows Solutions · Guides · Docs · Pricing · Sign in · Get started and
- * a language button. Under 1024 px they move into a menu opened by a native button and the
- * declarative Popover API: no JavaScript, so Enter, Space, Escape, closing by tapping outside
- * and returning focus to the button all come from the browser. While the menu is open the rest
- * of the page steps out of view (global.css), so the next Tab after the last item never reaches
- * content hidden beneath it. Browsers without the Popover API get the menu's content in the
- * page flow instead of a button, and no language button (the footer lists the languages too).
+ * From 1024 px the header shows Solutions · Guides · Docs · Pricing · Sign in · Get started.
+ * Under 1024 px they move into a menu opened by a native button and the declarative Popover API:
+ * no JavaScript, so Enter, Space, Escape, closing by tapping outside and returning focus to the
+ * button all come from the browser. While the menu is open the rest of the page steps out of view
+ * (global.css), so the next Tab after the last item never reaches content hidden beneath it.
+ * Browsers without the Popover API get the menu's content in the page flow instead of a button.
  *
- * Every control the canvas draws is here. A destination that does not exist yet is a
- * `ComingSoon` control, not a link, and a language with no pages is listed the same way; see
+ * The language selector lives only in the footer (ADR 0030): neither the header nor the menu has
+ * one. A destination that does not exist yet is a `ComingSoon` control, not a link; see
  * lib/site-nav.ts.
  */
-import { type Locale, localePath, localeTags } from '@mochifile/i18n'
+import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import mascotHappy from '../assets/mascot/sheet-happy-700.png'
-import { accountLinks, isCurrent, mainLinks, shellLanguages } from '../lib/site-nav'
+import { accountLinks, isCurrent, mainLinks } from '../lib/site-nav'
 import ArrowRight from './ArrowRight.astro'
 import ComingSoon from './ComingSoon.astro'
 import ComingSoonNotice from './ComingSoonNotice.astro'
@@ -33,13 +32,6 @@ interface Props {
 const { locale, paths } = Astro.props
 const links = mainLinks(locale)
 const { signIn, getStarted } = accountLinks(locale)
-const languages = shellLanguages.map((language) => ({
-  ...language,
-  href: language.locale ? paths[language.locale] : undefined,
-  hreflang: language.locale ? localeTags[language.locale] : undefined,
-  current: language.locale === locale,
-}))
-const currentLanguage = languages.find((language) => language.current)
 
 const navItem =
   'press inline-flex min-h-target-min items-center rounded-pill px-3 type-nav hover:bg-accent-soft focus-ring aria-[current=page]:bg-accent-soft aria-[current=page]:text-ube-ink'
@@ -49,10 +41,6 @@ const menuRow =
   'press flex min-h-menu-row w-full items-center justify-between border-hairline border-x-0 border-t-0 border-card-line px-1 text-left type-menu-link focus-ring'
 const bigPill =
   'press inline-flex min-h-target-lg w-full items-center justify-center rounded-pill px-6 type-button-lg focus-ring'
-const chip =
-  'press inline-flex min-h-target-min items-center rounded-pill border-hairline border-card-line bg-surface-card px-chip type-chip shadow-chip focus-ring aria-[current=true]:border-ink aria-[current=true]:bg-action aria-[current=true]:text-action-ink'
-const languageItem =
-  'press flex min-h-target-min w-full items-center justify-between gap-3 rounded-small px-3 text-left type-nav hover:bg-accent-soft focus-ring aria-[current=true]:bg-accent-soft aria-[current=true]:text-ube-ink'
 ---
 
 {/*
@@ -125,47 +113,6 @@ const languageItem =
           </li>
         </ul>
       </nav>
-      {/*
-        Language button (desktop): opens a list of the six languages in their own names. English
-        and Portuguese are links to this page's alternate (ADR 0007), so no script decides
-        anything; the others are "Coming soon". Under 1024 px the same list is in the menu.
-      */}
-      <button
-        type="button"
-        popovertarget="site-language"
-        aria-label={m.nav_language_current({ language: currentLanguage?.name ?? '' }, { locale })}
-        data-language-button
-        class="press hidden min-h-target-min items-center justify-center gap-2 rounded-pill border-hairline border-card-line bg-surface-card/60 px-3 type-button-sm text-ink focus-ring with-popover:lg:inline-flex"
-      >
-        {/* Line icons on the 24px grid, 2px stroke (README › Iconography). */}
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="size-4 shrink-0"
-        >
-          <circle cx="12" cy="12" r="9"></circle>
-          <path d="M3 12h18"></path>
-          <path d="M12 3c3 3 3 15 0 18-3-3-3-15 0-18"></path>
-        </svg>
-        <span lang={currentLanguage?.tag}>{currentLanguage?.name}</span>
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="size-4 shrink-0"
-        >
-          <path d="M6 9l6 6 6-6"></path>
-        </svg>
-      </button>
       {/* The browser exposes its open and closed state (aria-expanded) from `popovertarget`. */}
       <button
         type="button"
@@ -199,57 +146,6 @@ const languageItem =
         </svg>
       </button>
     </div>
-  </div>
-  <div
-    id="site-language"
-    popover
-    data-language-menu
-    class="w-language-menu rounded-card border-hairline border-card-line bg-surface-card p-2 text-ink shadow-lift max-lg:hidden"
-  >
-    <ul aria-label={m.nav_language({}, { locale })} class="flex flex-col">
-      {
-        languages.map((language) => (
-          <li>
-            {language.href ? (
-              <a
-                href={language.href}
-                hreflang={language.hreflang}
-                lang={language.tag}
-                aria-current={language.current ? 'true' : undefined}
-                data-language-switch={language.current ? undefined : ''}
-                class={languageItem}
-              >
-                {language.name}
-                {language.current && (
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.4"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="size-4 shrink-0"
-                  >
-                    <path d="M5 12l5 5 9-10"></path>
-                  </svg>
-                )}
-              </a>
-            ) : (
-              <ComingSoon
-                locale={locale}
-                notice="coming-soon-language"
-                class={languageItem}
-                data-shell-link={`language-${language.tag}`}
-              >
-                <span lang={language.tag}>{language.name}</span>
-              </ComingSoon>
-            )}
-          </li>
-        ))
-      }
-    </ul>
-    <ComingSoonNotice locale={locale} id="coming-soon-language" />
   </div>
   {/*
     Right after the button in the DOM, so the next Tab enters the menu. With the Popover API it
@@ -320,40 +216,6 @@ const languageItem =
             ),
           )
         }
-      </div>
-      <div class="mt-8 flex flex-col gap-2">
-        <p id="site-menu-language" class="type-eyebrow text-accent uppercase">
-          {m.nav_language({}, { locale })}
-        </p>
-        <ul aria-labelledby="site-menu-language" class="flex flex-wrap gap-2">
-          {
-            languages.map((language) => (
-              <li>
-                {language.href ? (
-                  <a
-                    href={language.href}
-                    hreflang={language.hreflang}
-                    lang={language.tag}
-                    aria-current={language.current ? 'true' : undefined}
-                    data-language-switch={language.current ? undefined : ''}
-                    class={chip}
-                  >
-                    {language.name}
-                  </a>
-                ) : (
-                  <ComingSoon
-                    locale={locale}
-                    notice="coming-soon-menu"
-                    class={chip}
-                    data-shell-link={`language-${language.tag}`}
-                  >
-                    <span lang={language.tag}>{language.name}</span>
-                  </ComingSoon>
-                )}
-              </li>
-            ))
-          }
-        </ul>
       </div>
       {/* The approved "happy" mascot on its green block; decorative, once, never over a control. */}
       <img

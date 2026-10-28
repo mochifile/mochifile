@@ -82,13 +82,12 @@ test('never redirects based on the browser language', async ({ testBrowser }) =>
 
 test('language switcher links between locales', async ({ page }) => {
   await page.goto('/')
-  // The footer repeats the links (site-footer.spec.ts): these are the header's list.
-  await page.getByRole('button', { name: 'Language: English' }).click()
-  await page.getByRole('banner').getByRole('link', { name: 'Português (Brasil)' }).click()
+  // The selector is in the footer only (ADR 0030); the header has none.
+  await expect(page.getByRole('banner').locator('[lang], [data-language-switch]')).toHaveCount(0)
+  await page.getByRole('contentinfo').getByRole('link', { name: 'Português (Brasil)' }).click()
   await expect(page).toHaveURL('/pt/')
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt')
-  await page.getByRole('button', { name: 'Idioma: Português (Brasil)' }).click()
-  await page.getByRole('banner').getByRole('link', { name: 'English' }).click()
+  await page.getByRole('contentinfo').getByRole('link', { name: 'English' }).click()
   await expect(page).toHaveURL('/')
 })
 

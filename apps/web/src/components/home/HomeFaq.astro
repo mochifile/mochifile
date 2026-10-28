@@ -28,8 +28,8 @@ const items = [
   </div>
   <div class="hv2-faq">
     {
-      items.map((item, index) => (
-        <details class="hv2-faq-row" open={index === 0}>
+      items.map((item) => (
+        <details class="hv2-faq-row">
           <summary>
             <span>{item.q}</span>
             <Icon d="m6 9 6 6 6-6" />

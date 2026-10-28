@@ -77,19 +77,6 @@
 }
 
 /*
- * The header's language menu (ADR 0030) hangs under the language button, at the container's
- * right edge. A popover is in the top layer, whose containing block is the viewport, so the edge
- * is worked out from the viewport's width; `absolute` lets it scroll away with the header.
- */
-[data-language-menu] {
-  position: absolute;
-  inset: auto;
-  margin: 0;
-  top: calc(var(--site-header) - var(--space-3));
-  right: max(var(--space-5), calc((100% - var(--site-max)) / 2 + var(--space-8)));
-}
-
-/*
  * The "Coming soon" notice (ComingSoon.astro) fades out by itself after a few seconds. It stays
  * open for assistive technology and closes on the next press or Escape; pressing a control
  * again shows it again from the start. Under reduced motion it still only changes opacity.

@@ -178,12 +178,13 @@ for (const c of LOCALES) {
     test('the FAQ opens and closes with the keyboard', async ({ page }) => {
       await page.goto(c.path)
       const closed = page.locator('summary', { hasText: c.faqClosed })
-      await expect(page.locator('details[open]')).toHaveCount(1)
+      // Every question starts closed, the first one too.
+      await expect(page.locator('details[open]')).toHaveCount(0)
       await expect(page.getByText(c.faqAnswer)).toBeHidden()
       await closed.focus()
       await page.keyboard.press('Enter')
       await expect(page.getByText(c.faqAnswer)).toBeVisible()
-      await expect(page.locator('details[open]')).toHaveCount(2)
+      await expect(page.locator('details[open]')).toHaveCount(1)
       await page.keyboard.press('Enter')
       await expect(page.getByText(c.faqAnswer)).toBeHidden()
     })

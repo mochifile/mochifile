@@ -15,8 +15,8 @@ import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import sheetWaiting380 from '../assets/brand/sheet-waiting-380.webp'
 import sheetWaiting696 from '../assets/brand/sheet-waiting-696.webp'
-import useImages354 from '../assets/brand/use-images-354.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { cardImage } from '../lib/card-images'
 import { topicTone } from '../lib/guide-style'
 import { type Guide, guidePaths, guidesIndexPaths } from '../lib/guides'
 import { toolPaths, tools } from '../lib/tools'
@@ -116,7 +116,7 @@ const indexPath = guidesIndexPaths()[locale]
             }
           </nav>
           <div class="mt-5 flex flex-col gap-1 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-4">
-            <img src={useImages354.src} alt="" width={354} height={216} loading="lazy" decoding="async" class="h-auto w-full rounded-md-squish-a" />
+            <img {...cardImage('images', '(min-width: 1024px) 220px, 280px')} alt="" loading="lazy" decoding="async" class="h-auto w-full rounded-md-squish-a" />
             <p class="mt-2 type-body-strong">{m.guide_tool_name({}, { locale })}</p>
             <p class="type-caption text-ink-muted">{m.guide_tool_text({}, { locale })}</p>
             <a href={toolHref} class="press mt-2 inline-flex min-h-target-min items-center justify-center rounded-pill bg-action px-4 type-body-strong text-action-ink focus-ring">{m.guide_tool_action({}, { locale })}</a>

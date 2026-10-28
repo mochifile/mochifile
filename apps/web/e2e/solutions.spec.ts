@@ -198,7 +198,8 @@ for (const c of LOCALES) {
 
     test('the FAQ opens with the keyboard', async ({ page }) => {
       await page.goto(c.path)
-      await expect(page.locator('details[open]')).toHaveCount(1)
+      // Every question starts closed, the first one too.
+      await expect(page.locator('details[open]')).toHaveCount(0)
       await expect(page.getByText(c.faqAnswer)).toBeHidden()
       await page.locator('summary', { hasText: c.faqClosed }).focus()
       await page.keyboard.press('Enter')
@@ -211,8 +212,10 @@ for (const c of LOCALES) {
       await page.goto(c.path)
       expect(await page.locator('main script').count()).toBe(0)
       expect(await page.locator('main [style]').count()).toBe(0)
-      // The language switcher leads to the translated slug.
-      await expect(page.getByRole('banner').locator(`a[href="${c.other}"]`).first()).toBeAttached()
+      // The language switcher (in the footer only) leads to the translated slug.
+      await expect(
+        page.getByRole('contentinfo').locator(`a[href="${c.other}"]`).first(),
+      ).toBeAttached()
     })
   })
 }

@@ -15,11 +15,6 @@ const trigger = (page: Page) => page.getByRole('button', { name: 'Menu' })
 const menu = (page: Page) => page.locator('[data-site-menu]')
 const suggestion = (page: Page) => page.locator('aside[data-language-suggestion]:not([hidden])')
 const isOpen = (page: Page) => menu(page).evaluate((el) => el.matches(':popover-open'))
-/** The "Coming soon" notice that is open, wherever it is. */
-const notice = (page: Page) => page.locator('[data-coming-soon]:popover-open')
-/** The desktop language button and the list it opens. */
-const languageButton = (page: Page) => page.locator('[data-language-button]')
-const languageMenu = (page: Page) => page.locator('[data-language-menu]')
 
 /**
  * The key that moves focus to the next link. WebKit on macOS follows the system setting and
@@ -81,7 +76,10 @@ for (const PHONE of PHONES) {
     // Everything in the header fits: no sideways scrolling, nothing cut off. The row is the
     // canvas's 84 px tall, with the logo and the menu button only.
     expect((await page.locator('header > div').first().boundingBox())?.height).toBe(84)
-    await expect(languageButton(page)).toBeHidden()
+    // The language selector is in the footer only: no button in the header row.
+    await expect(
+      page.locator('header [data-language-button], header [data-language-menu]'),
+    ).toHaveCount(0)
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       PHONE.width,
     )
@@ -95,15 +93,12 @@ for (const PHONE of PHONES) {
 
     await trigger(page).click()
     await expect(menu(page)).toBeVisible()
-    // Every control of the canvas, in its order: four links, two buttons, six languages.
+    // Every control of the menu, in its order: four links and two buttons; no languages.
     for (const name of ['Solutions', 'Guides', 'Docs', 'Pricing', 'Get started', 'Sign in']) {
       await expect(menu(page).getByRole('link', { name, exact: true })).toBeVisible()
     }
-    await expect(menu(page).getByRole('link', { name: 'English' })).toBeVisible()
-    await expect(menu(page).getByRole('link', { name: 'Português (Brasil)' })).toBeVisible()
-    for (const name of ['Español', 'Français', 'हिन्दी', '简体中文']) {
-      await expect(menu(page).getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible()
-    }
+    await expect(menu(page).locator('[lang], [data-language-switch]')).toHaveCount(0)
+    await expect(menu(page).getByText(/^(Language|Idioma)$/)).toHaveCount(0)
     // The menu starts right below the header row and fits the screen's width.
     const header = await page.locator('header > div').first().boundingBox()
     const panel = await menu(page).boundingBox()
@@ -156,7 +151,7 @@ test('keyboard: Tab order, Enter and Space, Escape and focus restoration', async
   const items = await menu(page).getByRole('link').or(menu(page).getByRole('button')).count()
   for (let i = 1; i < items; i++) await page.keyboard.press(TAB)
   expect(await focused(page)).toMatchObject({ where: 'menu', shown: true })
-  expect((await focused(page)).name).toContain('简体中文')
+  expect((await focused(page)).name).toContain('Sign in')
   await page.keyboard.press(TAB)
   const after = await focused(page)
   expect(after.shown).toBe(true)
@@ -182,34 +177,10 @@ test('a link in the menu navigates, and the new page starts with the menu closed
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
   await trigger(page).click()
-  await menu(page).getByRole('link', { name: 'Português (Brasil)' }).click()
-  await expect(page).toHaveURL('/pt/')
+  await menu(page).getByRole('link', { name: 'Pricing', exact: true }).click()
+  await expect(page).toHaveURL('/pricing/')
   expect(await isOpen(page)).toBe(false)
   await expect(page.locator('main')).toBeVisible()
-})
-
-test('a "Coming soon" control says so, goes nowhere, and keeps the menu open', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/')
-  await trigger(page).click()
-  await menu(page)
-    .getByRole('button', { name: /^Français/ })
-    .click()
-  await expect(notice(page)).toBeVisible()
-  await expect(notice(page)).toHaveText(/Coming soon/)
-  await expect(notice(page)).toHaveAttribute('role', 'status')
-  expect(new URL(page.url()).pathname).toBe('/')
-  expect(await isOpen(page)).toBe(true)
-  // Escape closes the notice first; the menu stays.
-  await page.keyboard.press('Escape')
-  await expect(notice(page)).toHaveCount(0)
-  expect(await isOpen(page)).toBe(true)
-  // A language with no pages behaves the same.
-  await menu(page)
-    .getByRole('button', { name: /^Español/ })
-    .click()
-  await expect(notice(page)).toBeVisible()
-  expect(new URL(page.url()).pathname).toBe('/')
 })
 
 for (const { viewport, path } of [
@@ -250,7 +221,6 @@ test('from 1024 px the links sit in the header; crossing it with the menu open b
   await page.setViewportSize({ width: 1023, height: 800 })
   await page.goto('/')
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeHidden()
-  await expect(languageButton(page)).toBeHidden()
   await trigger(page).click()
   await expect(menu(page)).toBeVisible()
 
@@ -268,7 +238,8 @@ test('from 1024 px the links sit in the header; crossing it with the menu open b
       .getByRole('link')
       .evaluateAll((links) => links.map((link) => link.getAttribute('href'))),
   ).toEqual(['/solutions/', '/guides/', '/docs/', '/pricing/', '/sign-in/', '/sign-up/'])
-  await expect(languageButton(page)).toBeVisible()
+  // No language selector in the header at any width: it is in the footer.
+  await expect(page.locator('header [lang], header [data-language-switch]')).toHaveCount(0)
 
   // Nothing hidden stays focusable: every Tab stop up to the content is visible.
   await page.getByRole('banner').getByRole('link', { name: 'Mochifile' }).focus()
@@ -335,10 +306,10 @@ test('while the menu is open, assistive technology gets the menu and nothing hid
   await trigger(page).click()
   const tree = await page.locator('body').ariaSnapshot()
   expect(tree).toContain('navigation "Menu"')
-  expect(tree).toContain('list "Language"')
   expect(tree).toContain('link "Solutions"')
-  expect(tree).toMatch(/button "Español ?, Coming soon"/)
-  expect(tree).toContain('link "English"')
+  expect(tree).toContain('link "Sign in"')
+  expect(tree).not.toContain('Language')
+  expect(tree).not.toContain('link "English"')
   expect(tree).toContain('button "Menu"')
   // The page beneath is out of the accessibility tree, like the content behind a dialog.
   expect(tree).not.toContain('heading')
@@ -397,12 +368,6 @@ test('crossing 1024 px never leaves focus on a hidden element', async ({ page, b
           .getByRole('navigation', { name: 'Main' })
           .getByRole('link', { name: 'Solutions', exact: true })
           .focus(),
-    },
-    {
-      name: 'the language button',
-      from: 1024,
-      to: 1023,
-      focus: () => languageButton(page).focus(),
     },
   ]
   for (const { name, from, to, focus } of cases) {
@@ -537,14 +502,9 @@ test('the menu works with JavaScript disabled', async ({ testBrowser }) => {
     await page.goto('/pt/')
     await page.getByRole('button', { name: 'Menu' }).click()
     await expect(menu(page)).toBeVisible()
-    // "Coming soon" works with no script too: a declarative popover.
-    await menu(page)
-      .getByRole('button', { name: /^Español/ })
-      .click()
-    await expect(notice(page)).toContainText('Em breve')
-    await page.keyboard.press('Escape')
-    await menu(page).getByRole('link', { name: 'English' }).click()
-    await expect(page).toHaveURL('/')
+    // Its links are plain links, so they work with no script too.
+    await menu(page).getByRole('link', { name: 'Preços', exact: true }).click()
+    await expect(page).toHaveURL('/pt/precos/')
   } finally {
     await context.close()
   }
@@ -697,89 +657,39 @@ for (const PHONE of PHONES) {
 }
 
 /**
- * The language selector (ADR 0030): from 1024 px a button in the header opens a list of the six
- * languages in their own names; under 1024 px the same languages are chips in the menu.
- * English and Portuguese are links to this page's alternate; the rest are "Coming soon".
+ * The language selector is in the footer only (ADR 0030; site-footer.spec.ts covers it): neither
+ * the header nor the phone menu has a language control or a link to the other language, at any
+ * width and in both languages.
  */
-const LANGUAGE_PAGES = [
-  {
-    path: '/compress-image/',
-    other: '/pt/comprimir-imagem/',
-    label: 'Language: English',
-    current: 'English',
-    target: 'Português (Brasil)',
-  },
-  {
-    path: '/pt/',
-    other: '/',
-    label: 'Idioma: Português (Brasil)',
-    current: 'Português (Brasil)',
-    target: 'English',
-  },
-] as const
-
-for (const { path, other, label, current, target } of LANGUAGE_PAGES) {
-  test(`the language button on ${path} lists six languages and links to ${other}`, async ({
-    page,
-    browserName,
-  }) => {
-    await page.setViewportSize({ width: 1280, height: 800 })
-    await page.goto(path)
-    await expect(languageButton(page)).toHaveAccessibleName(label)
-    await expect(languageMenu(page)).toBeHidden()
-    await languageButton(page).click()
-    await expect(languageMenu(page)).toBeVisible()
-    const items = languageMenu(page).getByRole('listitem')
-    await expect(items).toHaveCount(6)
-    // The page's own language is marked, not offered as a switch.
-    await expect(languageMenu(page).locator('[aria-current="true"]')).toHaveText(current)
-    // Each in its own name, in the canvas's order, with its language declared.
-    await expect(languageMenu(page).locator('[lang]')).toHaveCount(6)
-    for (const name of ['Español', 'Français', 'हिन्दी', '简体中文']) {
-      await expect(
-        languageMenu(page).getByRole('button', { name: new RegExp(`^${name}`) }),
-      ).toBeVisible()
-    }
-    const link = languageMenu(page).getByRole('link', { name: target })
-    await expect(link).toHaveAttribute('href', other)
-    await expect(link).toHaveAttribute('hreflang', other.startsWith('/pt/') ? 'pt' : 'en')
-
-    // A language with no pages says so and keeps the list open.
-    await languageMenu(page)
-      .getByRole('button', { name: /^Español/ })
-      .click()
-    await expect(notice(page)).toContainText(/Coming soon|Em breve/)
-    expect(new URL(page.url()).pathname).toBe(path)
-    await page.keyboard.press('Escape')
-    await expect(languageMenu(page)).toBeVisible()
-
-    // Escape closes the list and returns focus to the button.
-    await page.keyboard.press('Escape')
-    await expect(languageMenu(page)).toBeHidden()
-    // WebKit does not focus a button a pointer pressed, so it has nothing to give back.
-    if (browserName !== 'webkit') await expect(languageButton(page)).toBeFocused()
-
-    await languageButton(page).click()
-    await languageMenu(page).getByRole('link', { name: target }).click()
-    await expect(page).toHaveURL(other)
-  })
-
-  test(`the header fits and its language button stays in the row from 1024 to 1440 px (${path})`, async ({
+for (const path of ['/compress-image/', '/pt/comprimir-imagem/']) {
+  test(`${path}: no language selector in the header or the menu, at any width`, async ({
     page,
   }) => {
     await page.goto(path)
-    for (const width of [1024, 1100, 1280, 1440]) {
+    for (const width of [320, 390, 768, 1023, 1024, 1440]) {
       await page.setViewportSize({ width, height: 800 })
-      const box = await languageButton(page).boundingBox()
-      const nav = await page.getByRole('navigation', { name: /Main|Principal/ }).boundingBox()
-      if (!box || !nav) throw new Error('missing boxes')
-      expect(box.height).toBeGreaterThanOrEqual(44)
-      expect(box.x + box.width, `${width} px`).toBeLessThanOrEqual(width)
-      expect(nav.x + nav.width).toBeLessThanOrEqual(box.x)
-      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
-        width,
-      )
+      await expect(
+        page.locator('header [lang], header [data-language-switch]'),
+        `${width} px`,
+      ).toHaveCount(0)
+      await expect(
+        page.locator('header [data-language-button], header [data-language-menu]'),
+      ).toHaveCount(0)
+      await expect(
+        page.locator('header').getByText(/Português|English|Español|Français/),
+      ).toHaveCount(0)
     }
+    // The row stays balanced: the logo at the left edge of the container, the last control at the
+    // right edge, with nothing in between that is not a link.
+    await page.setViewportSize({ width: 1440, height: 800 })
+    const nav = await page.getByRole('navigation', { name: /Main|Principal/ }).boundingBox()
+    const logo = await page
+      .getByRole('banner')
+      .getByRole('link', { name: 'Mochifile' })
+      .boundingBox()
+    if (!nav || !logo) throw new Error('missing boxes')
+    expect(Math.round(logo.x)).toBe(200)
+    expect(Math.round(nav.x + nav.width)).toBe(1240)
   })
 }
 
@@ -803,11 +713,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
         expect(results.violations).toEqual([])
         if (viewport.width < 1024) {
           await page.getByRole('button', { name: 'Menu' }).click()
-          await expect(menu(page).getByRole('link', { name: 'English' })).toBeVisible()
-          expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
-        } else {
-          await languageButton(page).click()
-          await expect(languageMenu(page)).toBeVisible()
+          await expect(menu(page).getByRole('link', { name: 'Preços', exact: true })).toBeVisible()
           expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
         }
         expect(errors).toEqual([])

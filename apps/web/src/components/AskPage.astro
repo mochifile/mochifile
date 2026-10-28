@@ -13,14 +13,9 @@
  */
 import { type Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import images320 from '../assets/ask/use-images-320.webp'
-import images640 from '../assets/ask/use-images-640.webp'
-import pdf320 from '../assets/ask/use-pdf-320.webp'
-import pdf640 from '../assets/ask/use-pdf-640.webp'
-import video320 from '../assets/ask/use-video-320.webp'
-import video640 from '../assets/ask/use-video-640.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { askPaths, exampleLanguages } from '../lib/ask'
+import { cardImage } from '../lib/card-images'
 import { pricingPaths } from '../lib/pricing'
 import '../styles/ask.css'
 
@@ -51,9 +46,9 @@ const suggestions = [
 ].map(({ key, dot }) => ({ label: t(`ask_${key}`), prompt: t(`ask_${key}_prompt`), dot }))
 
 const groups = [
-  { id: 'images', title: m.ask_group_images({}, { locale }), src: images320, big: images640, n: 4 },
-  { id: 'pdfs', title: m.ask_group_pdfs({}, { locale }), src: pdf320, big: pdf640, n: 4 },
-  { id: 'video', title: m.ask_group_video({}, { locale }), src: video320, big: video640, n: 4 },
+  { id: 'images', title: m.ask_group_images({}, { locale }), image: 'images' as const, n: 4 },
+  { id: 'pdfs', title: m.ask_group_pdfs({}, { locale }), image: 'pdf' as const, n: 4 },
+  { id: 'video', title: m.ask_group_video({}, { locale }), image: 'video' as const, n: 4 },
 ].map((group) => ({
   ...group,
   examples: Array.from({ length: group.n }, (_, i) => t(`ask_ex_${group.id}_${i + 1}`)),
@@ -211,17 +206,7 @@ const sampleIn = (sample: Locale) => m.ask_chip_50kb_prompt({}, { locale: sample
         {
           groups.map((group) => (
             <article class="ask-card">
-              <img
-                src={group.src.src}
-                srcset={`${group.src.src} 320w, ${group.big.src} 640w`}
-                sizes="(min-width: 1101px) 296px, (min-width: 641px) 40vw, 312px"
-                alt=""
-                width="320"
-                height="192"
-                loading="lazy"
-                decoding="async"
-                class="ask-media"
-              />
+              <img {...cardImage(group.image)} alt="" loading="lazy" decoding="async" class="ask-media" />
               <h3 class="ask-h3">{group.title}</h3>
               <ul class="ask-stack ask-g8">
                 {group.examples.map((example) => (
