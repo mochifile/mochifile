@@ -15,6 +15,7 @@
       "./messages/ask/{locale}.json",
       "./messages/pages/{locale}.json",
       "./messages/home/{locale}.json",
+      "./messages/solutions/{locale}.json",
       "../tools/_template/messages/{locale}.json",
       "../tools/compress-image/messages/{locale}.json",
       "./messages/guides/{locale}.json"

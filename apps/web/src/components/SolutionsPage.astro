@@ -1,0 +1,125 @@
+---
+/**
+ * Solutions, the catalogue of every tool (docs/design-ref/v2, artboard MFSolutions). Visual
+ * first: every category and card the design draws is here, in both languages, whether the tool
+ * exists or not. A published tool is a link to its page (from the tool registry); the rest are
+ * the same cards, and using one opens a native popover that says it is not available yet. The
+ * search field and every link to an unbuilt page do the same. Nothing is processed or filtered.
+ * Static HTML: no script beyond the site-wide language suggestion.
+ */
+import type { Locale } from '@mochifile/i18n'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { CATALOG, richHref, solText, toolHref } from '../lib/solutions.ts'
+import { tools } from '../lib/tools.ts'
+import Icon from './solutions/Icon.astro'
+import Rich from './solutions/Rich.astro'
+import SoonPopover from './solutions/SoonPopover.astro'
+import ToolCard from './solutions/ToolCard.astro'
+import '../styles/solutions.css'
+
+interface Props {
+  locale: Locale
+  /** Path of this page in every locale. */
+  paths: Record<Locale, string>
+}
+
+const { locale, paths } = Astro.props
+const t = (key: string) => solText(key, locale)
+const compressorHref = richHref(tools, 'compress-image', locale)
+const which = [1, 2, 3, 4].map((n) => ({
+  title: t(`which_${n}_title`),
+  items: [1, 2, 3, 4]
+    .map((i) => (n === 1 || i <= 3 ? `which_${n}_item_${i}` : undefined))
+    .filter((key): key is string => key !== undefined),
+}))
+const faqs = [1, 2, 3, 4, 5, 6].map((n) => ({ q: t(`faq_${n}_q`), a: t(`faq_${n}_a`) }))
+---
+
+<BaseLayout locale={locale} title={t('meta_title')} description={t('meta_description')} paths={paths}>
+  <div class="sol">
+    <section class="sol-w sol-top" aria-labelledby="sol-title">
+      <div class="sol-stack sol-g16 sol-center">
+        <h1 id="sol-title" class="sol-h1">{t('h1_start')} <span class="sol-mark">{t('h1_mark')}</span></h1>
+        <p class="sol-lead"><Rich text={t('lead')} locale={locale} /></p>
+        <p class="sol-note">{t('lead_note')}</p>
+      </div>
+      <button type="button" class="sol-search" popovertarget="sol-soon" aria-label={`${t('search_label')}: ${t('search_text')}`}>
+        <Icon d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" stroke={2.2} />
+        <span>{t('search_text')}</span>
+      </button>
+
+      {
+        CATALOG.map((category) => (
+          <section class="sol-stack sol-g20 sol-catalog" aria-labelledby={`sol-cat-${category.id}`} data-category={category.id}>
+            <h2 id={`sol-cat-${category.id}`} class="sol-h3">{t(`cat_${category.id}`)}</h2>
+            <ul class="sol-grid">
+              {category.tools.map((entry) => (
+                <li class="sol-item">
+                  <ToolCard entry={entry} href={toolHref(tools, entry, locale)} locale={locale} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </section>
+
+    <section class="sol-w sol-sec sol-stack sol-g32" aria-labelledby="sol-which">
+      <div class="sol-stack sol-g12">
+        <h2 id="sol-which" class="sol-h2">{t('which_title')}</h2>
+        <span class="sol-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+      </div>
+      <div class="sol-grid sol-grid-2">
+        {
+          which.map((group) => (
+            <div class="sol-card sol-pad sol-stack sol-g12">
+              <h3 class="sol-h4">{group.title}</h3>
+              <ul class="sol-bullets sol-small">
+                {group.items.map((key) => (
+                  <li><Rich text={t(key)} locale={locale} /></li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="sol-w sol-w-mid sol-stack sol-g20 sol-about">
+      <h2 class="sol-h2">{t('about_1_title')}</h2>
+      <span class="sol-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+      <p><Rich text={t('about_1_text')} locale={locale} /></p>
+      <h2 class="sol-h2 sol-prose-title">{t('about_2_title')}</h2>
+      <span class="sol-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+      <p><Rich text={t('about_2_text')} locale={locale} /></p>
+    </section>
+
+    <section class="sol-w sol-sec sol-stack sol-g32" aria-labelledby="sol-faq">
+      <div class="sol-stack sol-g12">
+        <h2 id="sol-faq" class="sol-h2">{t('faq_title')}</h2>
+        <span class="sol-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+      </div>
+      <div class="sol-faq">
+        {
+          faqs.map((item, index) => (
+            <details class="sol-faq-row" open={index === 0}>
+              <summary>
+                <span>{item.q}</span>
+                <Icon d="m6 9 6 6 6-6" />
+              </summary>
+              <p>{item.a}</p>
+            </details>
+          ))
+        }
+      </div>
+      <div class="sol-cta">
+        <button type="button" class="sol-btn" popovertarget="sol-soon">
+          {t('cta')}
+          <Icon d="M5 12h14M13 6l6 6-6 6" />
+        </button>
+      </div>
+    </section>
+
+    <SoonPopover locale={locale} toolHref={compressorHref} />
+  </div>
+</BaseLayout>

@@ -1,0 +1,28 @@
+---
+/**
+ * The message shown when someone uses a part of the design that does not work yet: a native
+ * popover (ADR 0023, no script) opened by any button with `popovertarget="sol-soon"`. Focus
+ * moves to its button when it opens, so screen readers announce it; Esc or a click outside
+ * closes it. It never pretends anything was processed.
+ */
+import type { Locale } from '@mochifile/i18n'
+import { solText } from '../../lib/solutions.ts'
+
+interface Props {
+  locale: Locale
+  /** The one tool that works today. */
+  toolHref: string | undefined
+}
+const { locale, toolHref } = Astro.props
+---
+
+<div id="sol-soon" popover="auto" role="dialog" aria-labelledby="sol-soon-title" class="sol-soon">
+  <p id="sol-soon-title" class="sol-h4">{solText('soon_title', locale)}</p>
+  <p class="sol-small sol-muted">{solText('soon_text', locale)}</p>
+  <div class="sol-soon-actions">
+    {toolHref && <a class="sol-btn sol-btn-soft" href={toolHref}>{solText('soon_action', locale)}</a>}
+    <button type="button" class="sol-btn sol-btn-sm" popovertarget="sol-soon" popovertargetaction="hide" autofocus>
+      {solText('soon_close', locale)}
+    </button>
+  </div>
+</div>

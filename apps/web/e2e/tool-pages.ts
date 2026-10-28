@@ -30,6 +30,9 @@ const templateSlugs = new Set(
 /** Pages of the site that are not tools. Each page PR adds its paths here. */
 const nonToolPaths = new Set<string>([...Object.values(pricingPaths), ...Object.values(askPaths)])
 
+/** Slugs of the site's own pages, which are not tools (their checks are in their own specs). */
+const sitePageSlugs = new Set(['solutions', 'solucoes'])
+
 /** Slugs of the institutional pages (About, Contact…): in the sitemap, but not tools. */
 const institutionalSlugs = new Set(pageIds.flatMap((id) => Object.values(pageSlugs[id])))
 
@@ -53,6 +56,7 @@ export async function toolPaths(request: {
         slug !== undefined &&
         slug !== 'pt' &&
         !templateSlugs.has(slug) &&
+        !sitePageSlugs.has(slug) &&
         !institutionalSlugs.has(slug)
       )
     })

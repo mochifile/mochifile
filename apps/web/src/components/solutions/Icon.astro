@@ -1,0 +1,24 @@
+---
+/** A stroked 24×24 icon from the V2 canvas. Decorative: hidden from assistive technology. */
+interface Props {
+  d: string
+  size?: number
+  stroke?: number
+}
+const { d, size = 18, stroke = 2.4 } = Astro.props
+---
+
+<svg
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width={stroke}
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path d={d} />
+</svg>

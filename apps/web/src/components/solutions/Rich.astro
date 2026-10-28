@@ -1,0 +1,28 @@
+---
+/**
+ * A message with `[[id|label]]` links (parseRich). A link whose page exists is a link; one whose
+ * page does not yet looks the same and opens the "not available yet" message instead.
+ */
+import type { Locale } from '@mochifile/i18n'
+import { parseRich, richHref } from '../../lib/solutions.ts'
+import { tools } from '../../lib/tools.ts'
+
+interface Props {
+  text: string
+  locale: Locale
+}
+const { text, locale } = Astro.props
+const parts = parseRich(text)
+---
+
+{
+  parts.map((part) => {
+    if ('text' in part) return part.text
+    const href = richHref(tools, part.id, locale)
+    return href ? (
+      <a class="sol-link" href={href}>{part.label}</a>
+    ) : (
+      <button type="button" class="sol-link sol-link-btn" popovertarget="sol-soon">{part.label}</button>
+    )
+  })
+}
