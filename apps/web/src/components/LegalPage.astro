@@ -60,16 +60,17 @@ const facts: Record<string, string> = {
 }
 
 const pending =
-  'inline-flex min-h-6 items-center rounded-pill bg-warning-tint px-3 type-caption font-bold text-warning-ink'
-const tableCard = 'overflow-hidden rounded-lg-squish-a bg-surface-card'
+  'inline-flex min-h-6 items-center rounded-pill bg-warning-tint px-3 type-pill text-warning-ink uppercase'
+const tableCard =
+  'overflow-hidden rounded-card border-hairline border-card-line bg-surface-card shadow-card'
 const icon = 'size-6 shrink-0'
 ---
 
 <BaseLayout locale={locale} title={text(key('title'))} description={text(key('description'))} paths={legalPaths(page)}>
-  <article aria-labelledby="legal-heading" class="legal-page mx-auto flex w-full max-w-reading-max flex-col gap-6 pb-10 lg:pt-4">
+  <article aria-labelledby="legal-heading" class="legal-page mx-auto flex w-full max-w-narrow flex-col gap-6 pb-10 lg:pt-4">
     <header class="flex flex-col items-start gap-4">
-      <p class="type-caption tracking-widest text-ube-ink uppercase">{text('legal_eyebrow')}</p>
-      <h1 id="legal-heading" class="type-title text-balance sm:type-display-lg lg:type-display-xl">{text(key('heading'))}</h1>
+      <p class="type-eyebrow text-accent uppercase">{text('legal_eyebrow')}</p>
+      <h1 id="legal-heading" class="type-page-title-sm text-balance sm:type-page-title">{text(key('heading'))}</h1>
       <span aria-hidden="true" class="flex items-center gap-2">
         <span class="block h-1 w-10 rounded-pill bg-ube"></span>
         <span class="block size-2 rounded-pill bg-strawberry"></span>
@@ -87,7 +88,7 @@ const icon = 'size-6 shrink-0'
     <div class="page-copy legal-copy">
       {
         page === 'privacy' && (
-          <p class="flex items-start gap-3 rounded-md-squish-a bg-surface-card p-4">
+          <p class="flex items-start gap-3 rounded-small border-hairline border-card-line bg-surface-card p-4">
             <span class="flex size-10 shrink-0 items-center justify-center rounded-md-squish-a bg-matcha-tint text-matcha-ink">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" /></svg>
             </span>
@@ -133,7 +134,7 @@ const icon = 'size-6 shrink-0'
           <blockquote class="flex flex-col gap-3">
             <b class="not-italic">{text('legal_terms_and_conditions_introduction')}</b>
             <span aria-hidden="true" class="flex flex-col gap-2">
-              {skeleton(5).map((width) => <span class={`block h-3 rounded-pill bg-surface-card ${width}`} />)}
+              {skeleton(5).map((width) => <span class={`block h-3 rounded-pill bg-line ${width}`} />)}
             </span>
           </blockquote>
         )
@@ -142,7 +143,7 @@ const icon = 'size-6 shrink-0'
       {
         page === 'dpa' && (
           <>
-            <div class="flex flex-col gap-4 rounded-lg-squish-a bg-surface-card p-5 sm:p-7">
+            <div class="flex flex-col gap-4 rounded-card border-hairline border-card-line bg-surface-card p-5 shadow-card sm:p-7">
               <span aria-hidden="true" class="flex flex-col gap-2">
                 {skeleton(5).map((width) => <span class={`block h-3 rounded-pill bg-line ${width}`} />)}
               </span>
@@ -299,8 +300,14 @@ const icon = 'size-6 shrink-0'
   .legal-copy > h2:first-child {
     margin-top: 0;
   }
+  .legal-copy {
+    @apply type-prose;
+  }
+  .legal-copy h2 {
+    @apply type-section-title-sm;
+  }
   .legal-copy a {
-    color: var(--ube-ink);
+    color: var(--accent);
     font-weight: 600;
     text-decoration-thickness: 2px;
     text-underline-offset: 3px;
@@ -329,14 +336,14 @@ const icon = 'size-6 shrink-0'
     margin-top: 0;
   }
   .legal-copy blockquote {
-    @apply rounded-lg-squish-a;
+    @apply rounded-card;
     background-color: var(--ube-tint);
     color: var(--ube-ink);
     padding: var(--space-5) var(--space-6);
   }
   /* A card's title is an h2 (the card comes before any section) in the size of an h3. */
   .legal-copy h2.legal-card-title {
-    @apply type-label-lg;
+    @apply type-block-title-sm;
     margin-top: 0;
   }
 
@@ -359,12 +366,12 @@ const icon = 'size-6 shrink-0'
     color: var(--ink-muted);
     background-color: var(--surface-sunken);
     padding: var(--space-3) var(--space-4);
-    border-bottom: 2px solid var(--line);
+    border-bottom: 1.5px solid var(--card-line);
   }
   .legal-table td,
   .legal-table tbody th {
     padding: var(--space-3) var(--space-4);
-    border-bottom: 2px solid var(--line);
+    border-bottom: 1.5px solid var(--card-line);
     vertical-align: top;
   }
   .legal-table tbody th {

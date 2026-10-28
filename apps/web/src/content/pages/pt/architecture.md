@@ -2,7 +2,7 @@ A maioria das ferramentas de arquivos pede que você confie em “não guardamos
 
 ## A versão curta
 
-As ferramentas do navegador abrem seu arquivo, processam e salvam o resultado dentro da sua própria aba. O arquivo nunca é enviado: não vai para nós, não entra em fila, não é guardado nem usado para treinar nada. As ferramentas que precisam de um servidor são marcadas antes de você começar.
+As ferramentas do navegador abrem seu arquivo, processam e salvam o resultado dentro da sua própria aba. O arquivo nunca é enviado: não vai para nós, não entra em fila, não é guardado nem usado para treinar nada. Nenhuma ferramenta precisa de servidor hoje. Se alguma precisar, ela será marcada antes de você começar.
 
 ## Por que não há nada para apagar
 
@@ -35,9 +35,9 @@ form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests</pre>
 - Imagens com mais de 100 megapixels são recusadas antes de serem abertas.
 - O trabalho acontece, no máximo, em 16 megapixels e um arquivo por vez em cada worker, e a memória é liberada na hora.
 
-## Ferramentas que precisam de um servidor
+## Ferramentas futuras que podem precisar de um servidor
 
-Algumas ferramentas futuras, como recursos de IA, não conseguem rodar em um navegador. Para elas, a página da ferramenta avisa antes de você começar. Os arquivos viajam por uma conexão criptografada, são processados na memória e são apagados assim que o trabalho termina.
+Algumas ferramentas que podemos criar depois, como recursos de IA, talvez não consigam rodar em um navegador. Nenhuma existe hoje. Se uma for criada, a página dela avisará antes de você começar, e esta página descreverá como ela trata seus arquivos antes do lançamento.
 
 ## O que registramos
 

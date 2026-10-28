@@ -119,7 +119,7 @@
   "sol_about_1_title": "Páginas de ferramenta, Ask Mochifile ou a API?",
   "sol_about_1_text": "Uma página de ferramenta é o caminho mais rápido quando o trabalho é uma conversão fixa: nada para aprender. Para todo o resto, o [[ask|Ask Mochifile]] recebe um pedido em português simples, como “tire o fundo, PNG transparente” ou “corte quadrado e otimize para o eBay”, e faz tudo de uma vez. No Chrome, a [[extension|extensão]] coloca um menu “Converter para” ao clicar com o botão direito em qualquer imagem da web. Para pastas e automação, a [[cli|CLI, os servidores MCP e a API REST]] usam o mesmo motor. Tudo isso está planejado e ainda não está disponível.",
   "sol_about_2_title": "O que acontece com seus arquivos",
-  "sol_about_2_text": "As ferramentas do navegador abrem, convertem e salvam seus arquivos dentro da sua própria aba: nada é enviado. Ferramentas que precisarem de servidor avisarão antes de você começar, enviarão os arquivos por conexão criptografada, processarão na memória e apagarão ao fim do trabalho. A [[architecture|página de arquitetura]] tem os detalhes.",
+  "sol_about_2_text": "As ferramentas do navegador abrem, convertem e salvam seus arquivos dentro da sua própria aba: nada é enviado. Nenhuma ferramenta precisa de servidor hoje. Se alguma precisar, ela avisará antes de você começar, e a [[architecture|página de arquitetura]] vai descrever como ela trata os arquivos antes do lançamento.",
   "sol_faq_title": "Perguntas frequentes",
   "sol_faq_1_q": "Estas ferramentas são grátis?",
   "sol_faq_1_a": "Sim. Todas as ferramentas aqui são grátis, sem conta e sem limite mensal. Planos pagos estão planejados, mas ainda não existem.",

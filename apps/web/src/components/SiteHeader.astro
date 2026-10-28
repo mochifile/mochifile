@@ -76,7 +76,12 @@ const languageItem =
             links.map((link) => (
               <li>
                 {link.href ? (
-                  <a href={link.href} aria-current={isCurrent(link.href, paths[locale]) ? 'page' : undefined} class={navItem}>
+                  <a
+                    href={link.href}
+                    aria-current={isCurrent(link.href, paths[locale]) ? 'page' : undefined}
+                    class={navItem}
+                    data-shell-link={link.key}
+                  >
                     {link.label}
                   </a>
                 ) : (
@@ -266,7 +271,12 @@ const languageItem =
           links.map((link) => (
             <li>
               {link.href ? (
-                <a href={link.href} aria-current={isCurrent(link.href, paths[locale]) ? 'page' : undefined} class={menuRow}>
+                <a
+                  href={link.href}
+                  aria-current={isCurrent(link.href, paths[locale]) ? 'page' : undefined}
+                  class={menuRow}
+                  data-shell-link={link.key}
+                >
                   {link.label}
                   <ArrowRight />
                 </a>

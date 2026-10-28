@@ -2,7 +2,7 @@ Most file tools ask you to take “we don’t keep your files” on trust. This 
 
 ## The short version
 
-Browser tools open your file, process it and save the result inside your own browser tab. The file is never uploaded: it is not sent to us, queued, stored or used to train anything. Tools that need a server are marked before you start.
+Browser tools open your file, process it and save the result inside your own browser tab. The file is never uploaded: it is not sent to us, queued, stored or used to train anything. No tool needs a server today. If one ever does, it will be marked before you start.
 
 ## Why there is nothing to delete
 
@@ -35,9 +35,9 @@ form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests</pre>
 - Images over 100 megapixels are refused before they are opened.
 - Work happens at most at 16 megapixels and one file at a time per worker, and memory is freed right away.
 
-## Tools that need a server
+## Future tools that may need a server
 
-Some future tools, such as AI features, cannot run in a browser. For those, the tool page says so before you start. Files travel over an encrypted connection, are processed in memory and are deleted as soon as the job ends.
+Some tools we may add later, such as AI features, could not run in a browser. None exists today. If one is added, its page will say so before you start, and this page will describe how it handles your files before it launches.
 
 ## What we do record
 

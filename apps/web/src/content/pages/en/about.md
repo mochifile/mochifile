@@ -4,7 +4,7 @@ Mochifile exists for people who just want the job done: a photo small enough for
 
 ## Private by design
 
-Your files are personal: ID photos, documents, voice notes. So Mochifile’s tools run in your browser whenever possible. Your device does the work, and the file never leaves it. When a tool truly needs a server, the page says so before you start, the file travels over an encrypted connection, is processed in memory and is deleted when the job ends.
+Your files are personal: ID photos, documents, voice notes. So Mochifile’s tools run in your browser whenever possible. Your device does the work, and the file never leaves it. Every tool today runs in your browser. If a future tool ever needs a server, its page will say so before you start.
 
 That is a claim worth checking rather than taking on trust, so we publish the details on the [architecture and data handling](/architecture/) page.
 

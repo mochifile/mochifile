@@ -100,7 +100,7 @@ const uses = [
 
 // Inputs are not squished and have the control border (design system README › Shape, Colour).
 const control =
-  'min-h-target-primary w-full rounded-sm border-hairline border-card-line bg-surface-card shadow-chip px-4 text-ink placeholder:text-ink-muted user-invalid:border-danger type-body focus-ring'
+  'min-h-target-primary w-full rounded-sm border-chip border-border-control bg-surface-card px-4 text-ink placeholder:text-ink-muted user-invalid:border-danger type-body focus-ring'
 const label = 'type-eyebrow uppercase'
 const errorLine = 'items-center gap-2 type-body-sm text-danger-ink'
 const errorIcon = 'M12 7.5v5.5M12 16.5h.01'
@@ -178,7 +178,7 @@ const previewLinks = [
         <div class:list={['auth-steps flex w-full flex-col gap-5 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-5 sm:p-8', !signUp && 'max-w-[calc(var(--reading-max)*4/7)]']}>
           {/* The form. */}
           <section id={authStepId('email')} data-step tabindex="-1" aria-label={copy.heading} class="flex flex-col gap-5 outline-none">
-            <button type="button" popovertarget="auth-google" class="press inline-flex min-h-target-primary w-full items-center justify-center gap-3 rounded-pill border-hairline border-card-line bg-surface-card shadow-chip px-6 type-label-lg focus-ring">
+            <button type="button" popovertarget="auth-google" class="press inline-flex min-h-target-primary w-full items-center justify-center gap-3 rounded-pill border-hairline border-border-control bg-surface-card px-6 type-label-lg focus-ring">
               <GoogleG class="size-button-icon" />
               {text(m.auth_google)}
             </button>

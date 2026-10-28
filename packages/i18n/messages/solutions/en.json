@@ -119,7 +119,7 @@
   "sol_about_1_title": "Tool pages, Ask Mochifile or the API?",
   "sol_about_1_text": "A tool page is the quickest route when the job matches a single fixed conversion: nothing to learn. For anything else, [[ask|Ask Mochifile]] takes a plain-English request, like “remove the background, transparent PNG” or “square crop and optimise for eBay”, and does the job in one pass. In Chrome, the [[extension|extension]] adds a right-click “Convert to” menu to any image on the web. For folders and automation, the [[cli|CLI, the MCP servers and the REST API]] use the same engine. These are planned, and not available yet.",
   "sol_about_2_title": "What happens to your files",
-  "sol_about_2_text": "Browser tools open, convert and save your files inside your own browser tab: nothing is uploaded. Tools that need a server will tell you before you start, send files over an encrypted connection, process them in memory and delete them when the job ends. The [[architecture|architecture page]] has the details.",
+  "sol_about_2_text": "Browser tools open, convert and save your files inside your own browser tab: nothing is uploaded. No tool needs a server today. If one ever does, it will tell you before you start, and the [[architecture|architecture page]] will describe how it handles files before it launches.",
   "sol_faq_title": "Frequently asked questions",
   "sol_faq_1_q": "Are these tools free?",
   "sol_faq_1_a": "Yes. Every tool here is free to use, with no account and no monthly limit. Paid plans are planned, but not available yet.",

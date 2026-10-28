@@ -4,7 +4,7 @@ A Mochifile existe para quem só quer resolver o problema: uma foto pequena o ba
 
 ## Privada por padrão
 
-Seus arquivos são pessoais: fotos de documento, documentos, áudios. Por isso as ferramentas da Mochifile rodam no seu navegador sempre que possível. Seu aparelho faz o trabalho e o arquivo nunca sai dele. Quando uma ferramenta realmente precisa de um servidor, a página avisa antes de você começar, o arquivo viaja por uma conexão criptografada, é processado na memória e é apagado quando o trabalho termina.
+Seus arquivos são pessoais: fotos de documento, documentos, áudios. Por isso as ferramentas da Mochifile rodam no seu navegador sempre que possível. Seu aparelho faz o trabalho e o arquivo nunca sai dele. Hoje todas as ferramentas rodam no seu navegador. Se uma ferramenta futura precisar de um servidor, a página dela avisará antes de você começar.
 
 Essa é uma afirmação que vale a pena conferir em vez de aceitar na confiança, então publicamos os detalhes na página de [arquitetura e tratamento de dados](/pt/arquitetura/).
 

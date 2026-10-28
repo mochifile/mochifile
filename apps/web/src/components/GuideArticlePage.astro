@@ -83,7 +83,7 @@ const indexPath = guidesIndexPaths()[locale]
           </ol>
         </nav>
         <span class:list={['inline-flex min-h-6 items-center rounded-pill px-3 type-pill uppercase', topicTone[guide.topic]]}>{topicLabel}</span>
-        <h1 id="guide-title" class="type-section-title-sm text-balance sm:type-section-title">{meta.title}</h1>
+        <h1 id="guide-title" class="type-page-title-sm text-balance sm:type-page-title">{meta.title}</h1>
         <p class="type-body-sm text-ink-muted">{m.guide_byline({}, { locale })} · {m.guides_read_min({ minutes: meta.minutes }, { locale })}</p>
         <img
           src={sheetWaiting696.src}
