@@ -1,0 +1,156 @@
+---
+/**
+ * About, Sustainability and Architecture & data handling: an eyebrow, the title and a column of
+ * prose at reading width (the "Site final" artboards MFAbout, MFSustainability and
+ * MFArchitecture). The copy is Markdown (`content/pages/<locale>/<id>.md`, rendered at build
+ * time); the title, eyebrow and description are Paraglide messages. Static HTML, no script.
+ *
+ * About opens with the happy mascot sheet, on its own green block as drawn, above the copy
+ * (`assets/brand`: the artboard's `sheet-happy.png` at 380, 700 and 1100 px as WebP, 26 KB
+ * together; the build has no image optimizer, like the wordmark's copies in `assets/logo`).
+ * The artboards' yellow placeholders (founding story, a line about the maker, a renewable-energy
+ * claim, server locations, an analytics provider) are not shown: the README says to replace them
+ * with real information or remove them, and nothing here may be invented.
+ */
+import { getEntry, render } from 'astro:content'
+import { type Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import sheet380 from '../assets/brand/sheet-happy-380.webp'
+import sheet700 from '../assets/brand/sheet-happy-700.webp'
+import sheet1100 from '../assets/brand/sheet-happy-1100.webp'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { type PageId, pageContentId, pagePaths } from '../lib/pages'
+import PageHeading from './PageHeading.astro'
+
+interface Props {
+  id: Exclude<PageId, 'contact'>
+  locale: Locale
+}
+
+const { id, locale } = Astro.props
+
+const text = {
+  about: {
+    title: m.about_title,
+    description: m.about_description,
+    eyebrow: m.about_eyebrow,
+    heading: m.about_heading,
+  },
+  sustainability: {
+    title: m.sustainability_title,
+    description: m.sustainability_description,
+    eyebrow: m.sustainability_eyebrow,
+    heading: m.sustainability_heading,
+  },
+  architecture: {
+    title: m.architecture_title,
+    description: m.architecture_description,
+    eyebrow: m.architecture_eyebrow,
+    heading: m.architecture_heading,
+  },
+}[id]
+
+const entry = await getEntry('pageContent', pageContentId(id, locale))
+if (!entry) throw new Error(`Missing copy for the ${id} page in ${locale}`)
+const { Content } = await render(entry)
+const headingId = `${id}-heading`
+---
+
+<BaseLayout
+  locale={locale}
+  title={text.title({}, { locale })}
+  description={text.description({}, { locale })}
+  paths={pagePaths(id)}
+>
+  <article aria-labelledby={headingId} class="mx-auto flex w-full max-w-reading-max flex-col gap-8 pb-10 lg:pt-4">
+    <PageHeading eyebrow={text.eyebrow({}, { locale })} heading={text.heading({}, { locale })} id={headingId} />
+    {
+      id === 'about' && (
+        // Decoration: the headings say everything the picture does.
+        <img
+          src={sheet700.src}
+          srcset={`${sheet380.src} 380w, ${sheet700.src} 700w, ${sheet1100.src} 1100w`}
+          sizes="(min-width: 764px) 700px, calc(100vw - 32px)"
+          alt=""
+          width={1100}
+          height={651}
+          decoding="async"
+          class="h-auto w-full rounded-xl-squish-a"
+        />
+      )
+    }
+    <div class="page-copy institutional-copy">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>
+
+<style is:global>
+  @reference "../styles/global.css";
+
+  /*
+   * What the Markdown needs beyond `.page-copy` (global.css): the lead paragraph that opens a
+   * page (or follows About's first heading), links and bullets in the accent, the quotation,
+   * inline code and the policy block. Every value is a token.
+   */
+  .institutional-copy > p:first-child,
+  .institutional-copy > h2:first-child + p {
+    @apply type-body-lg;
+  }
+  .institutional-copy > h2:first-child {
+    margin-top: 0;
+  }
+  .institutional-copy a {
+    color: var(--ube-ink);
+    font-weight: 600;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  .institutional-copy a:hover {
+    text-decoration-line: none;
+  }
+  .institutional-copy a:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  .institutional-copy li::marker {
+    color: var(--ube);
+  }
+  .institutional-copy li + li {
+    margin-top: var(--space-2);
+  }
+  /* A tinted block, not a bar down one side (design system README › Don'ts). */
+  .institutional-copy blockquote {
+    @apply rounded-lg-squish-a;
+    background-color: var(--ube-tint);
+    color: var(--ube-ink);
+    padding: var(--space-5) var(--space-6);
+    font-style: italic;
+  }
+  .institutional-copy code {
+    @apply type-code;
+    background-color: var(--ube-tint);
+    color: var(--ube-ink);
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-2);
+    overflow-wrap: anywhere;
+  }
+  /* The policy as sent by the server: wrapped, so it never scrolls sideways on a phone. */
+  .institutional-copy pre.csp-policy {
+    @apply type-code rounded-lg-squish-b;
+    background-color: var(--surface-inverse);
+    color: var(--ink-on-inverse);
+    padding: var(--space-5) var(--space-6);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .institutional-copy p.note {
+    @apply type-body-sm;
+    color: var(--ink-muted);
+  }
+  .institutional-copy p.correction {
+    margin-top: var(--space-4);
+    font-style: italic;
+  }
+</style>

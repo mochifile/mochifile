@@ -1,0 +1,25 @@
+---
+/**
+ * The heading block of the institutional pages: an eyebrow, the H1 and the three-dot underline
+ * (a bar and the wordmark's two i-dots, here as `ube`, `strawberry` and `matcha`). The
+ * underline is decoration. The H1 steps down under 600 px like the other headings (design
+ * system README › Responsive headings).
+ */
+interface Props {
+  eyebrow: string
+  heading: string
+  id: string
+}
+
+const { eyebrow, heading, id } = Astro.props
+---
+
+<header class="flex flex-col items-start gap-4">
+  <p class="type-caption tracking-widest text-ube-ink uppercase">{eyebrow}</p>
+  <h1 id={id} class="type-title text-balance sm:type-display-lg lg:type-display-xl">{heading}</h1>
+  <span aria-hidden="true" class="flex items-center gap-2">
+    <span class="block h-1 w-10 rounded-pill bg-ube"></span>
+    <span class="block size-2 rounded-pill bg-strawberry"></span>
+    <span class="block size-2 rounded-pill bg-matcha"></span>
+  </span>
+</header>
