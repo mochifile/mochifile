@@ -5,6 +5,7 @@ import { type Locale, localePath, locales } from '@mochifile/i18n'
 import { MAIN_PAGE_KEY, type ToolManifest } from '@mochifile/tool-kit'
 import { manifest as templateManifest } from '@mochifile/tool-template/manifest'
 import { askPaths } from '../src/lib/ask.ts'
+import { pageIds, pageSlugs } from '../src/lib/pages.ts'
 import { pricingPaths } from '../src/lib/pricing.ts'
 
 /**
@@ -28,9 +29,12 @@ const templateSlugs = new Set(
 /** Pages of the site that are not tools. Each page PR adds its paths here. */
 const nonToolPaths = new Set<string>([...Object.values(pricingPaths), ...Object.values(askPaths)])
 
+/** Slugs of the institutional pages (About, Contact…): in the sitemap, but not tools. */
+const institutionalSlugs = new Set(pageIds.flatMap((id) => Object.values(pageSlugs[id])))
+
 /**
  * Tool pages of the sitemap: everything but the home pages, the V2 pages that are not tools
- * (pricing, Ask) and the template tool.
+ * (pricing, Ask, the institutional pages) and the template tool.
  */
 export async function toolPaths(request: {
   get: (url: string) => Promise<{ text(): Promise<string> }>
@@ -41,7 +45,12 @@ export async function toolPaths(request: {
     .filter((path) => !nonToolPaths.has(path))
     .filter((path) => {
       const slug = path.split('/').filter(Boolean).at(-1)
-      return slug !== undefined && slug !== 'pt' && !templateSlugs.has(slug)
+      return (
+        slug !== undefined &&
+        slug !== 'pt' &&
+        !templateSlugs.has(slug) &&
+        !institutionalSlugs.has(slug)
+      )
     })
 }
 

@@ -1,5 +1,6 @@
 import { defineCollection } from 'astro:content'
 import { glob } from 'astro/loaders'
+import { z } from 'astro/zod'
 import { pageCopySchema } from './lib/page-copy.ts'
 
 /**
@@ -20,4 +21,15 @@ const toolContent = defineCollection({
   schema: pageCopySchema,
 })
 
-export const collections = { toolContent }
+/**
+ * Copy of the institutional pages (About, Sustainability, Architecture and the intro of
+ * Contact): `src/content/pages/<locale>/<page id>.md`, one file per locale for every page in
+ * `lib/pages.ts`. The titles, labels and form texts stay in Paraglide messages. No frontmatter:
+ * there is nothing structured for the page to lay out, so a stray key fails the build.
+ */
+const pageContent = defineCollection({
+  loader: glob({ pattern: '*/*.md', base: './src/content/pages' }),
+  schema: z.object({}).strict(),
+})
+
+export const collections = { toolContent, pageContent }

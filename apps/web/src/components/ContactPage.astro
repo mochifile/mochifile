@@ -1,0 +1,210 @@
+---
+import { getEntry, render } from 'astro:content'
+/**
+ * Contact (the "Site final" artboard MFContact): the smiling mascot, a heading with the direct
+ * addresses, and the form. The form is complete, but nothing can be sent yet: there is no
+ * endpoint, and an anti-spam check needs its own decision first (a third-party script, so an
+ * ADR). Asking to send says so instead of pretending, and sends nothing: the form has
+ * `method="dialog"`, so submitting never navigates, and no field has a `name`.
+ *
+ * No script. Everything is HTML and CSS:
+ * - A field turns red with its message once the visitor has used it (`:user-invalid`).
+ * - While any field is not valid the visible button is a submit button, so the browser reports
+ *   what is missing. A submit button cannot open a popover, so once the form is valid a plain
+ *   button takes its place (`group-valid`) and opens the "not available yet" notice.
+ * - Where the Popover API is missing the notice is simply shown below the button, as text.
+ *
+ * The privacy line of the artboard ("See the Privacy Policy") waits for that page to exist;
+ * the Privacy Policy is a legal text and is published by its own change.
+ */
+import type { Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import { buttonClasses } from '@mochifile/ui'
+import smiling168 from '../assets/brand/expr-smiling-168.webp'
+import smiling276 from '../assets/brand/expr-smiling-276.webp'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { pageContentId, pagePaths } from '../lib/pages'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+
+const entry = await getEntry('pageContent', pageContentId('contact', locale))
+if (!entry) throw new Error(`Missing copy for the contact page in ${locale}`)
+const { Content } = await render(entry)
+
+const topics = [
+  m.contact_topic_general({}, { locale }),
+  m.contact_topic_problem({}, { locale }),
+  m.contact_topic_idea({}, { locale }),
+  m.contact_topic_other({}, { locale }),
+]
+
+// Inputs are not squished and have the control border (design system README › Shape, Colour).
+const control =
+  'min-h-target-primary w-full rounded-sm border-chip border-border-control bg-surface-card px-4 text-ink placeholder:text-ink-muted user-invalid:border-danger type-body focus-ring'
+const label = 'type-caption tracking-widest uppercase'
+const error =
+  'hidden items-center gap-2 type-body-sm text-danger-ink group-has-[:user-invalid]/field:flex'
+const fields = [
+  {
+    id: 'contact-name',
+    label: m.contact_name_label({}, { locale }),
+    placeholder: m.contact_name_placeholder({}, { locale }),
+    error: m.contact_name_error({}, { locale }),
+    type: 'text' as const,
+    autocomplete: 'name',
+  },
+  {
+    id: 'contact-email',
+    label: m.contact_email_label({}, { locale }),
+    placeholder: m.contact_email_placeholder({}, { locale }),
+    error: m.contact_email_error({}, { locale }),
+    type: 'email' as const,
+    autocomplete: 'email',
+  },
+]
+---
+
+<BaseLayout
+  locale={locale}
+  title={m.contact_title({}, { locale })}
+  description={m.contact_description({}, { locale })}
+  paths={pagePaths('contact')}
+>
+  <article aria-labelledby="contact-heading" class="flex flex-col items-center gap-8 pb-10 lg:pt-4">
+    <header class="flex max-w-reading-max flex-col items-center gap-3 text-center">
+      {/* Decoration: the heading says it all. Sized from the tokens (84 px in the artboard). */}
+      <img
+        src={smiling168.src}
+        srcset={`${smiling168.src} 168w, ${smiling276.src} 276w`}
+        sizes="84px"
+        alt=""
+        width={276}
+        height={252}
+        decoding="async"
+        class="h-auto w-[calc(var(--space-16)+var(--space-5))] rounded-md-squish-a"
+      />
+      <h1 id="contact-heading" class="type-title text-balance sm:type-display-lg">{m.contact_heading({}, { locale })}</h1>
+      <div class="contact-intro">
+        <Content />
+      </div>
+    </header>
+
+    <form
+      method="dialog"
+      aria-label={m.contact_form_label({}, { locale })}
+      class="group/form flex w-full max-w-[calc(var(--reading-max)*2/3)] flex-col gap-5 rounded-xl-squish-a bg-surface-card p-5 sm:p-8"
+    >
+      <div class="group/field flex flex-col gap-2">
+        <label for="contact-topic" class={label}>{m.contact_topic_label({}, { locale })}</label>
+        <div class="relative">
+          {/* The first option is the placeholder: empty, so the field is invalid until a topic is chosen. */}
+          <select
+            id="contact-topic"
+            required
+            aria-describedby="contact-topic-error"
+            class:list={[control, 'appearance-none pr-14 invalid:text-ink-muted']}
+          >
+            <option value="" disabled selected hidden>{m.contact_topic_placeholder({}, { locale })}</option>
+            {topics.map((topic) => <option class="text-ink">{topic}</option>)}
+          </select>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none absolute top-1/2 right-4 size-6 -translate-y-1/2 text-ink-muted">
+            <path d="m6 9 6 6 6-6"></path>
+          </svg>
+        </div>
+        <p id="contact-topic-error" role="alert" class={error}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-5 shrink-0"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></svg>
+          {m.contact_topic_error({}, { locale })}
+        </p>
+      </div>
+      {
+        fields.map((field) => (
+          <div class="group/field flex flex-col gap-2">
+            <label for={field.id} class={label}>{field.label}</label>
+            <input id={field.id} type={field.type} required autocomplete={field.autocomplete} maxlength="254" placeholder={field.placeholder} aria-describedby={`${field.id}-error`} class={control} />
+            <p id={`${field.id}-error`} role="alert" class={error}>
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-5 shrink-0"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></svg>
+              {field.error}
+            </p>
+          </div>
+        ))
+      }
+      <div class="group/field flex flex-col gap-2">
+        <label for="contact-message" class={label}>{m.contact_message_label({}, { locale })}</label>
+        <textarea id="contact-message" required rows="5" maxlength="5000" placeholder={m.contact_message_placeholder({}, { locale })} aria-describedby="contact-message-error" class:list={[control, 'min-h-[calc(var(--space-16)*2)] resize-y py-3']}></textarea>
+        <p id="contact-message-error" role="alert" class={error}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-5 shrink-0"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></svg>
+          {m.contact_message_error({}, { locale })}
+        </p>
+      </div>
+
+      {/* The same button twice: the visible one depends on whether the form is valid (see above). */}
+      <div class="group-valid/form:hidden">
+        <button type="submit" class={buttonClasses('primary', 'w-full')}>{m.contact_send({}, { locale })}</button>
+      </div>
+      <div class="hidden group-valid/form:block">
+        <button type="button" popovertarget="contact-unavailable" class={buttonClasses('primary', 'w-full')}>{m.contact_send({}, { locale })}</button>
+      </div>
+
+      <p class="text-center type-body-sm text-ink-muted">{m.contact_email_note({}, { locale })}</p>
+
+      {/*
+        Not a success message: it says nothing was sent. A toast along the bottom edge where the
+        Popover API exists (Esc, a click outside or Close dismiss it); plain text below the button
+        where it does not.
+      */}
+      <div
+        id="contact-unavailable"
+        popover="auto"
+        role="alert"
+        class="rounded-lg-squish-a bg-ube-tint p-4 text-ube-ink with-popover:fixed with-popover:inset-x-4 with-popover:top-auto with-popover:bottom-4 with-popover:mx-auto with-popover:my-0 with-popover:w-auto with-popover:max-w-reading-max with-popover:border-chip with-popover:border-ube popover-open:block"
+      >
+        <div class="flex items-start gap-3">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="mt-0.5 size-6 shrink-0"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>
+          <p class="min-w-0 flex-1 type-body-sm">
+            <strong class="type-body-strong">{m.contact_unavailable_title({}, { locale })}.</strong>
+            {m.contact_unavailable_text({}, { locale })}
+            <a href="mailto:hello@mochifile.com" class="font-semibold underline hover:no-underline focus-ring">hello@mochifile.com</a>.
+          </p>
+          <button type="button" popovertarget="contact-unavailable" popovertargetaction="hide" aria-label={m.contact_unavailable_close({}, { locale })} class="press -m-2 hidden size-target-min shrink-0 items-center justify-center rounded-pill focus-ring with-popover:flex">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-6"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+      </div>
+    </form>
+  </article>
+</BaseLayout>
+
+<style is:global>
+  @reference "../styles/global.css";
+
+  /* The two short paragraphs under the heading: the Markdown's links get the accent. */
+  .contact-intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    color: var(--ink-muted);
+  }
+  .contact-intro > p:first-child {
+    @apply type-body-lg;
+  }
+  .contact-intro > p + p {
+    @apply type-body-sm;
+  }
+  .contact-intro a {
+    color: var(--ube-ink);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .contact-intro a:hover {
+    text-decoration-line: underline;
+  }
+  .contact-intro a:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+</style>
