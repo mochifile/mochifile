@@ -17,12 +17,13 @@ const EXTENSIONS = new Set(['.ts', '.tsx', '.astro', '.css'])
 const SKIP_DIRS = new Set(['node_modules', 'paraglide', 'dist', '.astro', 'scripts'])
 /**
  * The only files allowed to hold raw values: the generated tokens, the component constants and
- * the pricing page's stylesheet (its header says why).
+ * the stylesheets of the pricing and Ask pages (their headers say why).
  */
 const ALLOWED_FILES = new Set([
   'packages/ui/src/tokens.generated.css',
   'packages/ui/src/component-constants.css',
   'apps/web/src/styles/pricing.css',
+  'apps/web/src/styles/ask.css',
 ])
 
 const RULES: Array<{ name: string; pattern: RegExp }> = [

@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { type Locale, localePath, locales } from '@mochifile/i18n'
 import { MAIN_PAGE_KEY, type ToolManifest } from '@mochifile/tool-kit'
 import { manifest as templateManifest } from '@mochifile/tool-template/manifest'
+import { askPaths } from '../src/lib/ask.ts'
 import { pricingPaths } from '../src/lib/pricing.ts'
 
 /**
@@ -24,14 +25,20 @@ const templateSlugs = new Set(
     .map((meta) => meta.slug),
 )
 
-/** Tool pages of the sitemap: everything but the home pages, the pricing pages and the template tool. */
+/** Pages of the site that are not tools. Each page PR adds its paths here. */
+const nonToolPaths = new Set<string>([...Object.values(pricingPaths), ...Object.values(askPaths)])
+
+/**
+ * Tool pages of the sitemap: everything but the home pages, the V2 pages that are not tools
+ * (pricing, Ask) and the template tool.
+ */
 export async function toolPaths(request: {
   get: (url: string) => Promise<{ text(): Promise<string> }>
 }) {
   const xml = await (await request.get('/sitemap-0.xml')).text()
   return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
     .map((match) => new URL(match[1] ?? '').pathname)
-    .filter((path) => !(Object.values(pricingPaths) as string[]).includes(path))
+    .filter((path) => !nonToolPaths.has(path))
     .filter((path) => {
       const slug = path.split('/').filter(Boolean).at(-1)
       return slug !== undefined && slug !== 'pt' && !templateSlugs.has(slug)

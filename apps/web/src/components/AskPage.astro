@@ -1,0 +1,283 @@
+---
+/**
+ * Ask Mochifile, V2 (docs/design-ref/v2, artboard MFFlow). Light theme only, visual first: the
+ * prompt box, the suggestions, the examples and the mascots are all drawn as designed, although
+ * the assistant does not exist yet (the README calls the page a concept). Nothing here processes,
+ * uploads or answers anything:
+ *
+ * - The suggestions and the examples only write a sentence into the box (askPage script).
+ * - "Add files" opens the browser's own file picker; the page shows how many were chosen and
+ *   never reads, stores or sends them (Never do: upload user files).
+ * - "Send", "Help", "Paid plans" and the four languages without a sample open a "Coming soon"
+ *   notice, a declarative popover, so they work without a script.
+ */
+import { type Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import images320 from '../assets/ask/use-images-320.webp'
+import images640 from '../assets/ask/use-images-640.webp'
+import pdf320 from '../assets/ask/use-pdf-320.webp'
+import pdf640 from '../assets/ask/use-pdf-640.webp'
+import video320 from '../assets/ask/use-video-320.webp'
+import video640 from '../assets/ask/use-video-640.webp'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { askPaths, exampleLanguages } from '../lib/ask'
+import '../styles/ask.css'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+const t = (key: string): string =>
+  (m as unknown as Record<string, (i: object, o: { locale: Locale }) => string>)[key]?.(
+    {},
+    { locale },
+  ) ?? ''
+const soon = m.ask_coming_soon({}, { locale })
+
+/** The suggestion chips: a dot colour (or an icon) and the sentence each one writes. */
+const suggestions = [
+  { key: 'chip_50kb', dot: 'ask-dot--mango' },
+  { key: 'chip_remove_bg', dot: 'ask-dot--ube' },
+  { key: 'chip_ebay', dot: 'ask-dot--straw' },
+  { key: 'chip_vinted', dot: 'ask-dot--matcha' },
+  { key: 'chip_square', dot: 'ask-dot--mango' },
+  { key: 'chip_pagespeed', dot: 'ask-dot--ube' },
+  { key: 'chip_to_pdf', dot: 'ask-dot--red' },
+  { key: 'chip_convert', dot: null },
+  { key: 'chip_rotate', dot: null },
+].map(({ key, dot }) => ({ label: t(`ask_${key}`), prompt: t(`ask_${key}_prompt`), dot }))
+
+const groups = [
+  { id: 'images', title: m.ask_group_images({}, { locale }), src: images320, big: images640, n: 4 },
+  { id: 'pdfs', title: m.ask_group_pdfs({}, { locale }), src: pdf320, big: pdf640, n: 4 },
+  { id: 'video', title: m.ask_group_video({}, { locale }), src: video320, big: video640, n: 4 },
+].map((group) => ({
+  ...group,
+  examples: Array.from({ length: group.n }, (_, i) => t(`ask_ex_${group.id}_${i + 1}`)),
+}))
+
+/** A sentence in a language the page has a sample for, for the language chips. */
+const sampleIn = (sample: Locale) => m.ask_chip_50kb_prompt({}, { locale: sample })
+---
+
+<BaseLayout
+  locale={locale}
+  title={m.ask_title({}, { locale })}
+  description={m.ask_description({}, { locale })}
+  paths={askPaths}
+>
+  <div class="ask" data-ask>
+    <section class="ask-w ask-top" aria-labelledby="ask-heading">
+      <div class="ask-stack ask-center ask-g20 ask-hero">
+        <p class="ask-eyebrow">{m.ask_eyebrow({}, { locale })}</p>
+        <h1 id="ask-heading" class="ask-h1">
+          {m.ask_h1_before({}, { locale })}<span class="ask-mark">{m.ask_h1_mark({}, { locale })}</span>
+        </h1>
+        <p class="ask-lead">{m.ask_lead({}, { locale })}</p>
+        <ul class="ask-row ask-g8 ask-center ask-small" aria-label={m.ask_languages_label({}, { locale })}>
+          {
+            exampleLanguages.map((language) => (
+              <li>
+                {'sample' in language ? (
+                  <button
+                    type="button"
+                    class="ask-chip"
+                    lang={language.tag}
+                    data-ask-prompt={sampleIn(language.sample)}
+                  >
+                    {language.label}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    class="ask-chip"
+                    lang={language.tag}
+                    popovertarget="ask-soon"
+                    popovertargetaction="show"
+                    title={soon}
+                  >
+                    {language.label}<span class="ask-sr">, {soon}</span>
+                  </button>
+                )}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div class="ask-box">
+        <div class="ask-prompt">
+          <div class="ask-row ask-g16 ask-nowrap">
+            {/* The browser's own picker. The page never reads the files, only counts them. */}
+            <input
+              type="file"
+              id="ask-files"
+              multiple
+              accept="image/*,application/pdf,video/*,audio/*"
+              class="ask-sr ask-files"
+            />
+            <label for="ask-files" class="ask-add">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span class="ask-sr">{m.ask_add_files({}, { locale })}</span>
+            </label>
+            <span class="ask-muted ask-add-text">{m.ask_add_files_text({}, { locale })}</span>
+          </div>
+          <label for="ask-input" class="ask-sr">{m.ask_input_label({}, { locale })}</label>
+          <textarea
+            id="ask-input"
+            class="ask-input"
+            rows="3"
+            maxlength="500"
+            placeholder={m.ask_placeholder({}, { locale })}
+          ></textarea>
+          <ul class="ask-row ask-g8 ask-suggestions" aria-label={m.ask_suggestions_label({}, { locale })}>
+            {
+              suggestions.map((suggestion) => (
+                <li>
+                  <button type="button" class="ask-chip" data-ask-prompt={suggestion.prompt}>
+                    {suggestion.dot ? (
+                      <span class:list={['ask-dot', suggestion.dot]} aria-hidden="true" />
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 8h13l-3-3M20 16H7l3 3" />
+                      </svg>
+                    )}
+                    {suggestion.label}
+                  </button>
+                </li>
+              ))
+            }
+          </ul>
+          <div class="ask-foot">
+            <p
+              class="ask-row ask-g8 ask-nowrap"
+              role="status"
+              data-ask-files
+              data-none={m.ask_no_files({}, { locale })}
+              data-one={m.ask_files_one({}, { locale })}
+              data-other={m.ask_files_other({ count: '{count}' }, { locale })}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9" />
+              </svg>
+              <span data-ask-files-text>{m.ask_no_files({}, { locale })}</span>
+            </p>
+            <span class="ask-row ask-g4 ask-nowrap">
+              <button type="button" class="ask-icon-btn" popovertarget="ask-soon" popovertargetaction="show" title={soon} aria-label={`${m.ask_help({}, { locale })}, ${soon}`}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01" />
+                </svg>
+              </button>
+              {/* Nothing is sent anywhere: the button says so. */}
+              <button type="button" class="ask-send" popovertarget="ask-soon" popovertargetaction="show" title={soon} aria-label={`${m.ask_send({}, { locale })}, ${soon}`}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 12l16-8-6 16-2.5-6.5z" />
+                </svg>
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <ul class="ask-row ask-g24 ask-center ask-small ask-trust">
+        <li class="ask-row ask-g6">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
+          </svg>
+          {m.ask_trust_private({}, { locale })}
+        </li>
+        <li class="ask-row ask-g6">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M13 2 4 14h7l-1 8 9-12h-7z" />
+          </svg>
+          {m.ask_trust_limit({}, { locale })}
+        </li>
+        <li class="ask-muted ask-formats">{m.ask_trust_formats({}, { locale })}</li>
+      </ul>
+    </section>
+
+    <section class="ask-w ask-sec ask-stack ask-g40" aria-labelledby="ask-examples">
+      <div class="ask-stack ask-center ask-g12">
+        <h2 id="ask-examples" class="ask-h2">{m.ask_examples_heading({}, { locale })}</h2>
+        <span class="ask-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+        <p class="ask-lead ask-lead--mid">{m.ask_examples_lead({}, { locale })}</p>
+      </div>
+      <div class="ask-grid">
+        {
+          groups.map((group) => (
+            <article class="ask-card">
+              <img
+                src={group.src.src}
+                srcset={`${group.src.src} 320w, ${group.big.src} 640w`}
+                sizes="(min-width: 1101px) 296px, (min-width: 641px) 40vw, 312px"
+                alt=""
+                width="320"
+                height="192"
+                loading="lazy"
+                decoding="async"
+                class="ask-media"
+              />
+              <h3 class="ask-h3">{group.title}</h3>
+              <ul class="ask-stack ask-g8">
+                {group.examples.map((example) => (
+                  <li>
+                    <button type="button" class="ask-example" data-ask-prompt={example} data-ask-scroll>
+                      <span>{example}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))
+        }
+      </div>
+      <p class="ask-small ask-muted ask-text-center">
+        {m.ask_free_before({}, { locale })}<button
+          type="button"
+          class="ask-link"
+          popovertarget="ask-soon"
+          popovertargetaction="show"
+          title={soon}>{m.ask_free_link({}, { locale })}<span class="ask-sr">, {soon}</span></button
+        >{m.ask_free_after({}, { locale })}
+      </p>
+    </section>
+
+    <div id="ask-soon" popover role="status" class="ask-notice">{m.ask_notice({}, { locale })}</div>
+  </div>
+</BaseLayout>
+
+<script>
+  // The only script of the page, and it only moves text around on this device: a suggestion or
+  // an example writes its sentence into the box, and the file picker's count is shown. Nothing
+  // is read from the files, stored or sent.
+  const input = document.querySelector<HTMLTextAreaElement>('#ask-input')
+
+  for (const button of document.querySelectorAll<HTMLElement>('[data-ask-prompt]')) {
+    button.addEventListener('click', () => {
+      if (!input) return
+      input.value = button.dataset.askPrompt ?? ''
+      input.focus()
+      input.setSelectionRange(input.value.length, input.value.length)
+      if (button.hasAttribute('data-ask-scroll')) {
+        const calm = matchMedia('(prefers-reduced-motion: reduce)').matches
+        input.scrollIntoView({ block: 'center', behavior: calm ? 'auto' : 'smooth' })
+      }
+    })
+  }
+
+  const files = document.querySelector<HTMLInputElement>('#ask-files')
+  const status = document.querySelector<HTMLElement>('[data-ask-files]')
+  const text = document.querySelector<HTMLElement>('[data-ask-files-text]')
+  files?.addEventListener('change', () => {
+    if (!status || !text) return
+    const count = files.files?.length ?? 0
+    const { none = '', one = '', other = '' } = status.dataset
+    text.textContent = count === 0 ? none : count === 1 ? one : other.replace('{count}', String(count))
+  })
+</script>

@@ -32,3 +32,4 @@ a PR. Accepted ADRs are not edited later except for their status; a new ADR supe
 | [0024](0024-lettered-wordmark.md) | The lettered wordmark in the header, footer and READMEs | Proposed (PR #42); Accepted on merge |
 | [0025](0025-convert-heic-colours-to-srgb.md) | Convert HEIC colours to sRGB when decoding with WebAssembly | Proposed |
 | [0030](0030-v2-site-shell.md) | The V2 site shell: header, phone menu, footer and "Coming soon" controls | Proposed |
+| [0031](0031-ask-mochifile-concept-page.md) | Ask Mochifile: the concept page and its one script | Proposed |

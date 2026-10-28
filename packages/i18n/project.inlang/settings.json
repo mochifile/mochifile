@@ -12,6 +12,7 @@
     "pathPattern": [
       "./messages/{locale}.json",
       "./messages/pricing/{locale}.json",
+      "./messages/ask/{locale}.json",
       "../tools/_template/messages/{locale}.json",
       "../tools/compress-image/messages/{locale}.json"
     ]
