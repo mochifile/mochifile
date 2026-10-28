@@ -220,3 +220,40 @@ for (const { path, lang, tools, title } of NOT_FOUND) {
     expect(colours).toEqual(['rgb(255, 247, 236)', 'rgb(30, 27, 46)'])
   })
 }
+
+const TOOL_PAGES = [
+  { path: '/compress-image/', home: '/', solutions: '/solutions/', label: 'Solutions' },
+  { path: '/compress-image-to-50kb/', home: '/', solutions: '/solutions/', label: 'Solutions' },
+  { path: '/pt/comprimir-imagem/', home: '/pt/', solutions: '/pt/solucoes/', label: 'Soluções' },
+  {
+    path: '/pt/comprimir-imagem-para-50kb/',
+    home: '/pt/',
+    solutions: '/pt/solucoes/',
+    label: 'Soluções',
+  },
+] as const
+
+for (const { path, home, solutions, label } of TOOL_PAGES) {
+  test(`the tool page ${path}: Home › ${label} › the tool, and light under a dark system theme`, async ({
+    page,
+    request,
+  }) => {
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await page.goto(path)
+    const crumbs = page.getByRole('navigation', { name: /breadcrumb|trilha/i }).locator('li a')
+    await expect(crumbs.nth(0)).toHaveAttribute('href', home)
+    await expect(crumbs.nth(1)).toHaveText(label)
+    await expect(crumbs.nth(1)).toHaveAttribute('href', solutions)
+    expect((await request.get(solutions)).status()).toBe(200)
+    // Light only: the page and its panel keep the light tokens whatever the system prefers.
+    const colours = await page.locator('.tp').evaluate((el) => {
+      const style = getComputedStyle(el)
+      return [style.backgroundColor, style.color]
+    })
+    expect(colours).toEqual(['rgb(255, 247, 236)', 'rgb(30, 27, 46)'])
+    const card = await page
+      .locator('.tp-panel-card')
+      .evaluate((el) => getComputedStyle(el).backgroundColor)
+    expect(card).toBe('rgb(255, 255, 255)')
+  })
+}

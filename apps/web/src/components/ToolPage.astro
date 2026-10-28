@@ -10,8 +10,10 @@ import sad from '../assets/tool/expr-sad.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { stepParts } from '../lib/page-copy.ts'
 import { serializeJsonLd, toolJsonLd } from '../lib/seo'
+import { shellPaths } from '../lib/site-nav'
 import { contentId, type ToolPageProps, toolPages, tools } from '../lib/tools'
 import '../styles/tool-page.css'
+import '../styles/tool-page-light.css'
 import ToolIsland from './ToolIsland'
 
 type Props = ToolPageProps
@@ -45,6 +47,8 @@ const stepMascots = [normal, determined, celebrate]
 
 const breadcrumbs = [
   { name: m.breadcrumb_home({}, { locale }), path: localePath(locale) },
+  // Home › Solutions › the tool, as in the artboard.
+  { name: m.nav_solutions({}, { locale }), path: shellPaths.solutions[locale] },
   { name: manifest.meta[locale].title, path: localePath(locale, manifest.meta[locale].slug) },
   ...(variant ? [{ name: meta.title, path: paths[locale] }] : []),
 ]

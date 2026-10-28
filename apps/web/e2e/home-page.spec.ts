@@ -114,7 +114,14 @@ for (const c of LOCALES) {
       }
       const target = await request.get(c.under50Page)
       expect(target.status()).toBe(200)
-      expect(await target.text()).toMatch(new RegExp(`<h1[^>]*>${c.under50Title}</h1>`))
+      // The title's last words are marked up, so read the heading as the browser does.
+      const tab = await page.context().newPage()
+      try {
+        await tab.goto(c.under50Page)
+        await expect(tab.getByRole('heading', { level: 1 })).toHaveText(c.under50Title)
+      } finally {
+        await tab.close()
+      }
 
       const start = main(page).getByRole('link', { name: c.start })
       await expect(start).toHaveAttribute('href', c.tool)

@@ -1,0 +1,62 @@
+/*
+ * The tool pages stay light, Mochifile V2 (light theme only, docs/design-ref/v2 README).
+ *
+ * The shell's tokens follow the system colour scheme, and the tool page, its panel and its states
+ * read them. Like the home, pricing, Ask and 404 pages, the page repeats the light value of every
+ * colour token on its own wrapper, from tokens.json (a unit test checks they still match), so a
+ * dark system theme changes nothing inside it, and gives the wrapper the page ground, full width,
+ * so no dark band shows beside it. The design guard allows raw values in this file only.
+ */
+body:has(.tp) {
+  overflow-x: clip;
+}
+
+.tp {
+  --surface-page: #fff7ec;
+  --surface-card: #ffffff;
+  --surface-sunken: #fffbf4;
+  --surface-inverse: #1e1b2e;
+  --surface-inverse-raised: #2c2840;
+  --ink: #1e1b2e;
+  --ink-muted: #5c566b;
+  --ink-on-inverse: #fff7ec;
+  --ink-on-inverse-muted: #d9d3e6;
+  --ink-on-block: #1e1b2e;
+  --line: #e7dccb;
+  --border-control: #918474;
+  --border-dashed: #c9bba4;
+  --mango: #ffb627;
+  --strawberry: #ff6f91;
+  --matcha: #8fd16a;
+  --ube: #9b7bea;
+  --mango-tint: #fff0d1;
+  --strawberry-tint: #ffe3ea;
+  --matcha-tint: #e9f7df;
+  --ube-tint: #efe8fc;
+  --mango-ink: #5a3a00;
+  --strawberry-ink: #7a1532;
+  --matcha-ink: #17391f;
+  --ube-ink: #3b2770;
+  --action: #1e1b2e;
+  --action-ink: #fff7ec;
+  --danger: #c63a1e;
+  --danger-tint: #fde4dc;
+  --danger-ink: #8a220f;
+  --focus-ring: #1f5eff;
+  --mochi-body: #fff4e0;
+  --mochi-outline: #1e1b2e;
+  --mochi-blush: #ff8fa3;
+  --accent: #5b3cc4;
+  --accent-soft: #efe8fc;
+  --card-line: #efe3d0;
+  --dot-red: #ff5a5a;
+  --dot-green: #7ccf5c;
+  --heart: #d12c4a;
+  --warning-tint: var(--mango-tint);
+  --warning-ink: var(--mango-ink);
+
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  background: var(--surface-page);
+  color: var(--ink);
+}

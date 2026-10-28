@@ -12,7 +12,7 @@ const cases = [
     lang: 'en',
     title: 'Template tool: lower case',
     copyHeading: 'About this variant',
-    breadcrumbs: ['Home', 'Template tool', 'Template tool: lower case'],
+    breadcrumbs: ['Home', 'Solutions', 'Template tool', 'Template tool: lower case'],
     lowerLabel: 'lower case',
     alternates: [
       ['en', `${SITE}/template-tool-lowercase/`],
@@ -26,7 +26,7 @@ const cases = [
     lang: 'pt',
     title: 'Ferramenta modelo: minúsculas',
     copyHeading: 'Sobre esta variante',
-    breadcrumbs: ['Início', 'Ferramenta modelo', 'Ferramenta modelo: minúsculas'],
+    breadcrumbs: ['Início', 'Soluções', 'Ferramenta modelo', 'Ferramenta modelo: minúsculas'],
     lowerLabel: 'minúsculas',
     alternates: [
       ['en', `${SITE}/template-tool-lowercase/`],
@@ -80,7 +80,8 @@ for (const c of cases) {
         offers: { price: '0' },
       })
       expect(graph[1]).toMatchObject({ '@type': 'BreadcrumbList' })
-      expect(graph[1]?.itemListElement).toHaveLength(3)
+      // Home › Solutions › the tool › the variant.
+      expect(graph[1]?.itemListElement).toHaveLength(4)
     })
 
     test('starts the tool with the preset options', async ({ page }) => {
