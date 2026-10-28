@@ -5,6 +5,7 @@ import { type Locale, localePath, locales } from '@mochifile/i18n'
 import { MAIN_PAGE_KEY, type ToolManifest } from '@mochifile/tool-kit'
 import { manifest as templateManifest } from '@mochifile/tool-template/manifest'
 import { askPaths } from '../src/lib/ask.ts'
+import { authModes, authSlugs } from '../src/lib/auth.ts'
 import { guidesSection } from '../src/lib/guides.ts'
 import { pageIds, pageSlugs } from '../src/lib/pages.ts'
 import { pricingPaths } from '../src/lib/pricing.ts'
@@ -29,6 +30,9 @@ const templateSlugs = new Set(
 
 /** Pages of the site that are not tools. Each page PR adds its paths here. */
 const nonToolPaths = new Set<string>([...Object.values(pricingPaths), ...Object.values(askPaths)])
+
+/** Slugs of the account pages (sign in, sign up): in the sitemap, but not tools. */
+const accountSlugs = new Set(authModes.flatMap((mode) => Object.values(authSlugs[mode])))
 
 /** Slugs of the site's own pages, which are not tools (their checks are in their own specs). */
 const sitePageSlugs = new Set(['solutions', 'solucoes'])
@@ -57,6 +61,7 @@ export async function toolPaths(request: {
         slug !== 'pt' &&
         !templateSlugs.has(slug) &&
         !sitePageSlugs.has(slug) &&
+        !accountSlugs.has(slug) &&
         !institutionalSlugs.has(slug)
       )
     })
