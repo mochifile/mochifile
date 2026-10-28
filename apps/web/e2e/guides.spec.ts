@@ -165,7 +165,7 @@ for (const locale of ['en', 'pt'] as const) {
       await expect(page.locator(`h2[id="${id}"]`)).toHaveCount(1)
     }
     // The way to the size page.
-    const cta = page.getByRole('link', { name: copy.cta })
+    const cta = page.getByRole('main').getByRole('link', { name: copy.cta })
     await expect(cta).toHaveAttribute('href', copy.tool)
     await expect(page.locator('main [style]')).toHaveCount(0)
     // No author and no date: the byline says what it is and how long it takes.

@@ -5,6 +5,8 @@ import {
   accountLinks,
   companyLinks,
   footerColumns,
+  footerPills,
+  isCurrent,
   mainLinks,
   shellLanguages,
   toolHref,
@@ -35,18 +37,45 @@ const compress: RegisteredTool = {
 }
 
 describe('site shell links', () => {
-  it('lists the canvas navigation in order, none of it linked yet', () => {
-    expect(mainLinks('en').map((link) => link.label)).toEqual([
-      'Solutions',
-      'Guides',
-      'Docs',
-      'Pricing',
+  it('lists the canvas navigation in order, each linked to its page', () => {
+    expect(mainLinks('en').map((link) => [link.label, link.href])).toEqual([
+      ['Solutions', '/solutions/'],
+      ['Guides', '/guides/'],
+      ['Docs', '/docs/'],
+      ['Pricing', '/pricing/'],
+    ])
+    expect(mainLinks('pt').map((link) => link.href)).toEqual([
+      '/pt/solucoes/',
+      '/pt/guias/',
+      '/pt/docs/',
+      '/pt/precos/',
     ])
     const { signIn, getStarted } = accountLinks('en')
     expect([signIn.label, getStarted.label]).toEqual(['Sign in', 'Get started'])
-    for (const link of [...mainLinks('en'), signIn, getStarted, ...companyLinks('en')]) {
-      expect(link.href, `${link.key} has no page yet`).toBeUndefined()
-    }
+    expect([signIn.href, getStarted.href]).toEqual(['/sign-in/', '/sign-up/'])
+    expect(accountLinks('pt').signIn.href).toBe('/pt/entrar/')
+  })
+
+  it('links the company pages that exist and leaves the legal ones as "Coming soon"', () => {
+    const company = Object.fromEntries(companyLinks('en').map((link) => [link.key, link.href]))
+    expect(company).toEqual({
+      about: '/about/',
+      contact: '/contact/',
+      sustainability: '/sustainability/',
+      architecture: '/architecture/',
+      'terms-of-service': undefined,
+      'privacy-policy': undefined,
+      'terms-conditions': undefined,
+      dpa: undefined,
+    })
+    expect(footerPills('pt').guides.href).toBe('/pt/guias/')
+  })
+
+  it('marks the page and its section as current', () => {
+    expect(isCurrent('/guides/', '/guides/heic-vs-jpg/')).toBe(true)
+    expect(isCurrent('/pricing/', '/pricing/')).toBe(true)
+    expect(isCurrent('/pricing/', '/guides/')).toBe(false)
+    expect(isCurrent(undefined, '/')).toBe(false)
   })
 
   it('translates the labels', () => {

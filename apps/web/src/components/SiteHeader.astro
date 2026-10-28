@@ -18,7 +18,7 @@
 import { type Locale, localePath, localeTags } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import mascotHappy from '../assets/mascot/sheet-happy-700.png'
-import { accountLinks, mainLinks, shellLanguages } from '../lib/site-nav'
+import { accountLinks, isCurrent, mainLinks, shellLanguages } from '../lib/site-nav'
 import ArrowRight from './ArrowRight.astro'
 import ComingSoon from './ComingSoon.astro'
 import ComingSoonNotice from './ComingSoonNotice.astro'
@@ -76,7 +76,7 @@ const languageItem =
             links.map((link) => (
               <li>
                 {link.href ? (
-                  <a href={link.href} class={navItem}>
+                  <a href={link.href} aria-current={isCurrent(link.href, paths[locale]) ? 'page' : undefined} class={navItem}>
                     {link.label}
                   </a>
                 ) : (
@@ -88,18 +88,35 @@ const languageItem =
             ))
           }
           <li class="ml-2">
-            <ComingSoon
-              locale={locale}
-              class:list={[navItem, 'text-ink-muted']}
-              data-shell-link={signIn.key}
-            >
-              {signIn.label}
-            </ComingSoon>
+            {signIn.href ? (
+              <a
+                href={signIn.href}
+                aria-current={isCurrent(signIn.href, paths[locale]) ? 'page' : undefined}
+                class:list={[navItem, 'text-ink-muted']}
+                data-shell-link={signIn.key}
+              >
+                {signIn.label}
+              </a>
+            ) : (
+              <ComingSoon
+                locale={locale}
+                class:list={[navItem, 'text-ink-muted']}
+                data-shell-link={signIn.key}
+              >
+                {signIn.label}
+              </ComingSoon>
+            )}
           </li>
           <li class="ml-1">
-            <ComingSoon locale={locale} class={primaryPill} data-shell-link={getStarted.key}>
-              {getStarted.label}
-            </ComingSoon>
+            {getStarted.href ? (
+              <a href={getStarted.href} class={primaryPill} data-shell-link={getStarted.key}>
+                {getStarted.label}
+              </a>
+            ) : (
+              <ComingSoon locale={locale} class={primaryPill} data-shell-link={getStarted.key}>
+                {getStarted.label}
+              </ComingSoon>
+            )}
           </li>
         </ul>
       </nav>
@@ -194,7 +211,7 @@ const languageItem =
                 hreflang={language.hreflang}
                 lang={language.tag}
                 aria-current={language.current ? 'true' : undefined}
-                data-language-switch
+                data-language-switch={language.current ? undefined : ''}
                 class={languageItem}
               >
                 {language.name}
@@ -249,7 +266,7 @@ const languageItem =
           links.map((link) => (
             <li>
               {link.href ? (
-                <a href={link.href} class={menuRow}>
+                <a href={link.href} aria-current={isCurrent(link.href, paths[locale]) ? 'page' : undefined} class={menuRow}>
                   {link.label}
                   <ArrowRight />
                 </a>
@@ -269,22 +286,30 @@ const languageItem =
         }
       </ul>
       <div class="mt-6 flex flex-col gap-3">
-        <ComingSoon
-          locale={locale}
-          notice="coming-soon-menu"
-          class:list={[bigPill, 'bg-action text-action-ink shadow-action']}
-          data-shell-link={getStarted.key}
-        >
-          {getStarted.label}
-        </ComingSoon>
-        <ComingSoon
-          locale={locale}
-          notice="coming-soon-menu"
-          class:list={[bigPill, 'border-hairline border-card-line bg-surface-card text-ink shadow-card']}
-          data-shell-link={signIn.key}
-        >
-          {signIn.label}
-        </ComingSoon>
+        {
+          [
+            { link: getStarted, tone: 'bg-action text-action-ink shadow-action' },
+            {
+              link: signIn,
+              tone: 'border-hairline border-card-line bg-surface-card text-ink shadow-card',
+            },
+          ].map(({ link, tone }) =>
+            link.href ? (
+              <a href={link.href} class:list={[bigPill, tone]} data-shell-link={link.key}>
+                {link.label}
+              </a>
+            ) : (
+              <ComingSoon
+                locale={locale}
+                notice="coming-soon-menu"
+                class:list={[bigPill, tone]}
+                data-shell-link={link.key}
+              >
+                {link.label}
+              </ComingSoon>
+            ),
+          )
+        }
       </div>
       <div class="mt-8 flex flex-col gap-2">
         <p id="site-menu-language" class="type-eyebrow text-accent uppercase">
@@ -300,7 +325,7 @@ const languageItem =
                     hreflang={language.hreflang}
                     lang={language.tag}
                     aria-current={language.current ? 'true' : undefined}
-                    data-language-switch
+                    data-language-switch={language.current ? undefined : ''}
                     class={chip}
                   >
                     {language.name}

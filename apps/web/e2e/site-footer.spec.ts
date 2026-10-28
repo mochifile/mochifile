@@ -19,7 +19,22 @@ const PAGES = [
       ['Compress image', '/compress-image/'],
       ['Compress to 50 KB', '/compress-image-to-50kb/'],
     ],
-    soon: ['HEIC to JPG', 'MP4 to WebM', 'Chrome extension', 'API docs', 'About'],
+    soon: [
+      'HEIC to JPG',
+      'MP4 to WebM',
+      'Chrome extension',
+      'CLI and MCP server',
+      'Privacy Policy',
+    ],
+    pages: [
+      ['View all solutions', '/solutions/'],
+      ['Read guides', '/guides/'],
+      ['API docs', '/docs/'],
+      ['About', '/about/'],
+      ['Contact', '/contact/'],
+      ['Sustainability', '/sustainability/'],
+      ['Architecture', '/architecture/'],
+    ],
   },
   {
     locale: 'pt',
@@ -30,7 +45,22 @@ const PAGES = [
       ['Comprimir imagem', '/pt/comprimir-imagem/'],
       ['Comprimir para 50 KB', '/pt/comprimir-imagem-para-50kb/'],
     ],
-    soon: ['HEIC para JPG', 'MP4 para WebM', 'Extensão do Chrome', 'Sobre'],
+    soon: [
+      'HEIC para JPG',
+      'MP4 para WebM',
+      'Extensão do Chrome',
+      'CLI e servidor MCP',
+      'Política de Privacidade',
+    ],
+    pages: [
+      ['Ver todas as soluções', '/pt/solucoes/'],
+      ['Ler guias', '/pt/guias/'],
+      ['Documentação da API', '/pt/docs/'],
+      ['Sobre', '/pt/sobre/'],
+      ['Contato', '/pt/contato/'],
+      ['Sustentabilidade', '/pt/sustentabilidade/'],
+      ['Arquitetura', '/pt/arquitetura/'],
+    ],
   },
 ] as const
 const WIDTHS = [320, 360, 390, 768, 1024, 1440]
@@ -44,7 +74,7 @@ const notice = (page: Page) => page.locator('#coming-soon:popover-open')
 const tabKey = (browserName: string) =>
   browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab'
 
-for (const { locale, path, other, columns, real, soon } of PAGES) {
+for (const { locale, path, other, columns, real, soon, pages } of PAGES) {
   test(`footer shows every element of the canvas, linking only destinations that exist (${locale})`, async ({
     page,
     request,
@@ -54,19 +84,20 @@ for (const { locale, path, other, columns, real, soon } of PAGES) {
     for (const name of columns) {
       await expect(footer(page).getByRole('navigation', { name })).toBeVisible()
     }
-    // Tool pages that exist are links; the rest are buttons that say "Coming soon".
+    // Tool pages and site pages that exist are links; the rest are buttons that say "Coming soon".
     for (const [name, href] of real) {
       await expect(footer(page).getByRole('link', { name })).toHaveAttribute('href', href)
     }
     for (const name of soon) {
       await expect(footer(page).getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible()
     }
-    await expect(
-      footer(page).getByRole('button', { name: /^(View all solutions|Ver todas as soluções)/ }),
-    ).toBeVisible()
-    await expect(
-      footer(page).getByRole('button', { name: /^(Read guides|Ler guias)/ }),
-    ).toBeVisible()
+    // The pages that exist are links, in this language.
+    for (const [name, href] of pages) {
+      await expect(footer(page).getByRole('link', { name, exact: true })).toHaveAttribute(
+        'href',
+        href,
+      )
+    }
 
     const hrefs = await footer(page)
       .getByRole('link')

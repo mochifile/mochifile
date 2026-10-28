@@ -7,7 +7,8 @@ import { PHONES } from './tool-pages.ts'
 /**
  * The site header (ADR 0023, ADR 0030): "Skip to content", the V2 links and language button from
  * 1024 px, and below it a phone menu built on the declarative Popover API, without JavaScript.
- * Destinations that do not exist yet are "Coming soon" buttons, not links.
+ * Destinations that do not exist yet (the four languages with no pages) are "Coming soon" buttons,
+ * not links; the pages that exist are links.
  */
 
 const trigger = (page: Page) => page.getByRole('button', { name: 'Menu' })
@@ -96,7 +97,7 @@ for (const PHONE of PHONES) {
     await expect(menu(page)).toBeVisible()
     // Every control of the canvas, in its order: four links, two buttons, six languages.
     for (const name of ['Solutions', 'Guides', 'Docs', 'Pricing', 'Get started', 'Sign in']) {
-      await expect(menu(page).getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible()
+      await expect(menu(page).getByRole('link', { name, exact: true })).toBeVisible()
     }
     await expect(menu(page).getByRole('link', { name: 'English' })).toBeVisible()
     await expect(menu(page).getByRole('link', { name: 'Português (Brasil)' })).toBeVisible()
@@ -162,9 +163,7 @@ test('keyboard: Tab order, Enter and Space, Escape and focus restoration', async
   expect(['main', 'footer', 'aside']).not.toContain(after.where)
 
   // Escape closes from inside the menu and returns focus to the button.
-  await menu(page)
-    .getByRole('button', { name: /^Solutions/ })
-    .focus()
+  await menu(page).getByRole('link', { name: 'Solutions', exact: true }).focus()
   await page.keyboard.press('Escape')
   expect(await isOpen(page)).toBe(false)
   await expect(trigger(page)).toBeFocused()
@@ -194,7 +193,7 @@ test('a "Coming soon" control says so, goes nowhere, and keeps the menu open', a
   await page.goto('/')
   await trigger(page).click()
   await menu(page)
-    .getByRole('button', { name: /^Pricing/ })
+    .getByRole('button', { name: /^Français/ })
     .click()
   await expect(notice(page)).toBeVisible()
   await expect(notice(page)).toHaveText(/Coming soon/)
@@ -261,10 +260,14 @@ test('from 1024 px the links sit in the header; crossing it with the menu open b
   await expect(page.locator('main')).toBeVisible()
   const nav = page.getByRole('navigation', { name: 'Main' })
   for (const name of ['Solutions', 'Guides', 'Docs', 'Pricing', 'Sign in', 'Get started']) {
-    await expect(nav.getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible()
+    await expect(nav.getByRole('link', { name, exact: true })).toBeVisible()
   }
-  // Nothing is linked to a page that does not exist.
-  await expect(nav.getByRole('link')).toHaveCount(0)
+  // Every link goes to a page of the site.
+  expect(
+    await nav
+      .getByRole('link')
+      .evaluateAll((links) => links.map((link) => link.getAttribute('href'))),
+  ).toEqual(['/solutions/', '/guides/', '/docs/', '/pricing/', '/sign-in/', '/sign-up/'])
   await expect(languageButton(page)).toBeVisible()
 
   // Nothing hidden stays focusable: every Tab stop up to the content is visible.
@@ -333,7 +336,8 @@ test('while the menu is open, assistive technology gets the menu and nothing hid
   const tree = await page.locator('body').ariaSnapshot()
   expect(tree).toContain('navigation "Menu"')
   expect(tree).toContain('list "Language"')
-  expect(tree).toMatch(/button "Solutions ?, Coming soon"/)
+  expect(tree).toContain('link "Solutions"')
+  expect(tree).toMatch(/button "Español ?, Coming soon"/)
   expect(tree).toContain('link "English"')
   expect(tree).toContain('button "Menu"')
   // The page beneath is out of the accessibility tree, like the content behind a dialog.
@@ -391,7 +395,7 @@ test('crossing 1024 px never leaves focus on a hidden element', async ({ page, b
       focus: () =>
         page
           .getByRole('navigation', { name: 'Main' })
-          .getByRole('button', { name: /^Solutions/ })
+          .getByRole('link', { name: 'Solutions', exact: true })
           .focus(),
     },
     {
@@ -451,7 +455,7 @@ for (const input of ['mouse', 'touch'] as const) {
       // is guaranteed to be there, so what is checked is that the menu takes the press itself.
       await trigger(page).click()
       await expect(menu(page)).toBeVisible()
-      const signIn = await centre(menu(page).getByRole('button', { name: /^Sign in/ }))
+      const signIn = await centre(menu(page).getByRole('link', { name: 'Sign in', exact: true }))
       const action = { x: signIn.x, y: signIn.y + 56 }
       await press(action.x, action.y)
       await page.waitForTimeout(300)
@@ -528,7 +532,7 @@ test('the menu works with JavaScript disabled', async ({ testBrowser }) => {
     await expect(menu(page)).toBeVisible()
     // "Coming soon" works with no script too: a declarative popover.
     await menu(page)
-      .getByRole('button', { name: /^Preços/ })
+      .getByRole('button', { name: /^Español/ })
       .click()
     await expect(notice(page)).toContainText('Em breve')
     await page.keyboard.press('Escape')

@@ -1,5 +1,9 @@
-import type { Locale } from '@mochifile/i18n'
+import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
+import { authPaths } from './auth.ts'
+import { guidesIndexPaths } from './guides.ts'
+import { pagePaths } from './pages.ts'
+import { pricingPaths } from './pricing.ts'
 import { type RegisteredTool, toolPages } from './tools.ts'
 
 /**
@@ -16,23 +20,61 @@ export interface ShellLink {
   href?: string
 }
 
+/**
+ * The built pages the shell links to, in every language. A destination missing here has no page
+ * yet and stays a "Coming soon" control (terms, privacy, the Chrome extension, the CLI).
+ */
+const route = (en: string, pt: string = en): Record<Locale, string> => ({
+  en: localePath('en', en),
+  pt: localePath('pt', pt),
+})
+export const shellPaths = {
+  solutions: route('solutions', 'solucoes'),
+  guides: guidesIndexPaths(),
+  docs: route('docs'),
+  pricing: pricingPaths,
+  signIn: authPaths('sign-in'),
+  signUp: authPaths('sign-up'),
+  about: pagePaths('about'),
+  contact: pagePaths('contact'),
+  sustainability: pagePaths('sustainability'),
+  architecture: pagePaths('architecture'),
+} as const
+
+/** A link with its destination in this language. */
+const link = (
+  key: string,
+  label: string,
+  paths: Record<Locale, string> | undefined,
+  locale: Locale,
+): ShellLink => (paths ? { key, label, href: paths[locale] } : { key, label })
+
+/**
+ * Whether `href` is the page being shown or a section it belongs to (a guide is in Guides), for
+ * `aria-current`. The home page is current only for itself.
+ */
+export function isCurrent(href: string | undefined, here: string): boolean {
+  if (!href) return false
+  return href === here || (href.split('/').filter(Boolean).length > 0 && here.startsWith(href))
+}
+
 export const GITHUB_REPOSITORY = 'https://github.com/mochifile/mochifile'
 export const CREDIT_URL = 'https://github.com/RaioViajante'
 
 /** The header's links, in the canvas's order. */
 export function mainLinks(locale: Locale): ShellLink[] {
   return [
-    { key: 'solutions', label: m.nav_solutions({}, { locale }) },
-    { key: 'guides', label: m.nav_guides({}, { locale }) },
-    { key: 'docs', label: m.nav_docs({}, { locale }) },
-    { key: 'pricing', label: m.nav_pricing({}, { locale }) },
+    link('solutions', m.nav_solutions({}, { locale }), shellPaths.solutions, locale),
+    link('guides', m.nav_guides({}, { locale }), shellPaths.guides, locale),
+    link('docs', m.nav_docs({}, { locale }), shellPaths.docs, locale),
+    link('pricing', m.nav_pricing({}, { locale }), shellPaths.pricing, locale),
   ]
 }
 
 export function accountLinks(locale: Locale): { signIn: ShellLink; getStarted: ShellLink } {
   return {
-    signIn: { key: 'sign-in', label: m.nav_sign_in({}, { locale }) },
-    getStarted: { key: 'get-started', label: m.nav_get_started({}, { locale }) },
+    signIn: link('sign-in', m.nav_sign_in({}, { locale }), shellPaths.signIn, locale),
+    getStarted: link('get-started', m.nav_get_started({}, { locale }), shellPaths.signUp, locale),
   }
 }
 
@@ -92,7 +134,7 @@ export function footerColumns(
       links: [
         { key: 'chrome-extension', label: m.footer_chrome_extension({}, { locale }) },
         { key: 'cli-mcp', label: m.footer_cli_mcp({}, { locale }) },
-        { key: 'api-docs', label: m.footer_api_docs({}, { locale }) },
+        link('api-docs', m.footer_api_docs({}, { locale }), shellPaths.docs, locale),
       ],
     },
   ]
@@ -101,10 +143,15 @@ export function footerColumns(
 /** Company and legal links, in the canvas's order. */
 export function companyLinks(locale: Locale): ShellLink[] {
   return [
-    { key: 'about', label: m.footer_about({}, { locale }) },
-    { key: 'contact', label: m.footer_contact({}, { locale }) },
-    { key: 'sustainability', label: m.footer_sustainability({}, { locale }) },
-    { key: 'architecture', label: m.footer_architecture({}, { locale }) },
+    link('about', m.footer_about({}, { locale }), shellPaths.about, locale),
+    link('contact', m.footer_contact({}, { locale }), shellPaths.contact, locale),
+    link(
+      'sustainability',
+      m.footer_sustainability({}, { locale }),
+      shellPaths.sustainability,
+      locale,
+    ),
+    link('architecture', m.footer_architecture({}, { locale }), shellPaths.architecture, locale),
     { key: 'terms-of-service', label: m.footer_terms_of_service({}, { locale }) },
     { key: 'privacy-policy', label: m.footer_privacy_policy({}, { locale }) },
     { key: 'terms-conditions', label: m.footer_terms_conditions({}, { locale }) },
@@ -137,3 +184,16 @@ export const shellLanguages: readonly ShellLanguage[] = [
   { name: 'हिन्दी', tag: 'hi' },
   { name: '简体中文', tag: 'zh-CN' },
 ]
+
+/** The footer's two pills: all solutions and the guides. */
+export function footerPills(locale: Locale): { solutions: ShellLink; guides: ShellLink } {
+  return {
+    solutions: link(
+      'view-solutions',
+      m.footer_view_solutions({}, { locale }),
+      shellPaths.solutions,
+      locale,
+    ),
+    guides: link('read-guides', m.footer_read_guides({}, { locale }), shellPaths.guides, locale),
+  }
+}
