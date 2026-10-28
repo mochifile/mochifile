@@ -77,8 +77,11 @@ We will build the ZIP ourselves, as a Blob of parts, and drop `client-zip`.
 - **Failures.** A file that cannot be read, or gives fewer bytes than its size, rejects
   `createZip`, and `downloadZip` creates no URL and clicks nothing. A ZIP that is wrong is never
   offered.
-- **Dependency.** `client-zip` is removed from `@mochifile/tool-ui` and from `SHIPPED` in
-  `third-party-licenses.ts`. `preloadZip` goes with it: there is nothing to load on intent.
+- **Dependency and loading.** `client-zip` is removed from `@mochifile/tool-ui` and from `SHIPPED`
+  in `third-party-licenses.ts`. The builder (`zip-archive.ts`: names, CRC-32, headers) is still
+  loaded on the first sign of intent (`preloadZip`, called when the tool prepares), as the library
+  was, through a dynamic `import()` in `zip.ts`. It must stay that way: imported statically it ends
+  up in the tool's first load (see Consequences).
 
 ## Measurements
 
@@ -126,8 +129,8 @@ What the table says, and does not say:
   that helps one engine and hurts another, and needs engine detection, is not simpler than the
   problem.
 - **JavaScript heap** (Chromium only, `performance.memory`, peak during the call): 30–32 MB with
-  the old version and 36–38 MB with the new one. The slices are `ArrayBuffer`s, which are not counted
-  there. WebKit does not expose it.
+  the old version and 36–38 MB with the new one. The slices are `ArrayBuffer`s, which are not
+  counted there. WebKit does not expose it.
 - **2 GB in Chromium is inconclusive.** The headless shell could not read back its own 2 GB of
   in-memory Blobs, without any ZIP involved (`NotReadableError` at 48 MB into the first file); the
   old version failed in the same way (`Failed to fetch`). 20 × 50 MB works.
@@ -163,9 +166,15 @@ What the table says, and does not say:
 - **A failure of "Download all" is still silent**: the button's handler does not show an error
   (it did not before). Nothing is downloaded, which is the safe outcome; the message needs a
   string in every language and a place in the V2 panel, so it is left as a follow-up.
-- One dependency fewer to keep, update and ship: its notice leaves `/third-party-licenses.txt`, and
-  the JavaScript of the site is 1.5 KB smaller gzipped (the 2.7 KB `client-zip` chunk is gone; the
-  new code, about 1.2 KB, is part of the tool's own chunk instead of loading on intent).
+- One dependency fewer to keep, update and ship: its notice leaves `/third-party-licenses.txt`.
+- **The builder must load on demand.** JavaScript sent before any interaction on
+  `/compress-image-to-50kb/` (Save-Data, gzip, the method of the e2e budget of 90 KiB = 92,160
+  bytes), measured on production builds: `main` 88,004 bytes; the first version of this change,
+  with the builder imported statically, 88,970; with the names added, still static, **92,450,
+  over the budget**; loaded on demand, **87,886**. (An earlier figure here, "1.5 KB less
+  JavaScript", was the total of every chunk of the site, which is not what loads first.) The
+  budget test caught it; `zip.ts` is a small facade with a dynamic `import()` for that reason,
+  and its test checks that a failed load can be retried.
 - A ZIP writer of our own is a small piece of code to maintain. It writes one fixed shape of
   archive, and it is covered by a reader written separately in the tests, by Node's CRC-32, and
   by `unzip` and Python when they are installed (CI runners and developer machines). The names are

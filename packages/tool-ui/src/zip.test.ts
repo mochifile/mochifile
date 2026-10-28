@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { crc32 as nodeCrc32 } from 'node:zlib'
 import { afterAll, describe, expect, it } from 'vitest'
 import { bytes, file, readZip } from './testing/zip-testing.ts'
-import { checkZipLimits, createZip, type ZipFile, zipEntries } from './zip.ts'
+import { checkZipLimits, createZip, type ZipFile, zipEntries } from './zip-archive.ts'
 
 const build = async (files: ZipFile[], when?: Date) =>
   Buffer.from(await (await createZip(files, when)).arrayBuffer())

@@ -49,6 +49,27 @@ describe('downloadZip', () => {
     expect(revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:archive')
   })
 
+  it('loads the builder on demand, and tries again after a failed load', async () => {
+    vi.resetModules()
+    vi.doMock('./zip-archive.ts', () => {
+      throw new Error('offline')
+    })
+    const fresh = await import('./zip.ts')
+    const files = [{ name: 'a.jpg', blob: new Blob(['x']) }]
+    try {
+      // Preloading never throws, even when the builder cannot be loaded.
+      expect(() => fresh.preloadZip()).not.toThrow()
+      await expect(fresh.downloadZip(files, 'photos.zip')).rejects.toThrow()
+      expect(createObjectURL).not.toHaveBeenCalled()
+      expect(link.click).not.toHaveBeenCalled()
+      vi.doUnmock('./zip-archive.ts')
+      await fresh.downloadZip(files, 'photos.zip')
+      expect(link.click).toHaveBeenCalledOnce()
+    } finally {
+      vi.doUnmock('./zip-archive.ts')
+    }
+  })
+
   it('downloads nothing, and holds no URL, when a file cannot be read', async () => {
     vi.useFakeTimers()
     const unreadable = Object.assign(new Blob(['x']), {

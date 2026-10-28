@@ -2,7 +2,7 @@
 import { crc32 as nodeCrc32 } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
 import { bytes, file, readZip } from './testing/zip-testing.ts'
-import { createZip, type ZipFile, zipEntries } from './zip.ts'
+import { createZip, type ZipFile, zipEntries } from './zip-archive.ts'
 
 const blob = new Blob([])
 const named = (...names: string[]): ZipFile[] => names.map((name) => ({ name, blob }))

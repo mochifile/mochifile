@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 import { bytes, file } from './testing/zip-testing.ts'
-import { createZip, zipEntries } from './zip.ts'
+import { createZip, zipEntries } from './zip-archive.ts'
 
 /**
  * The real thing: ZIPs whose files would overwrite each other if their names were kept are

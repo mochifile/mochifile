@@ -1,7 +1,7 @@
 // Helpers for the ZIP tests: bytes, files, and a reader of the archive that does not use the code
 // under test.
 import { expect } from 'vitest'
-import type { ZipFile } from '../zip.ts'
+import type { ZipFile } from '../zip-archive.ts'
 
 /** Deterministic bytes, so a failure can be reproduced. */
 export function bytes(length: number, seed = 1): Uint8Array<ArrayBuffer> {
