@@ -43,6 +43,12 @@
   --mochi-body: #fff4e0;
   --mochi-outline: #1e1b2e;
   --mochi-blush: #ff8fa3;
+  --accent: #5b3cc4;
+  --accent-soft: #efe8fc;
+  --card-line: #efe3d0;
+  --dot-red: #ff5a5a;
+  --dot-green: #7ccf5c;
+  --heart: #d12c4a;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -58,6 +64,8 @@
   --icon-tile: 52px;
   --content-max: 1240px;
   --reading-max: 700px;
+  --site-header: 84px;
+  --site-max: 1104px;
   --radius-sm: 14px;
   --radius-md: 18px;
   --radius-lg: 26px;
@@ -109,6 +117,12 @@
     --mochi-body: #fff4e0;
     --mochi-outline: #1e1b2e;
     --mochi-blush: #ff8fa3;
+    --accent: #d3c4fa;
+    --accent-soft: #2b2442;
+    --card-line: #3a3550;
+    --dot-red: #ff5a5a;
+    --dot-green: #7dbf59;
+    --heart: #ff8fa3;
   }
 }
 :root[data-theme="dark"] {
@@ -149,6 +163,12 @@
   --mochi-body: #fff4e0;
   --mochi-outline: #1e1b2e;
   --mochi-blush: #ff8fa3;
+  --accent: #d3c4fa;
+  --accent-soft: #2b2442;
+  --card-line: #3a3550;
+  --dot-red: #ff5a5a;
+  --dot-green: #7dbf59;
+  --heart: #ff8fa3;
 }
 
 /* Tailwind theme: only the design system values exist. */
@@ -190,6 +210,12 @@
   --color-mochi-body: var(--mochi-body);
   --color-mochi-outline: var(--mochi-outline);
   --color-mochi-blush: var(--mochi-blush);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-card-line: var(--card-line);
+  --color-dot-red: var(--dot-red);
+  --color-dot-green: var(--dot-green);
+  --color-heart: var(--heart);
 
   --spacing-*: initial;
   --spacing-0: 0px;
@@ -206,10 +232,12 @@
   --spacing-target-min: var(--target-min);
   --spacing-target-primary: var(--target-primary);
   --spacing-icon-tile: var(--icon-tile);
+  --spacing-site-header: var(--site-header);
 
   --container-*: initial;
   --container-content-max: var(--content-max);
   --container-reading-max: var(--reading-max);
+  --container-site-max: var(--site-max);
 
   --radius-*: initial;
   --radius-sm: var(--radius-sm);
@@ -296,4 +324,85 @@
   font-size: 15px;
   line-height: 26px;
   font-weight: 400;
+}
+@utility type-nav {
+  font-family: var(--family-sans);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+}
+@utility type-button-sm {
+  font-family: var(--family-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+}
+@utility type-footer-link {
+  font-family: var(--family-sans);
+  font-size: 14.5px;
+  line-height: 20px;
+  font-weight: 600;
+}
+@utility type-footer-small {
+  font-family: var(--family-sans);
+  font-size: 13.5px;
+  line-height: 20px;
+  font-weight: 500;
+}
+@utility type-footer-note {
+  font-family: var(--family-sans);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+}
+@utility type-eyebrow {
+  font-family: var(--family-sans);
+  font-size: 12.5px;
+  line-height: 18px;
+  font-weight: 700;
+  letter-spacing: 2.2px;
+}
+@utility type-footer-heading {
+  font-family: var(--family-sans);
+  font-size: 13px;
+  line-height: 26px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+@utility type-badge-label {
+  font-family: var(--family-sans);
+  font-size: 10.5px;
+  line-height: 14px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+@utility type-button-lg {
+  font-family: var(--family-sans);
+  font-size: 17px;
+  line-height: 20px;
+  font-weight: 700;
+}
+@utility type-chip {
+  font-family: var(--family-sans);
+  font-size: 13.5px;
+  line-height: 20px;
+  font-weight: 600;
+}
+@utility type-credit {
+  font-family: var(--family-sans);
+  font-size: 14px;
+  line-height: 21px;
+  font-weight: 500;
+}
+@utility type-menu-link {
+  font-family: var(--family-display);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+}
+@utility type-badge-title {
+  font-family: var(--family-display);
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 700;
 }

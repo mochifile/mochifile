@@ -10,7 +10,7 @@ const SCHEMES = ['light', 'dark'] as const
 const COPY_WIDTHS = [368, 552] as const
 
 /** What the masters were made at; the logo's proportions in global.css come from these. */
-const MASTER_SIZE = { light: { width: 960, height: 171 }, dark: { width: 960, height: 173 } }
+const MASTER_SIZE = { light: { width: 1800, height: 333 }, dark: { width: 1908, height: 353 } }
 
 interface Png {
   width: number
@@ -69,8 +69,8 @@ describe('the wordmark masters', () => {
       expect(png.cornerAlpha).toBe(0)
     })
 
-    it(`${scheme}: stays under 150 KB`, () => {
-      expect(png.bytes).toBeLessThan(150_000)
+    it(`${scheme}: stays under 400 KB`, () => {
+      expect(png.bytes).toBeLessThan(400_000)
     })
   }
 

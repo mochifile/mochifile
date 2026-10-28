@@ -1,20 +1,29 @@
 ---
 /**
- * The site footer: the logo and the privacy note, one group of links per tool category, a
- * "Mochifile" group and a last line with the licenses and the other language.
+ * The site footer (V2 canvas: MFFooter; ADR 0030), centred on the page ground: three link
+ * columns (popular tools, video, install), "View all solutions" and "Read guides", the company
+ * and legal links, the language row, the credit, GitHub, two badges and the "Ask AI" line.
  *
- * The tool groups come from the registry, so a tool appears here when it is published and
- * never before. Nothing else is listed until it exists: About, Help, the legal pages and the
- * contact addresses are added by the PRs that publish them (design-system proposal v1.1).
+ * Everything the canvas draws is here. A destination that does not exist yet is a `ComingSoon`
+ * control instead of a link, and a language with no pages is listed the same way; see
+ * lib/site-nav.ts. The only addition to the canvas is the "Open-source licenses" link at the end
+ * of the footer: the third-party notice is published and must stay reachable.
  *
- * Under 600 px the groups stack in one column, so long Portuguese titles and 200% zoom never
- * squeeze them; from 600 px they sit in two columns, from 1280 px in up to four.
+ * Under 600 px the link columns stack in one, so long Portuguese labels and 200% zoom never
+ * squeeze them.
  */
-import { type Locale, localeNames, localePath, locales, localeTags } from '@mochifile/i18n'
+import { type Locale, localeTags } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import { footerToolGroups } from '../lib/footer.ts'
+import {
+  askAiTargets,
+  CREDIT_URL,
+  companyLinks,
+  footerColumns,
+  GITHUB_REPOSITORY,
+  shellLanguages,
+} from '../lib/site-nav.ts'
 import { tools } from '../lib/tools.ts'
-import Logo from './Logo.astro'
+import ComingSoon from './ComingSoon.astro'
 
 interface Props {
   locale: Locale
@@ -23,108 +32,183 @@ interface Props {
 }
 
 const { locale, paths } = Astro.props
-// One literal class per category: Tailwind only generates classes it can read in the source.
-const categories = {
-  image: { label: m.category_image({}, { locale }), dot: 'bg-mango' },
-  media: { label: m.category_media({}, { locale }), dot: 'bg-ube' },
-  pdf: { label: m.category_pdf({}, { locale }), dot: 'bg-strawberry' },
-}
-const groups = [
-  ...footerToolGroups(tools, locale).map(({ category, links }) => ({
-    id: `footer-group-${category}`,
-    ...categories[category],
-    links: links.map((link) => ({ ...link, current: link.href === paths[locale] })),
-  })),
-  {
-    id: 'footer-group-mochifile',
-    label: m.footer_group_mochifile({}, { locale }),
-    dot: 'bg-matcha',
-    links: [
-      {
-        href: 'https://github.com/mochifile/mochifile',
-        title: m.footer_source_code({}, { locale }),
-        current: false,
-      },
-    ],
-  },
-]
-const otherLocales = locales.filter((target) => target !== locale)
-const linkClass =
-  'inline-flex min-h-target-min max-w-full items-center rounded-sm py-1 font-medium wrap-break-word text-ink-on-inverse-muted hover:text-ink-on-inverse hover:underline focus-ring'
+const columns = footerColumns(locale, tools)
+const company = companyLinks(locale)
+const languages = shellLanguages.map((language) => ({
+  ...language,
+  href: language.locale ? paths[language.locale] : undefined,
+  hreflang: language.locale ? localeTags[language.locale] : undefined,
+  current: language.locale === locale,
+}))
+
+const columnLink =
+  'press flex min-h-footer-link items-center justify-center rounded-sm type-footer-link hover:underline focus-ring'
+const smallLink =
+  'inline-flex min-h-footer-link items-center rounded-sm px-link-x type-footer-small text-ink-muted hover:text-ink hover:underline focus-ring'
+const softPill =
+  'press inline-flex min-h-target-min items-center justify-center rounded-pill border-hairline border-card-line bg-surface-card px-pill-sm type-button-sm text-accent shadow-card focus-ring'
+const primaryPill =
+  'press inline-flex min-h-target-min items-center justify-center rounded-pill bg-action px-pill-sm type-button-sm text-action-ink shadow-action focus-ring'
+const badge =
+  'press inline-flex min-h-badge items-center gap-badge-gap rounded-small border-hairline border-card-line bg-surface-card pr-badge-end pl-badge-start text-left text-ink shadow-card focus-ring'
+const askAiLink =
+  'inline-flex min-h-footer-link items-center rounded-sm px-1 hover:text-ink hover:underline focus-ring'
+const githubPath =
+  'M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'
 ---
 
-<footer class="rounded-2xl-squish-a rounded-b-none bg-surface-inverse type-body-sm text-ink-on-inverse-muted">
-  <div class="mx-auto flex max-w-content-max flex-col gap-10 px-4 pt-10 pb-6 sm:pt-14">
-    <div class="grid gap-8 lg:grid-cols-3">
-      <div class="flex flex-col gap-2">
-        {/* The margin keeps the logo's clear space above the text. */}
-        <div class="mb-6">
-          <Logo href={localePath(locale)} ground="on-dark" />
-        </div>
-        <p class="max-w-reading-max">{m.footer_privacy_note({}, { locale })}</p>
-      </div>
-      <nav
-        aria-label={m.nav_footer({}, { locale })}
-        class="grid gap-x-4 gap-y-8 sm:grid-cols-2 lg:col-span-2 xl:grid-cols-4"
-      >
+<footer class="mx-auto flex max-w-site-max flex-col items-center gap-8 px-5 pt-section pb-footer-end text-center text-ink sm:px-8">
+  <div class="grid grid-cols-1 justify-center gap-x-14 gap-y-5 sm:grid-cols-[repeat(3,minmax(0,var(--spacing-footer-column)))] sm:gap-y-6">
+    {
+      columns.map((column) => (
+        <nav aria-labelledby={`footer-${column.key}`}>
+          <p
+            id={`footer-${column.key}`}
+            class="mb-2 type-footer-heading text-ink-muted uppercase"
+          >
+            {column.heading}
+          </p>
+          <ul>
+            {column.links.map((link) => (
+              <li>
+                {link.href ? (
+                  <a href={link.href} class={columnLink}>
+                    {link.label}
+                  </a>
+                ) : (
+                  <ComingSoon locale={locale} class={`${columnLink} w-full`} data-shell-link={link.key}>
+                    {link.label}
+                  </ComingSoon>
+                )}
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))
+    }
+  </div>
+  <div class="flex flex-wrap items-center justify-center gap-3">
+    <ComingSoon locale={locale} class={softPill} data-shell-link="view-solutions">
+      {m.footer_view_solutions({}, { locale })}
+    </ComingSoon>
+    <ComingSoon locale={locale} class={primaryPill} data-shell-link="read-guides">
+      {m.footer_read_guides({}, { locale })}
+    </ComingSoon>
+  </div>
+  <div class="flex flex-col items-center gap-2">
+    <nav aria-label={m.footer_company_legal({}, { locale })}>
+      <ul class="flex flex-wrap justify-center gap-x-1">
         {
-          groups.map((group) => (
-            <div class="flex min-w-0 flex-col gap-1">
-              <p id={group.id} class="flex items-center gap-2 type-label-lg text-ink-on-inverse">
-                <span aria-hidden="true" class:list={['size-3 shrink-0 rounded-pill', group.dot]} />
-                {group.label}
-              </p>
-              <ul aria-labelledby={group.id} class="flex flex-col">
-                {group.links.map((link) => (
-                  <li>
-                    <a href={link.href} aria-current={link.current ? 'page' : undefined} class={linkClass}>
-                      {link.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          company.map((link) => (
+            <li>
+              <ComingSoon locale={locale} class={smallLink} data-shell-link={link.key}>
+                {link.label}
+              </ComingSoon>
+            </li>
           ))
         }
-      </nav>
+      </ul>
+    </nav>
+    {/* Each language in its own name, no flags; English and Portuguese have pages (ADR 0007). */}
+    <nav aria-label={m.nav_language({}, { locale })}>
+      <ul class="flex flex-wrap justify-center gap-x-1">
+        {
+          languages.map((language) => (
+            <li>
+              {language.href ? (
+                <a
+                  href={language.href}
+                  hreflang={language.hreflang}
+                  lang={language.tag}
+                  aria-current={language.current ? 'true' : undefined}
+                  data-language-switch
+                  class={`${smallLink} aria-[current=true]:font-extrabold aria-[current=true]:text-ink`}
+                >
+                  {language.name}
+                </a>
+              ) : (
+                <ComingSoon
+                  locale={locale}
+                  class={smallLink}
+                  data-shell-link={`language-${language.tag}`}
+                >
+                  <span lang={language.tag}>{language.name}</span>
+                </ComingSoon>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+  <div class="flex flex-col items-center gap-3">
+    <p class="type-credit text-ink-muted">
+      {m.footer_made_with({}, { locale })}{' '}
+      <span class="text-heart" role="img" aria-label={m.footer_love({}, { locale })}>♥</span>{' '}
+      {m.footer_made_by({}, { locale })}{' '}
+      <a href={CREDIT_URL} class="rounded-sm font-bold text-accent focus-ring">RaioViajante</a>
+    </p>
+    {/* The only social network. */}
+    <a
+      href={GITHUB_REPOSITORY}
+      aria-label={m.footer_github({}, { locale })}
+      class="press inline-flex size-target-min items-center justify-center rounded-pill text-ink focus-ring"
+    >
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d={githubPath}></path>
+      </svg>
+    </a>
+    <div class="flex flex-wrap items-center justify-center gap-3">
+      <a href={GITHUB_REPOSITORY} aria-label={m.footer_badge_open_source({}, { locale })} class={badge}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d={githubPath}></path>
+        </svg>
+        <span class="flex flex-col">
+          <small class="type-badge-label text-ink-muted uppercase">
+            {m.footer_badge_open_source_small({}, { locale })}
+          </small>
+          <b class="type-badge-title">{m.footer_badge_open_source_main({}, { locale })}</b>
+        </span>
+      </a>
+      {/* Sponsorship is not set up: the badge is drawn and says so when pressed. */}
+      <ComingSoon locale={locale} class={badge} data-shell-link="sponsor">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          class="text-heart"
+        >
+          <path d="M12 20s-7-4.4-9.3-9A5 5 0 0 1 12 6a5 5 0 0 1 9.3 5c-2.3 4.6-9.3 9-9.3 9z"></path>
+        </svg>
+        <span class="flex flex-col">
+          <small class="type-badge-label text-ink-muted uppercase">
+            {m.footer_badge_sponsor_small({}, { locale })}
+          </small>
+          <b class="type-badge-title">Mochifile</b>
+        </span>
+      </ComingSoon>
     </div>
-    <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 border-t border-surface-inverse-raised pt-5">
-      {/* A column, so the link below the note never slides with the note's width. */}
-      <div class="flex min-w-0 flex-col items-start gap-1 font-semibold">
-        <p>{m.footer_open_source({}, { locale })}</p>
-        <a class={linkClass} href="/third-party-licenses.txt">{m.footer_licenses({}, { locale })}</a>
-      </div>
-      {/*
-        The other language, as in the header (ADR 0007): a plain link to this page's alternate,
-        named in its own language. A single link needs no landmark of its own.
-      */}
+    <p class="flex flex-wrap items-center justify-center gap-x-ask-gap type-footer-note text-ink-muted">
+      <span class="font-bold text-accent">{m.footer_ask_ai({}, { locale })}</span>
       {
-        otherLocales.map((target) => (
-          <a
-            href={paths[target]}
-            hreflang={localeTags[target]}
-            lang={localeTags[target]}
-            data-language-switch
-            class="press inline-flex min-h-target-min items-center gap-2 rounded-pill border-chip border-ink-on-inverse-muted px-4 font-semibold text-ink-on-inverse focus-ring"
-          >
-            {/* Line icon on the 24px grid, 2px stroke (README › Iconography). */}
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              class="size-button-icon"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M3 12h18" />
-              <path d="M12 3c3 3 3 15 0 18-3-3-3-15 0-18" />
-            </svg>
-            {localeNames[target]}
-          </a>
+        askAiTargets.map((target, index) => (
+          <>
+            {index > 0 && <i aria-hidden="true" class="size-1 rounded-pill bg-border-dashed" />}
+            <ComingSoon locale={locale} class={askAiLink} data-shell-link={target.key}>
+              {target.label}
+            </ComingSoon>
+          </>
         ))
       }
-    </div>
+    </p>
+    <a href="/third-party-licenses.txt" class={`${askAiLink} type-footer-note text-ink-muted`}>
+      {m.footer_licenses({}, { locale })}
+    </a>
   </div>
 </footer>
