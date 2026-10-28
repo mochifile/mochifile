@@ -10,6 +10,7 @@ import {
 } from './decode.ts'
 import { sniffImage } from './sniff.ts'
 import { readPhoto, syntheticImage } from './testing/fixtures.ts'
+import { box, heifFile, u32 } from './testing/icc-profile.ts'
 import { loadNodeCodecs } from './testing/node-codecs.ts'
 
 let codecs: Codecs
@@ -88,11 +89,43 @@ describe('decodeImage (WebAssembly path)', () => {
 
   it('refuses images above its pixel limit without decoding them', async () => {
     const bytes = (await readPhoto('landscape')) as Uint8Array<ArrayBuffer>
-    const huge = { ...sniffImage(bytes), width: 6000, height: 4001 }
+    const huge = { ...sniffImage(bytes), width: 5000, height: 5001 }
     expect(huge.width * huge.height).toBeGreaterThan(WASM_MAX_PIXELS)
     await expect(
       decodeImage({ path: 'wasm', bytes, info: huge, target: { width: 100, height: 100 }, codecs }),
-    ).rejects.toMatchObject({ code: 'dimensions-too-large', details: { maxMegapixels: 24 } })
+    ).rejects.toMatchObject({
+      code: 'dimensions-too-large',
+      details: { maxMegapixels: WASM_MAX_PIXELS / 1_000_000 },
+    })
+  })
+
+  // HEIC reaches this limit on Windows and Android, where only WebAssembly reads it. Header-only
+  // files: the limit is checked before any pixel is decoded, so what follows the check shows
+  // whether it passed (`invalid-file`: the fake file has no image data) or not.
+  describe('HEIC dimensions from iPhone cameras', () => {
+    const header = (width: number, height: number) =>
+      heifFile({
+        properties: [box('ispe', [0, 0, 0, 0], u32(width), u32(height))],
+        associations: [{ item: 1, indexes: [1] }],
+      }) as Uint8Array<ArrayBuffer>
+    const decodeHeader = (width: number, height: number) => {
+      const bytes = header(width, height)
+      const info = sniffImage(bytes)
+      return decodeImage({ path: 'wasm', bytes, info, target: { width, height }, codecs })
+    }
+
+    it('accepts the 24 MP an iPhone 15 or 16 saves by default (5712 × 4284)', async () => {
+      expect(5712 * 4284).toBeLessThanOrEqual(WASM_MAX_PIXELS)
+      await expect(decodeHeader(5712, 4284)).rejects.toMatchObject({ code: 'invalid-file' })
+      await expect(decodeHeader(4284, 5712)).rejects.toMatchObject({ code: 'invalid-file' })
+    })
+
+    it('accepts the usual 12 MP (4032 × 3024) and still refuses 48 MP (8064 × 6048)', async () => {
+      await expect(decodeHeader(4032, 3024)).rejects.toMatchObject({ code: 'invalid-file' })
+      await expect(decodeHeader(8064, 6048)).rejects.toMatchObject({
+        code: 'dimensions-too-large',
+      })
+    })
   })
 
   // Like browsers, the JPEG decoder shows what it can of a damaged JPEG. A PNG with corrupt
