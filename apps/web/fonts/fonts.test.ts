@@ -12,7 +12,10 @@ const repoRoot = resolve(FONTS_DIR, '../../..')
  * Characters the site may use although the fonts do not draw them: they come from the next
  * font in the stack. Add one only on purpose.
  */
-const FROM_FALLBACK = new Set(['⌘']) // ⌘, in the "paste with ⌘V" hint
+const FROM_FALLBACK = new Set([
+  '⌘', // in the "paste with ⌘V" hint
+  '♥', // the footer credit's heart, coloured with `text-heart`
+])
 
 /** Every file whose text is shown with the brand fonts. */
 function textSources(): string[] {

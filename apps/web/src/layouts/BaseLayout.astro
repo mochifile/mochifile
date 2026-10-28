@@ -1,6 +1,7 @@
 ---
 import { Font } from 'astro:assets'
 import { type Locale, localeTags } from '@mochifile/i18n'
+import ComingSoonNotice from '../components/ComingSoonNotice.astro'
 import LanguageSuggestion from '../components/LanguageSuggestion.astro'
 import SiteFooter from '../components/SiteFooter.astro'
 import SiteHeader from '../components/SiteHeader.astro'
@@ -61,5 +62,7 @@ const alternates = buildAlternates(paths, site)
       <slot />
     </main>
     <SiteFooter locale={locale} paths={paths} />
+    {/* Opened by the "Coming soon" controls outside the menus (ADR 0026). */}
+    <ComingSoonNotice locale={locale} />
   </body>
 </html>

@@ -2,16 +2,16 @@ import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures.ts'
 
 /**
- * The wordmark (Logo.astro, ADR 0024) comes in two files and global.css shows the one that
- * matches the theme: the system's colour scheme, or a forced `data-theme`. The footer is an ink
- * block in every theme and always shows the cream file. `home.spec.ts` covers the logo's name,
- * minimum size and clear space.
+ * The wordmark (Logo.astro, ADR 0024, ADR 0026) comes in two files and global.css shows the one
+ * that matches the theme: the system's colour scheme, or a forced `data-theme`. V2 draws it in
+ * the header only; the footer has no logo. `home.spec.ts` covers the logo's name, minimum size
+ * and clear space.
  */
 
 const PAGES = ['/', '/pt/', '/compress-image/'] as const
 
-/** The wordmark files currently drawn inside `scope` (`header` or `footer`), by scheme. */
-async function shown(page: Page, scope: 'header' | 'footer') {
+/** The wordmark files currently drawn inside `scope`, by scheme. */
+async function shown(page: Page, scope: 'header') {
   return page
     .locator(`${scope} [data-logo] img`)
     .evaluateAll((images) =>
@@ -22,7 +22,7 @@ async function shown(page: Page, scope: 'header' | 'footer') {
 }
 
 /** Waits for the images drawn in `scope` to load, as the lazy ones start after layout. */
-async function loaded(page: Page, scope: 'header' | 'footer') {
+async function loaded(page: Page, scope: 'header') {
   await page.locator(`${scope} [data-logo]`).scrollIntoViewIfNeeded()
   await expect
     .poll(() =>
@@ -54,18 +54,9 @@ for (const path of PAGES) {
     })
   }
 
-  test(`the footer shows the cream wordmark in a light and a dark theme (${path})`, async ({
-    page,
-  }) => {
+  test(`the footer has no wordmark (${path})`, async ({ page }) => {
     await page.goto(path)
-    for (const theme of ['light', 'dark']) {
-      await page.evaluate(
-        (value) => document.documentElement.setAttribute('data-theme', value),
-        theme,
-      )
-      expect(await shown(page, 'footer'), `${theme} theme`).toEqual(['dark'])
-    }
-    await loaded(page, 'footer')
+    await expect(page.locator('footer [data-logo]')).toHaveCount(0)
   })
 }
 
@@ -99,7 +90,7 @@ test('each wordmark keeps its proportions at every width, so nothing moves when 
         (value) => document.documentElement.setAttribute('data-theme', value),
         theme,
       )
-      for (const scope of ['header', 'footer'] as const) {
+      for (const scope of ['header'] as const) {
         const [box] = await page.locator(`${scope} [data-logo] img`).evaluateAll((images) =>
           images
             .filter((img) => getComputedStyle(img).display !== 'none')
@@ -114,7 +105,8 @@ test('each wordmark keeps its proportions at every width, so nothing moves when 
         if (!box) throw new Error(`no wordmark in the ${scope}`)
         // The box follows the width and height attributes, whatever file the srcset picks.
         expect(box.width / box.height, `${scope}, ${theme}, ${width} px`).toBeCloseTo(box.attr, 2)
-        expect(box.width, `${scope}, ${width} px`).toBe(width < 600 ? 120 : 184)
+        // 28 px tall at the official lettering's proportions, on every screen.
+        expect(box.width, `${scope}, ${width} px`).toBe(151)
       }
     }
   }

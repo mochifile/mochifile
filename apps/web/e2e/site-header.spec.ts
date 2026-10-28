@@ -5,17 +5,20 @@ import { readLayoutShifts, recordLayoutShifts } from './layout-shifts.ts'
 import { PHONES } from './tool-pages.ts'
 
 /**
- * The site header (ADR 0023): "Skip to content", the tool links from 1024 px, and below it a
- * phone menu built on the declarative Popover API, without JavaScript.
+ * The site header (ADR 0023, ADR 0026): "Skip to content", the V2 links and language button from
+ * 1024 px, and below it a phone menu built on the declarative Popover API, without JavaScript.
+ * Destinations that do not exist yet are "Coming soon" buttons, not links.
  */
 
-const TOOL = 'Compress an image to a target size'
 const trigger = (page: Page) => page.getByRole('button', { name: 'Menu' })
 const menu = (page: Page) => page.locator('[data-site-menu]')
 const suggestion = (page: Page) => page.locator('aside[data-language-suggestion]:not([hidden])')
 const isOpen = (page: Page) => menu(page).evaluate((el) => el.matches(':popover-open'))
-/** The language pill in the header row (the menu has its own language link). */
-const pill = (page: Page) => page.locator('header > div [data-language-switch]')
+/** The "Coming soon" notice that is open, wherever it is. */
+const notice = (page: Page) => page.locator('[data-coming-soon]:popover-open')
+/** The desktop language button and the list it opens. */
+const languageButton = (page: Page) => page.locator('[data-language-button]')
+const languageMenu = (page: Page) => page.locator('[data-language-menu]')
 
 /**
  * The key that moves focus to the next link. WebKit on macOS follows the system setting and
@@ -32,7 +35,7 @@ function focused(page: Page) {
     const box = el.getBoundingClientRect()
     const top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)
     return {
-      // Its text without the parts hidden from assistive technology (the pill's "PT").
+      // Its text without the parts hidden from assistive technology.
       name: (
         el.getAttribute('aria-label') ??
         [...el.childNodes]
@@ -74,7 +77,10 @@ for (const PHONE of PHONES) {
   }) => {
     await page.setViewportSize(PHONE)
     await page.goto('/compress-image/')
-    // Everything in the header fits: no sideways scrolling, nothing cut off.
+    // Everything in the header fits: no sideways scrolling, nothing cut off. The row is the
+    // canvas's 84 px tall, with the logo and the menu button only.
+    expect((await page.locator('header > div').first().boundingBox())?.height).toBe(84)
+    await expect(languageButton(page)).toBeHidden()
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       PHONE.width,
     )
@@ -88,8 +94,15 @@ for (const PHONE of PHONES) {
 
     await trigger(page).click()
     await expect(menu(page)).toBeVisible()
-    await expect(menu(page).getByRole('link', { name: TOOL })).toBeVisible()
-    await expect(menu(page).getByRole('link', { name: 'Português' })).toBeVisible()
+    // Every control of the canvas, in its order: four links, two buttons, six languages.
+    for (const name of ['Solutions', 'Guides', 'Docs', 'Pricing', 'Get started', 'Sign in']) {
+      await expect(menu(page).getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible()
+    }
+    await expect(menu(page).getByRole('link', { name: 'English' })).toBeVisible()
+    await expect(menu(page).getByRole('link', { name: 'Português (Brasil)' })).toBeVisible()
+    for (const name of ['Español', 'Français', 'हिन्दी', '简体中文']) {
+      await expect(menu(page).getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible()
+    }
     // The menu starts right below the header row and fits the screen's width.
     const header = await page.locator('header > div').first().boundingBox()
     const panel = await menu(page).boundingBox()
@@ -116,16 +129,15 @@ test('keyboard: Tab order, Enter and Space, Escape and focus restoration', async
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
 
-  // Skip link, logo, language, menu button.
+  // Skip link, logo, menu button.
   const order = []
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     await page.keyboard.press(TAB)
     order.push(await focused(page))
   }
   expect(order).toEqual([
     { name: 'Skip to content', where: 'body', shown: true },
     { name: 'Mochifile', where: 'header', shown: true },
-    { name: 'Switch to Portuguese', where: 'header', shown: true },
     { name: 'Menu', where: 'header', shown: true },
   ])
 
@@ -135,19 +147,22 @@ test('keyboard: Tab order, Enter and Space, Escape and focus restoration', async
   await expect(trigger(page)).toBeFocused()
   await page.keyboard.press(TAB)
   expect(await focused(page)).toMatchObject({ where: 'menu', shown: true })
-  expect((await focused(page)).name).toContain(TOOL)
+  expect((await focused(page)).name).toContain('Solutions')
 
   // Through every item, then out: never onto anything hidden or covered by the menu.
-  const items = await menu(page).getByRole('link').count()
+  const items = await menu(page).getByRole('link').or(menu(page).getByRole('button')).count()
   for (let i = 1; i < items; i++) await page.keyboard.press(TAB)
-  expect(await focused(page)).toEqual({ name: 'Português', where: 'menu', shown: true })
+  expect(await focused(page)).toMatchObject({ where: 'menu', shown: true })
+  expect((await focused(page)).name).toContain('简体中文')
   await page.keyboard.press(TAB)
   const after = await focused(page)
   expect(after.shown).toBe(true)
   expect(['main', 'footer', 'aside']).not.toContain(after.where)
 
   // Escape closes from inside the menu and returns focus to the button.
-  await menu(page).getByRole('link', { name: TOOL }).focus()
+  await menu(page)
+    .getByRole('button', { name: /^Solutions/ })
+    .focus()
   await page.keyboard.press('Escape')
   expect(await isOpen(page)).toBe(false)
   await expect(trigger(page)).toBeFocused()
@@ -166,10 +181,34 @@ test('a link in the menu navigates, and the new page starts with the menu closed
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
   await trigger(page).click()
-  await menu(page).getByRole('link', { name: TOOL }).click()
-  await expect(page).toHaveURL('/compress-image/')
+  await menu(page).getByRole('link', { name: 'Português (Brasil)' }).click()
+  await expect(page).toHaveURL('/pt/')
   expect(await isOpen(page)).toBe(false)
   await expect(page.locator('main')).toBeVisible()
+})
+
+test('a "Coming soon" control says so, goes nowhere, and keeps the menu open', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await trigger(page).click()
+  await menu(page)
+    .getByRole('button', { name: /^Pricing/ })
+    .click()
+  await expect(notice(page)).toBeVisible()
+  await expect(notice(page)).toHaveText(/Coming soon/)
+  await expect(notice(page)).toHaveAttribute('role', 'status')
+  expect(new URL(page.url()).pathname).toBe('/')
+  expect(await isOpen(page)).toBe(true)
+  // Escape closes the notice first; the menu stays.
+  await page.keyboard.press('Escape')
+  await expect(notice(page)).toHaveCount(0)
+  expect(await isOpen(page)).toBe(true)
+  // A language with no pages behaves the same.
+  await menu(page)
+    .getByRole('button', { name: /^Español/ })
+    .click()
+  await expect(notice(page)).toBeVisible()
+  expect(new URL(page.url()).pathname).toBe('/')
 })
 
 for (const { viewport, path } of [
@@ -210,6 +249,7 @@ test('from 1024 px the links sit in the header; crossing it with the menu open b
   await page.setViewportSize({ width: 1023, height: 800 })
   await page.goto('/')
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeHidden()
+  await expect(languageButton(page)).toBeHidden()
   await trigger(page).click()
   await expect(menu(page)).toBeVisible()
 
@@ -218,17 +258,16 @@ test('from 1024 px the links sit in the header; crossing it with the menu open b
   await expect(menu(page)).toBeHidden()
   await expect(page.locator('main')).toBeVisible()
   const nav = page.getByRole('navigation', { name: 'Main' })
-  await expect(nav.getByRole('link', { name: TOOL })).toBeVisible()
-  // Only released tools: the links are the registry's tool pages, nothing else.
-  for (const href of await nav
-    .getByRole('link')
-    .evaluateAll((links) => links.map((link) => link.getAttribute('href')))) {
-    expect(['/compress-image/', '/template-tool/']).toContain(href)
+  for (const name of ['Solutions', 'Guides', 'Docs', 'Pricing', 'Sign in', 'Get started']) {
+    await expect(nav.getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible()
   }
+  // Nothing is linked to a page that does not exist.
+  await expect(nav.getByRole('link')).toHaveCount(0)
+  await expect(languageButton(page)).toBeVisible()
 
   // Nothing hidden stays focusable: every Tab stop up to the content is visible.
   await page.getByRole('banner').getByRole('link', { name: 'Mochifile' }).focus()
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 8; i++) {
     await page.keyboard.press(TAB)
     const stop = await focused(page)
     expect(stop.shown, stop.name).toBe(true)
@@ -291,8 +330,9 @@ test('while the menu is open, assistive technology gets the menu and nothing hid
   await trigger(page).click()
   const tree = await page.locator('body').ariaSnapshot()
   expect(tree).toContain('navigation "Menu"')
-  expect(tree).toContain(`list "Tools"`)
-  expect(tree).toContain(`link "${TOOL}`)
+  expect(tree).toContain('list "Language"')
+  expect(tree).toMatch(/button "Solutions ?, Coming soon"/)
+  expect(tree).toContain('link "English"')
   expect(tree).toContain('button "Menu"')
   // The page beneath is out of the accessibility tree, like the content behind a dialog.
   expect(tree).not.toContain('heading')
@@ -343,11 +383,20 @@ test('crossing 1024 px never leaves focus on a hidden element', async ({ page, b
     },
     { name: 'the menu button', from: 1023, to: 1024, focus: () => trigger(page).focus() },
     {
-      name: 'a header tool link',
+      name: 'a header link',
       from: 1024,
       to: 1023,
       focus: () =>
-        page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: TOOL }).focus(),
+        page
+          .getByRole('navigation', { name: 'Main' })
+          .getByRole('button', { name: /^Solutions/ })
+          .focus(),
+    },
+    {
+      name: 'the language button',
+      from: 1024,
+      to: 1023,
+      focus: () => languageButton(page).focus(),
     },
   ]
   for (const { name, from, to, focus } of cases) {
@@ -396,11 +445,12 @@ for (const input of ['mouse', 'touch'] as const) {
       page.on('filechooser', () => {
         chooser = true
       })
-      // Where "Choose photos" is: blank while the menu is open.
-      const action = await centre(page.locator('[data-primary-action]'))
-
+      // A blank part of the open menu: the gap under its two buttons. Nothing of the page beneath
+      // is guaranteed to be there, so what is checked is that the menu takes the press itself.
       await trigger(page).click()
       await expect(menu(page)).toBeVisible()
+      const signIn = await centre(menu(page).getByRole('button', { name: /^Sign in/ }))
+      const action = { x: signIn.x, y: signIn.y + 56 }
       await press(action.x, action.y)
       await page.waitForTimeout(300)
       expect(await isOpen(page)).toBe(true)
@@ -413,16 +463,16 @@ for (const input of ['mouse', 'touch'] as const) {
       await expect(page.locator('main')).toBeVisible()
       expect(chooser).toBe(false)
 
-      // So does a press on the header outside the menu (between the logo and the language).
+      // So does a press on the header outside the menu (between the logo and the button).
       await trigger(page).click()
       await expect(menu(page)).toBeVisible()
       const logo = await page
         .getByRole('banner')
         .getByRole('link', { name: 'Mochifile' })
         .boundingBox()
-      const language = await pill(page).boundingBox()
-      if (!logo || !language) throw new Error('missing boxes')
-      await press((logo.x + logo.width + language.x) / 2, button.y)
+      const buttonBox = await trigger(page).boundingBox()
+      if (!logo || !buttonBox) throw new Error('missing boxes')
+      await press((logo.x + logo.width + buttonBox.x) / 2, button.y)
       await expect(menu(page)).toBeHidden()
       await page.waitForTimeout(300)
       expect(chooser).toBe(false)
@@ -474,8 +524,14 @@ test('the menu works with JavaScript disabled', async ({ testBrowser }) => {
     await page.goto('/pt/')
     await page.getByRole('button', { name: 'Menu' }).click()
     await expect(menu(page)).toBeVisible()
-    await menu(page).getByRole('link', { name: 'Comprimir imagem' }).click()
-    await expect(page).toHaveURL('/pt/comprimir-imagem/')
+    // "Coming soon" works with no script too: a declarative popover.
+    await menu(page)
+      .getByRole('button', { name: /^Preços/ })
+      .click()
+    await expect(notice(page)).toContainText('Em breve')
+    await page.keyboard.press('Escape')
+    await menu(page).getByRole('link', { name: 'English' }).click()
+    await expect(page).toHaveURL('/')
   } finally {
     await context.close()
   }
@@ -585,7 +641,7 @@ for (const PHONE of PHONES) {
       expect(panel.y).toBeGreaterThanOrEqual(header.y + header.height)
 
       // Keyboard: the header's stops are all visible and on top, then the suggestion.
-      for (const name of ['Skip to content', 'Mochifile', 'Switch to Portuguese', 'Menu']) {
+      for (const name of ['Skip to content', 'Mochifile', 'Menu']) {
         await page.keyboard.press(TAB)
         expect(await focused(page)).toMatchObject({ name, shown: true })
       }
@@ -628,72 +684,89 @@ for (const PHONE of PHONES) {
 }
 
 /**
- * The language pill (SiteHeader artboard): one link with a globe to this page in the other
- * language. Under 1024 px it shows the code beside the menu button; from 1024 px the name, each
- * in that language. Its accessible name is the action, in the page's language.
+ * The language selector (ADR 0026): from 1024 px a button in the header opens a list of the six
+ * languages in their own names; under 1024 px the same languages are chips in the menu.
+ * English and Portuguese are links to this page's alternate; the rest are "Coming soon".
  */
-const PILL_PAGES = [
+const LANGUAGE_PAGES = [
   {
     path: '/compress-image/',
     other: '/pt/comprimir-imagem/',
-    code: 'PT',
-    name: 'Português',
-    label: 'Switch to Portuguese',
+    label: 'Language: English',
+    current: 'English',
+    target: 'Português (Brasil)',
   },
-  { path: '/pt/', other: '/', code: 'EN', name: 'English', label: 'Mudar para inglês' },
+  {
+    path: '/pt/',
+    other: '/',
+    label: 'Idioma: Português (Brasil)',
+    current: 'Português (Brasil)',
+    target: 'English',
+  },
 ] as const
 
-for (const { path, other, code, name, label } of PILL_PAGES) {
-  test(`the language pill links to ${other} from ${path} at every width`, async ({ page }) => {
+for (const { path, other, label, current, target } of LANGUAGE_PAGES) {
+  test(`the language button on ${path} lists six languages and links to ${other}`, async ({
+    page,
+    browserName,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto(path)
-    await expect(pill(page)).toHaveCount(1)
-    await expect(pill(page)).toHaveAttribute('href', other)
-    await expect(pill(page)).toHaveAttribute('hreflang', other.startsWith('/pt/') ? 'pt' : 'en')
-    // Named in the page's language, so the name is read with the page's voice; the code and
-    // the language's name it shows are in that language.
-    await expect(pill(page)).toHaveAccessibleName(label)
-    await expect(pill(page)).not.toHaveAttribute('lang')
-    for (const span of await pill(page).locator('span').all()) {
-      await expect(span).toHaveAttribute('lang', other.startsWith('/pt/') ? 'pt' : 'en')
-    }
-    expect(await page.getByRole('banner').ariaSnapshot()).toContain(`link "${label}"`)
-    // The page's own language is not offered: it is a link away, not a choice.
-    await expect(page.locator('header a[aria-current="true"]')).toHaveCount(0)
-
-    for (const width of [320, 360, 390, 600, 768, 1023, 1024, 1440]) {
-      await page.setViewportSize({ width, height: 800 })
-      const phone = width < 1024
-      await expect(pill(page)).toBeVisible()
+    await expect(languageButton(page)).toHaveAccessibleName(label)
+    await expect(languageMenu(page)).toBeHidden()
+    await languageButton(page).click()
+    await expect(languageMenu(page)).toBeVisible()
+    const items = languageMenu(page).getByRole('listitem')
+    await expect(items).toHaveCount(6)
+    // The page's own language is marked, not offered as a switch.
+    await expect(languageMenu(page).locator('[aria-current="true"]')).toHaveText(current)
+    // Each in its own name, in the canvas's order, with its language declared.
+    await expect(languageMenu(page).locator('[lang]')).toHaveCount(6)
+    for (const name of ['Español', 'Français', 'हिन्दी', '简体中文']) {
       await expect(
-        page.getByRole('banner').getByRole('link', { name: label, exact: true }),
+        languageMenu(page).getByRole('button', { name: new RegExp(`^${name}`) }),
       ).toBeVisible()
-      // What the eye reads: the code, then the name.
-      const shown = await pill(page).evaluate((el) =>
-        [...el.querySelectorAll('span')]
-          .filter((span) => span.getBoundingClientRect().width > 1)
-          .map((span) => span.textContent?.trim())
-          .join(' '),
-      )
-      expect(shown, `${width} px`).toBe(phone ? code : name)
-      const box = await pill(page).boundingBox()
-      if (!box) throw new Error('no pill')
+    }
+    const link = languageMenu(page).getByRole('link', { name: target })
+    await expect(link).toHaveAttribute('href', other)
+    await expect(link).toHaveAttribute('hreflang', other.startsWith('/pt/') ? 'pt' : 'en')
+
+    // A language with no pages says so and keeps the list open.
+    await languageMenu(page)
+      .getByRole('button', { name: /^Español/ })
+      .click()
+    await expect(notice(page)).toContainText(/Coming soon|Em breve/)
+    expect(new URL(page.url()).pathname).toBe(path)
+    await page.keyboard.press('Escape')
+    await expect(languageMenu(page)).toBeVisible()
+
+    // Escape closes the list and returns focus to the button.
+    await page.keyboard.press('Escape')
+    await expect(languageMenu(page)).toBeHidden()
+    // WebKit does not focus a button a pointer pressed, so it has nothing to give back.
+    if (browserName !== 'webkit') await expect(languageButton(page)).toBeFocused()
+
+    await languageButton(page).click()
+    await languageMenu(page).getByRole('link', { name: target }).click()
+    await expect(page).toHaveURL(other)
+  })
+
+  test(`the header fits and its language button stays in the row from 1024 to 1440 px (${path})`, async ({
+    page,
+  }) => {
+    await page.goto(path)
+    for (const width of [1024, 1100, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 800 })
+      const box = await languageButton(page).boundingBox()
+      const nav = await page.getByRole('navigation', { name: /Main|Principal/ }).boundingBox()
+      if (!box || !nav) throw new Error('missing boxes')
       expect(box.height).toBeGreaterThanOrEqual(44)
-      expect(box.x + box.width).toBeLessThanOrEqual(width)
+      expect(box.x + box.width, `${width} px`).toBeLessThanOrEqual(width)
+      expect(nav.x + nav.width).toBeLessThanOrEqual(box.x)
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         width,
       )
-      if (phone) {
-        // Beside the menu button, 8 px before it, on one row.
-        const button = await trigger(page).boundingBox()
-        if (!button) throw new Error('no menu button')
-        expect(Math.round(button.x - (box.x + box.width))).toBe(8)
-        expect(Math.round(box.y + box.height / 2)).toBe(Math.round(button.y + button.height / 2))
-      }
     }
-
-    await page.setViewportSize({ width: 390, height: 844 })
-    await pill(page).click()
-    await expect(page).toHaveURL(other)
   })
 }
 
@@ -715,20 +788,13 @@ for (const colorScheme of ['light', 'dark'] as const) {
         await page.goto('/pt/comprimir-imagem/')
         const results = await new AxeBuilder({ page }).include('header').analyze()
         expect(results.violations).toEqual([])
-        // The pill's outline is the control border of the active theme, as on the menu button.
-        const [outline, control] = await page.evaluate(() => {
-          const probe = document.createElement('div')
-          probe.className = 'border-chip border-border-control'
-          document.body.append(probe)
-          const value = getComputedStyle(probe).borderTopColor
-          probe.remove()
-          const link = document.querySelector('header > div [data-language-switch]') as Element
-          return [getComputedStyle(link).borderTopColor, value]
-        })
-        expect(outline).toBe(control)
         if (viewport.width < 1024) {
           await page.getByRole('button', { name: 'Menu' }).click()
           await expect(menu(page).getByRole('link', { name: 'English' })).toBeVisible()
+          expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+        } else {
+          await languageButton(page).click()
+          await expect(languageMenu(page)).toBeVisible()
           expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
         }
         expect(errors).toEqual([])

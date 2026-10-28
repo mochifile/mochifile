@@ -5,21 +5,20 @@ import light368 from '../assets/logo/mochifile-wordmark-light-368.png'
 import light552 from '../assets/logo/mochifile-wordmark-light-552.png'
 
 /**
- * The Mochifile wordmark (ADR 0024): the approved lowercase lettering, a raster used as it is,
- * never redrawn or set in a font. The masters are in docs/design-system/assets/Logos; these are
- * their 368 and 552 px copies (a 184px logo at 2x and 3x), so a visitor downloads 12 KB, not
- * the 59 KB master. The names say the colour scheme the lettering is shown in: `light` is ink
+ * The official Mochifile lettering (ADR 0024, ADR 0026): the lowercase wordmark, a raster used as
+ * it is, never redrawn or set in a font. The masters are in docs/design-system/assets/Logos;
+ * these are their 368 and 552 px copies (a 151px logo at 2x and 3x), so a visitor downloads
+ * 12 KB, not the 280 KB master. The names say the colour scheme the lettering is shown in: `light` is ink
  * for light grounds, `dark` is cream for dark ones. The i-dots keep their colours in both.
  *
  * On page grounds (`light`, the default) both files are in the page and global.css shows the
  * one that matches the theme with the selectors the tokens use (system preference, or a forced
  * `data-theme`), so no script runs. Both are lazy, so the browser never fetches the hidden one.
- * The footer is an ink block in every theme (`on-dark`), so it only has the cream file.
+ * `on-dark` shows only the cream file, for ink grounds.
  *
  * The link's accessible name is "Mochifile"; the images are decorative and hidden from
- * assistive technology, so the name is announced once. Width is `w-logo-phone` (120px) under
- * 600px and `w-logo` (184px) from 600px, above the 96px minimum. The "o" is 0.715 of the
- * wordmark's height: callers keep that much clear space around it. The images carry their
+ * assistive technology, so the name is announced once. Width is `w-logo` (151px, 28px tall) on
+ * every screen, above the 96px minimum. Callers keep the height of the "o" clear around it. The images carry their
  * size and global.css pins each one's proportions, so the box is reserved before they load and
  * never changes when a file of another size arrives.
  */
@@ -31,8 +30,8 @@ interface Props {
 }
 
 const { href, ground = 'light' } = Astro.props
-const light = { scheme: 'light', small: light368, large: light552, width: 960, height: 171 }
-const dark = { scheme: 'dark', small: dark368, large: dark552, width: 960, height: 173 }
+const light = { scheme: 'light', small: light368, large: light552, width: 1800, height: 333 }
+const dark = { scheme: 'dark', small: dark368, large: dark552, width: 1908, height: 353 }
 const wordmarks = ground === 'on-dark' ? [dark] : [light, dark]
 ---
 
@@ -41,14 +40,14 @@ const wordmarks = ground === 'on-dark' ? [dark] : [light, dark]
   aria-label="Mochifile"
   data-logo
   data-logo-themed={ground === 'light' ? '' : undefined}
-  class="inline-flex w-logo-phone shrink-0 rounded-sm focus-ring sm:w-logo"
+  class="inline-flex w-logo shrink-0 rounded-sm focus-ring"
 >
   {
     wordmarks.map(({ scheme, small, large, width, height }) => (
       <img
         src={small.src}
         srcset={`${small.src} ${small.width}w, ${large.src} ${large.width}w`}
-        sizes="(min-width: 600px) 184px, 120px"
+        sizes="151px"
         alt=""
         aria-hidden="true"
         data-wordmark={scheme}
