@@ -512,6 +512,21 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
     </ul>
   )
 
+  const tooManyNotice = tooMany && (
+    <div className="cp-notice" role="alert">
+      <WarningIcon />
+      <span className="cp-notice-body">
+        <b>
+          {m.compress_image_too_many_title(
+            { maxFiles: String(manifest.limits.maxFiles) },
+            { locale },
+          )}
+        </b>
+        <span className="cp-small">{m.compress_image_too_many_detail({}, { locale })}</span>
+      </span>
+    </div>
+  )
+
   const engineBlock = engineFailed && (
     <CenterState
       image={sad}
@@ -689,6 +704,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                     </div>
                   ),
               )}
+              {tooManyNotice}
               {list}
             </section>
           )}
@@ -838,22 +854,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                   />
                 ) : (
                   <div className="cp-col cp-g12">
-                    {tooMany && (
-                      <div className="cp-notice" role="alert">
-                        <WarningIcon />
-                        <span className="cp-notice-body">
-                          <b>
-                            {m.compress_image_too_many_title(
-                              { maxFiles: String(manifest.limits.maxFiles) },
-                              { locale },
-                            )}
-                          </b>
-                          <span className="cp-small">
-                            {m.compress_image_too_many_detail({}, { locale })}
-                          </span>
-                        </span>
-                      </div>
-                    )}
+                    {tooManyNotice}
                     {list}
                     {staged && (
                       <span className="cp-more">
