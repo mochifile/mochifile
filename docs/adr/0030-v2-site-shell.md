@@ -22,7 +22,7 @@ a language selector in the header and the footer, GitHub as the only social netw
   `dot-red`, `dot-green`, `heart`), two sizes (`site-header` 84px, `site-max` 1104px) and the
   "Site shell" type styles. Shadows, the "mochi squish" radii and a few measured spacings are in
   `component-constants.css`, each citing the canvas. The new colours have dark values only so
-  every token is complete; V2 is light-only and no dark theme or theme switch is designed.
+  every token is complete; V2 is light-only: no dark theme or theme switch is designed, and `<html data-theme="light">` keeps the dark tokens off whatever the system prefers.
 - **Wordmark.** The official lettering files replace the masters named in ADR 0024
   (`mochifile-wordmark-light.png` is now `logo-official-dark.png`, ink letters, 1800 × 333 px;
   `-dark` is `logo-official-cream.png`, 1908 × 353 px). The site still ships 368 and 552 px

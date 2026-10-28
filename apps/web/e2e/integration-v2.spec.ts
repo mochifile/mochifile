@@ -257,3 +257,71 @@ for (const { path, home, solutions, label } of TOOL_PAGES) {
     expect(card).toBe('rgb(255, 255, 255)')
   })
 }
+
+/**
+ * V2 is light only: `<html data-theme="light">` and `color-scheme: light` switch off the tokens'
+ * dark theme, so a visitor whose system prefers dark sees the same cream page everywhere.
+ */
+test('every page stays light when the system prefers dark, on a desktop and on a phone', async ({
+  page,
+  request,
+  pageErrors,
+}) => {
+  test.setTimeout(240_000)
+  const xml = await (await request.get('/sitemap-0.xml')).text()
+  const paths = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1] ?? '').pathname)
+  // The error pages are not in the sitemap: they answer any unknown address.
+  const all = [...new Set([...paths, '/does-not-exist/', '/pt/nao-existe/'])]
+  expect(all.length).toBeGreaterThan(40)
+  await page.emulateMedia({ colorScheme: 'dark' })
+  const failures: string[] = []
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport)
+    for (const path of all) {
+      await page.goto(path, { waitUntil: 'domcontentloaded' })
+      const state = await page.evaluate(() => {
+        const root = document.documentElement
+        return {
+          dark: matchMedia('(prefers-color-scheme: dark)').matches,
+          theme: root.getAttribute('data-theme'),
+          scheme: getComputedStyle(root).colorScheme,
+          meta: document.querySelector('meta[name="color-scheme"]')?.getAttribute('content'),
+          page: getComputedStyle(document.body).backgroundColor,
+          ink: getComputedStyle(document.body).color,
+        }
+      })
+      const expected = {
+        dark: true,
+        theme: 'light',
+        scheme: 'light',
+        meta: 'light',
+        page: 'rgb(255, 247, 236)',
+        ink: 'rgb(30, 27, 46)',
+      }
+      if (JSON.stringify(state) !== JSON.stringify(expected)) {
+        failures.push(`${viewport.width}px ${path}: ${JSON.stringify(state)}`)
+      }
+    }
+  }
+  // The browser logs the error pages' own 404; nothing else may be logged.
+  pageErrors.splice(0, pageErrors.length, ...pageErrors.filter((error) => !OWN_404.test(error)))
+  expect(failures).toEqual([])
+})
+
+test('the phone menu is light too under a dark system theme', async ({ page, pageErrors }) => {
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.setViewportSize({ width: 390, height: 844 })
+  for (const path of ['/', '/pt/', '/does-not-exist/']) {
+    await page.goto(path)
+    await page.getByRole('button', { name: /^Menu$/ }).click()
+    const colours = await page
+      .locator('[data-site-menu]')
+      .evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).color])
+    expect(colours, path).toEqual(['rgb(255, 247, 236)', 'rgb(30, 27, 46)'])
+    await page.keyboard.press('Escape')
+  }
+  pageErrors.splice(0, pageErrors.length, ...pageErrors.filter((error) => !OWN_404.test(error)))
+})

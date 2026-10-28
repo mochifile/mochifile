@@ -3,7 +3,7 @@ import { expect, test } from './fixtures.ts'
 
 /**
  * The wordmark (Logo.astro, ADR 0024, ADR 0030) comes in two files and global.css shows the one
- * that matches the theme: the system's colour scheme, or a forced `data-theme`. V2 draws it in
+ * that matches the theme: a forced `data-theme` (the page is `light`, and ignores the system's colour scheme). V2 draws it in
  * the header only; the footer has no logo. `home.spec.ts` covers the logo's name, minimum size
  * and clear space.
  */
@@ -60,8 +60,9 @@ for (const path of PAGES) {
   })
 }
 
+// V2 is light only (ADR 0030): the system's colour scheme never changes the wordmark.
 for (const colorScheme of ['light', 'dark'] as const) {
-  test(`the header follows the system's ${colorScheme} colour scheme without a forced theme`, async ({
+  test(`the header shows the light wordmark when the system prefers ${colorScheme}`, async ({
     page,
     browserName,
   }) => {
@@ -74,7 +75,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
     // As home-page.spec.ts does: Firefox in CI did not always apply the emulation.
     test.skip(!emulated && browserName === 'firefox', `Firefox did not apply ${colorScheme}`)
     expect(emulated, 'the colour scheme emulation applies').toBe(true)
-    expect(await shown(page, 'header')).toEqual([colorScheme])
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+    expect(await shown(page, 'header')).toEqual(['light'])
     await loaded(page, 'header')
   })
 }
