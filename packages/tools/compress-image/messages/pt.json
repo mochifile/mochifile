@@ -112,5 +112,54 @@
   ],
   "compress_image_cancelled_none": "Nenhuma foto foi comprimida.",
   "compress_image_compress_more": "Comprimir outras",
-  "compress_image_compress_another": "Comprimir outra"
+  "compress_image_compress_another": "Comprimir outra",
+  "compress_image_target_note": "Cada foto sai com {target} ou menos. Conferimos antes de você baixar.",
+  "compress_image_format_note": "Mantém o formato da foto quando possível. Se precisar mudar, o resultado avisa.",
+  "compress_image_drop_dragging": "Solte para adicionar suas fotos",
+  "compress_image_start": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Comprimir {count} foto",
+        "countPlural=other": "Comprimir {count} fotos"
+      }
+    }
+  ],
+  "compress_image_more_photos": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "+ {count} foto a mais",
+        "countPlural=other": "+ {count} fotos a mais"
+      }
+    }
+  ],
+  "compress_image_preparing_title": "Preparando o compressor…",
+  "compress_image_preparing_detail": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Ele roda aqui, no seu aparelho. {count} foto esperando.",
+        "countPlural=other": "Ele roda aqui, no seu aparelho. {count} fotos esperando."
+      }
+    }
+  ],
+  "compress_image_download_count": "Baixar {count} (ZIP)",
+  "compress_image_compress_again": "Comprimir de novo",
+  "compress_image_unreachable_title": "Esta foto não consegue ficar abaixo de {target}.",
+  "compress_image_unreachable_detail": "O menor tamanho que conseguimos foi {smallest}.",
+  "compress_image_try_size": "Tentar {size}",
+  "compress_image_choose_size": "Escolher outro tamanho",
+  "compress_image_engine_failed_title": "Não conseguimos carregar o compressor.",
+  "compress_image_browser_title": "Este navegador não consegue rodar a ferramenta.",
+  "compress_image_browser_text": "Ela precisa de recursos que navegadores antigos não têm. Atualize o navegador ou abra esta página em outro navegador atualizado.",
+  "compress_image_heic_note": "HEIC ainda não é aceito.",
+  "compress_image_download_format": "Baixar {format}",
+  "compress_image_flattened_title": "O fundo transparente ficou branco.",
+  "compress_image_tag_flattened": "Transparência preenchida de branco",
+  "compress_image_too_many_title": "Você pode adicionar até {maxFiles} fotos de uma vez.",
+  "compress_image_too_many_detail": "Só as primeiras foram adicionadas."
 }
