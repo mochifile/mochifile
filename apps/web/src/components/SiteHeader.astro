@@ -16,7 +16,7 @@
  */
 import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import mascotHappy from '../assets/mascot/sheet-happy-700.png'
+import { illustration } from '../lib/illustrations'
 import { accountLinks, isCurrent, mainLinks } from '../lib/site-nav'
 import ArrowRight from './ArrowRight.astro'
 import ComingSoon from './ComingSoon.astro'
@@ -219,10 +219,8 @@ const bigPill =
       </div>
       {/* The approved "happy" mascot on its green block; decorative, once, never over a control. */}
       <img
-        src={mascotHappy.src}
+        {...illustration('sheet-happy', 'calc(100vw - 32px)')}
         alt=""
-        width={700}
-        height={414}
         loading="lazy"
         decoding="async"
         class="mt-8 h-auto w-full rounded-mascot"

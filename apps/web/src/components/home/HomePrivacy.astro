@@ -1,8 +1,11 @@
 ---
-/** "Private by design": what happens to a file in the browser tools, with the happy mascot. */
+/**
+ * "Private by design": what happens to a file in the browser tools. The mascot holds a padlocked
+ * folder: the section's own promise (nothing is uploaded) in a picture, claiming nothing more.
+ */
 import type { Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import happy from '../../assets/home/sheet-happy-800.webp'
+import { illustration } from '../../lib/illustrations'
 import Icon from './Icon.astro'
 
 interface Props {
@@ -19,7 +22,7 @@ const githubPath =
 <section class="hv2-w hv2-sec-sm" aria-labelledby="hv2-privacy-title">
   <div class="hv2-card hv2-card-privacy">
     <div class="hv2-split hv2-privacy-split">
-      <img src={happy.src} width={happy.width} height={happy.height} alt="" loading="lazy" decoding="async" class="hv2-media" />
+      <img {...illustration('sheet-safe', '(min-width: 1101px) 370px, (min-width: 901px) 340px, (min-width: 641px) calc(100vw - 146px), calc(100vw - 122px)')} alt="" loading="lazy" decoding="async" class="hv2-media" />
       <div class="hv2-stack hv2-g16">
         <span class="hv2-eyebrow">{m.hv2_privacy_eyebrow({}, { locale })}</span>
         <h2 id="hv2-privacy-title" class="hv2-h2">{m.hv2_privacy_title({}, { locale })}</h2>

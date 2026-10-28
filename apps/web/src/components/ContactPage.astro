@@ -20,9 +20,8 @@ import { getEntry, render } from 'astro:content'
 import type { Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import { buttonClasses } from '@mochifile/ui'
-import smiling168 from '../assets/brand/expr-smiling-168.webp'
-import smiling276 from '../assets/brand/expr-smiling-276.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { illustration } from '../lib/illustrations'
 import { pageContentId, pagePaths } from '../lib/pages'
 
 interface Props {
@@ -78,12 +77,8 @@ const fields = [
     <header class="flex max-w-reading-max flex-col items-center gap-3 text-center">
       {/* Decoration: the heading says it all. Sized from the tokens (84 px in the artboard). */}
       <img
-        src={smiling168.src}
-        srcset={`${smiling168.src} 168w, ${smiling276.src} 276w`}
-        sizes="84px"
+        {...illustration('expr-smiling')}
         alt=""
-        width={276}
-        height={252}
         decoding="async"
         class="h-auto w-[calc(var(--space-16)+var(--space-5))] rounded-md-squish-a"
       />

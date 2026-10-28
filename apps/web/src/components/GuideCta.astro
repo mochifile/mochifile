@@ -4,10 +4,7 @@
  * tool and a mascot on its own block (MFGuides, MFGuide). The mascot sheet already carries its
  * block colour; it is decoration.
  */
-import sheetHappy380 from '../assets/brand/sheet-happy-380.webp'
-import sheetHappy700 from '../assets/brand/sheet-happy-700.webp'
-import sheetSquish380 from '../assets/brand/sheet-squish-380.webp'
-import sheetSquish700 from '../assets/brand/sheet-squish-700.webp'
+import { illustration } from '../lib/illustrations'
 
 interface Props {
   pill: string
@@ -19,10 +16,6 @@ interface Props {
 }
 
 const { pill, heading, text, action, href, mascot } = Astro.props
-const sheet = {
-  squish: { small: sheetSquish380, large: sheetSquish700 },
-  happy: { small: sheetHappy380, large: sheetHappy700 },
-}[mascot]
 ---
 
 <section aria-label={heading} class="grid items-center gap-8 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-6 sm:p-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:p-14">
@@ -36,12 +29,8 @@ const sheet = {
     </a>
   </div>
   <img
-    src={sheet.large.src}
-    srcset={`${sheet.small.src} 380w, ${sheet.large.src} 700w`}
-    sizes="(min-width: 1024px) 336px, 100vw"
+    {...illustration(`sheet-${mascot}`, '(min-width: 1024px) 336px, (min-width: 641px) calc(100vw - 114px), calc(100vw - 82px)')}
     alt=""
-    width={1100}
-    height={651}
     loading="lazy"
     decoding="async"
     class="h-auto w-full rounded-mascot"

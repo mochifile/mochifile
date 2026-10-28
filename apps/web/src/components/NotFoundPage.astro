@@ -18,9 +18,8 @@
 import type { Locale } from '@mochifile/i18n'
 import { localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import sheet320 from '../assets/brand/sheet-worried-320.webp'
-import sheet694 from '../assets/brand/sheet-worried-694.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { illustration } from '../lib/illustrations'
 import { seeAllToolsHref } from '../lib/not-found'
 import { samePathInAllLocales } from '../lib/seo'
 import { toolPaths, tools } from '../lib/tools'
@@ -56,12 +55,8 @@ const button =
   <section aria-labelledby="not-found-heading" class="not-found mx-auto flex w-full max-w-narrow flex-col items-center gap-5 pt-6 pb-10 text-center sm:pt-10 lg:pt-14">
     {/* Decoration: the heading and the text say it all. The sheet carries its own block colour. */}
     <img
-      src={sheet694.src}
-      srcset={`${sheet320.src} 320w, ${sheet694.src} 694w`}
-      sizes="(min-width: 600px) 320px, calc(100vw - 32px)"
+      {...illustration('sheet-lost', '(min-width: 600px) 320px, calc(100vw - 32px)')}
       alt=""
-      width={694}
-      height={426}
       decoding="async"
       class="h-auto w-full max-w-[calc(var(--space-16)*5)] rounded-mascot"
     />
