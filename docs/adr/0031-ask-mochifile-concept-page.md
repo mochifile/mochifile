@@ -35,8 +35,8 @@ island except the language suggestion, and the Never-do list forbids uploading o
 
 ## Consequences
 
-- The page claims, as designed, "Mochifile works out the formats, sizes and settings" and "All of it
-  works on the free plan". Until an assistant exists, the Send notice is the only place that says
-  it does not; the copy should be revisited when the page is linked from the navigation.
+- The copy says what the page is: a concept that is planned for the free plan, where Mochifile is
+  "meant to" work out formats, sizes and settings. The hero lead still describes the idea in the
+  canvas's words; revisit it when the page is linked from the navigation.
 - When the assistant exists, Send gets a real handler and a privacy review (what leaves the
   device); the notice and the "concept" notes go away.

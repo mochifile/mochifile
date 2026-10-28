@@ -41,7 +41,7 @@
   "ask_trust_limit": "No monthly limit",
   "ask_trust_formats": "JPG · PNG · WebP · AVIF · PDF · WebM",
   "ask_examples_heading": "Compression is just one thing you can ask for",
-  "ask_examples_lead": "Type it the way you would say it. Mochifile works out the formats, sizes and settings. Tap any example to load it.",
+  "ask_examples_lead": "Type it the way you would say it. Mochifile is meant to work out the formats, sizes and settings. Tap any example to load it into the box.",
   "ask_group_images": "Images",
   "ask_group_pdfs": "PDFs",
   "ask_group_video": "Video and audio",
@@ -57,7 +57,7 @@
   "ask_ex_video_2": "Keep only the audio as MP3",
   "ask_ex_video_3": "Compress for WhatsApp",
   "ask_ex_video_4": "Convert the audio to AAC",
-  "ask_free_before": "All of it works on the free plan. ",
+  "ask_free_before": "Ask Mochifile is a concept. It is planned for the free plan. ",
   "ask_free_link": "Paid plans",
-  "ask_free_after": " raise the monthly allowance, file size and batch size."
+  "ask_free_after": " would raise the monthly allowance, file size and batch size."
 }

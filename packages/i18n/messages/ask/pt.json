@@ -41,7 +41,7 @@
   "ask_trust_limit": "Sem limite mensal",
   "ask_trust_formats": "JPG · PNG · WebP · AVIF · PDF · WebM",
   "ask_examples_heading": "Comprimir é só uma das coisas que você pode pedir",
-  "ask_examples_lead": "Escreva do jeito que você falaria. O Mochifile descobre os formatos, os tamanhos e os ajustes. Toque em um exemplo para carregá-lo.",
+  "ask_examples_lead": "Escreva do jeito que você falaria. A ideia é que o Mochifile descubra os formatos, os tamanhos e os ajustes. Toque em um exemplo para carregá-lo no campo.",
   "ask_group_images": "Imagens",
   "ask_group_pdfs": "PDFs",
   "ask_group_video": "Vídeo e áudio",
@@ -57,7 +57,7 @@
   "ask_ex_video_2": "Deixar só o áudio em MP3",
   "ask_ex_video_3": "Comprimir para o WhatsApp",
   "ask_ex_video_4": "Converter o áudio para AAC",
-  "ask_free_before": "Tudo isso funciona no plano grátis. ",
+  "ask_free_before": "O Pergunte ao Mochifile é um conceito. A ideia é que ele esteja no plano grátis. ",
   "ask_free_link": "Os planos pagos",
-  "ask_free_after": " aumentam a cota mensal, o tamanho dos arquivos e o tamanho dos lotes."
+  "ask_free_after": " aumentariam a cota mensal, o tamanho dos arquivos e o tamanho dos lotes."
 }

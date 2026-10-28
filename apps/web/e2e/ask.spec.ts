@@ -180,7 +180,10 @@ for (const [locale, copy] of Object.entries(PAGES)) {
       await expect(page.locator('[data-ask-files-text]')).toHaveText(copy.oneFile)
       await page.locator('#ask-files').setInputFiles([])
       await expect(page.locator('[data-ask-files-text]')).toHaveText(copy.noFiles)
-      // The names are never shown, and no request was made for the files.
+      // The picker belongs to no form and has no name, so the browser could not submit it, and
+      // the names are never shown: no request was made for the files.
+      await expect(page.locator('form')).toHaveCount(0)
+      await expect(page.locator('#ask-files')).not.toHaveAttribute('name', /.+/)
       await expect(page.getByText('a.png')).toHaveCount(0)
       expect(requests.slice(before).filter((request) => !request.startsWith('GET'))).toEqual([])
     })
