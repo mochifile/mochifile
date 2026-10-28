@@ -7,7 +7,6 @@ import { createToolClient } from '@mochifile/tool-kit/client'
 import {
   downloadZip,
   FileName,
-  preloadZip,
   type QueueItem,
   errorMessage as sharedErrorMessage,
   summarizeQueue,
@@ -104,10 +103,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
     state: engine,
     prepare,
   } = usePrepareOnIntent({
-    load: () => {
-      preloadZip()
-      return client.prepare()
-    },
+    load: () => client.prepare(),
     preloadOnIdle: () => shouldPreloadOnIdle(navigator as NavigatorLike),
   })
   const { items, add, requeue, cancel, remove, clear, done, busy } = useFileQueue<

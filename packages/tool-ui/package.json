@@ -14,8 +14,7 @@
   },
   "dependencies": {
     "@mochifile/tool-kit": "workspace:*",
-    "@mochifile/ui": "workspace:*",
-    "client-zip": "2.5.1"
+    "@mochifile/ui": "workspace:*"
   },
   "peerDependencies": {
     "react": "^19.0.0"
