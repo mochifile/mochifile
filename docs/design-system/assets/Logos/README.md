@@ -17,3 +17,5 @@ The header, the footer and the READMEs use the approved lowercase lettering, as 
 - The site ships smaller palette copies in `apps/web/src/assets/logo/` (368 and 552 px wide, 256 colours, no dithering: at most 8/255 off the master on any edge pixel). To regenerate them: `sharp(master).resize({ width }).png({ palette: true, colours: 256, quality: 100, dither: 0, effort: 10, compressionLevel: 9 })`. A test keeps them in step with the masters.
 
 The v1 vector files in this folder stay: the symbol, the favicons, the app icons and the drawn lockups are unchanged. The v1 horizontal and stacked lockups and the v1 drawn wordmark are no longer used by the site.
+
+The `favicon*`, `apple-touch-icon.png` and `icon-512.png` here are the v1 icons, kept for history: the site's icons are the "m" app icon since ADR 0032.

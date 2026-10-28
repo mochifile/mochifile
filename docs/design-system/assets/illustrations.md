@@ -145,6 +145,10 @@ is decoration (`alt=""`), so no text refers to it.
 Before and after (DPR 2, 1440 px: the 404 page, About, Home's privacy card):
 [`docs/integration/images/mascot-refresh-before-after.webp`](../../integration/images/mascot-refresh-before-after.webp).
 
+Compression check (original resized | delivered | difference x10, for `sheet-lost`, `use-pdf` and `sheet-safe`):
+[`docs/integration/images/mascot-compression-diff.webp`](../../integration/images/mascot-compression-diff.webp).
+The differences are one-pixel edge lines; there are no blocks, bands or halos.
+
 ## Not changed
 
 - The wordmark and symbol (`Logos/`), `assets/logo/`, the favicons and `apple-touch-icon.png`,

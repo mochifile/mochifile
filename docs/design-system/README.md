@@ -108,13 +108,13 @@ Rules: the mascot reacts, it never talks in speech bubbles and never blocks a co
 
 The logo is final (v1). All files are in *Assets › Logos*; never redraw it or set it in a font. Since ADR 0024 the site and the READMEs show the **lettered wordmark** (below) in place of the v1 drawn wordmark and lockups, which stay in the folder.
 
-- **Symbol:** the mochi-document with eyes: cream body, a folded top-right corner in `ube`, a bold rounded outline in `ink`. Favicon, avatars, app icon, and next to the wordmark.
+- **Symbol:** the mochi-document with eyes: cream body, a folded top-right corner in `ube`, a bold rounded outline in `ink`. Avatars and the mascot's face (the favicon and app icon are the "m" app icon since ADR 0032).
 - **Wordmark:** "mochifile", the approved lowercase lettering: heavy rounded letters, with a coral dot on the first i and a green one on the second. It is not a font: use the files `mochifile-wordmark-light.png` (ink letters, for the light colour scheme) and `mochifile-wordmark-dark.png` (cream letters, for the dark one). Their dots are drawn in the artwork and are not the `strawberry` and `matcha` tokens.
 - **Lockups:** the wordmark alone (default: header, footer, READMEs; the heavy lettering carries its own colour, and the symbol is already the favicon and the mascot is on the page), symbol alone (favicon, avatars, small spaces). The v1 horizontal and stacked lockups are kept for history, not used.
 - **On dark grounds:** use the `-dark` wordmark (cream letters; the dots keep their colours). The footer is an ink block in both themes, so it always uses it.
 - **Mono:** one-colour ink versions exist for stamps, embossing and single-colour print only.
 - **Clear space:** at least the height of the "o" on every side (0.715 of the wordmark's height). **Minimum size:** 96px wide on screen; below that, use the symbol alone.
-- **Favicons:** `favicon.svg` (modern browsers), a pixel-drawn 16px PNG and a 32px PNG; app icons (180px, 512px) are the symbol on a `mango` square.
+- **Favicons:** since ADR 0032 the favicon and the app icons are the **"m" app icon** of the V2 Home (dark lowercase "m", a red and a green dot, cream): 16, 32 and 48px PNGs, a 180px touch icon and a 512px manifest icon, cropped and resampled from the artboard's raster and never redrawn, so there is no SVG favicon. The document-with-eyes symbol stays the mascot's face and the avatar; the v1 `favicon.*` and `icon-512.png` in *Assets › Logos* are kept for history.
 - **Never:** stretch, recolour the letters with brand colours, swap the dot colours, add effects or outlines, set the name in a font, or place it on busy photos.
 - Always write the name as **Mochifile** in text and **mochifile** only in the logo. Never "Mochi" alone (trademark rule).
 
