@@ -163,6 +163,52 @@ curl -sI http://mochifile.com/ | grep -iE '^HTTP|^location'
 dig +short MX mochifile.com                                  # the three route*.mx.cloudflare.net
 ```
 
+## Web Analytics stays off
+
+Mochifile does not use analytics at this stage ([ADR 0009](../adr/0009-privacy-by-design.md)),
+and the CSP allows no third-party script ([ADR 0012](../adr/0012-content-security-policy.md)).
+Cloudflare can still add one without any change to this repository: when Web Analytics is
+enabled with automatic setup, the edge inserts a `<script>` for
+`static.cloudflareinsights.com/beacon.min.js` before `</body>` of every HTML page it serves to a
+browser. The CSP blocks it, but every visitor then gets a CSP error in the console, and only
+the CSP stands between them and the beacon.
+
+| Domain | What it serves | Web Analytics |
+| --- | --- | --- |
+| `mochifile.com` | the site (Worker Custom Domain) | **Real User Measurements (RUM)** set to **Disable**, saved with **Update**, on 2026-10-27 |
+| `mochifile.app` | 301 redirects only (Redirect Rule) | not set up: it has no site in Web Analytics |
+
+To check the setting, sign in at <https://dash.cloudflare.com> and open **Web Analytics** (under
+**Analytics & Logs**). `mochifile.com` must show RUM as **Disable**. Do not delete the site or
+its history. If `mochifile.app` ever serves pages instead of redirecting, check it the same way.
+
+The e2e tests run against a local server and never see what Cloudflare's edge adds, so check
+production after any change to Cloudflare settings. The check is the HTML itself, fetched the
+way a browser asks for it: the edge only inserted the script for requests with
+`Accept: text/html`, so a plain `curl` would miss it.
+
+```sh
+for u in / /pt/ /compress-image/ /nope/ /pt/nao-existe/; do
+  printf '%-18s ' "$u"
+  curl -s -H 'Accept: text/html' "https://mochifile.com$u" \
+    | grep -c -E 'cloudflareinsights|<script[^>]+src="https?://'
+done                       # 0 for each page: no beacon and no script from another origin
+```
+
+Response headers are not proof either way. While the script was injected, those responses had
+no `ETag`, but a header can change for other reasons; always check the HTML.
+
+In a browser, the console on these pages should show no CSP violation (a 404 page logs only
+its own 404 status).
+
+### Network Error Logging is separate
+
+Cloudflare also adds `NEL` and `Report-To` headers to every response. They ask browsers that
+support Network Error Logging (Chromium-based ones) to report failed requests, such as DNS, TLS
+or connection errors, to `a.nel.cloudflare.com`. This is not Web Analytics: the RUM setting
+does not change it, it sets no cookie, and the CSP does not apply to it. It is still on, and
+no decision about it has been recorded yet.
+
 ## Rotating the token
 
 Create a new token (step 3), replace the `CLOUDFLARE_API_TOKEN` secret (step 4, **Update**),

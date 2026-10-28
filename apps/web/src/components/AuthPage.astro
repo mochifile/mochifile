@@ -1,0 +1,381 @@
+---
+/**
+ * Sign in and Sign up (the "Site final" artboards MFSignIn and MFSignUp). Accounts do not
+ * exist yet, so nothing here can sign anyone in or send anything: the forms check what is typed
+ * (an email address, a 6-digit code) and then say, in a notice, that this is not available yet.
+ * No field has a `name` and the forms use `method="dialog"`, so nothing is submitted, stored
+ * or sent. No script.
+ *
+ * The artboards draw an email and a password. The README's preferred direction is passwordless
+ * (a one-time code by email), and the brief asks for the email and code experience, so there
+ * is no password field: the email step is followed by the code steps below.
+ *
+ * The code steps (enter the code, checking, wrong code, expired code) are previews: each is a
+ * `:target` of this page, reached only from the "Preview the next steps" links, and each says
+ * it is a preview. The email step's button never leads to them, because that would pretend an
+ * email was sent.
+ *
+ * Same technique as the other forms: `:user-invalid` flags a field once it was used; while the
+ * form is not valid the visible button is a submit button (the browser reports what is
+ * missing), and once it is valid a plain button opens the notice (a submit button cannot open
+ * a popover). Where the Popover API is missing the notices are plain text.
+ *
+ * Terms of Service and Privacy Policy appear as text: both are legal texts published by their
+ * own change, with their own addresses.
+ */
+import type { Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import GoogleG from '../assets/google-g.svg'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { type AuthMode, authPaths, authStepId } from '../lib/auth'
+import { illustration } from '../lib/illustrations'
+
+interface Props {
+  mode: AuthMode
+  locale: Locale
+}
+
+const { mode, locale } = Astro.props
+const signUp = mode === 'sign-up'
+const other: AuthMode = signUp ? 'sign-in' : 'sign-up'
+const text = (fn: (params: Record<string, never>, options: { locale: Locale }) => string) =>
+  fn({}, { locale })
+
+const copy = signUp
+  ? {
+      title: text(m.auth_signup_title),
+      description: text(m.auth_signup_description),
+      heading: text(m.auth_signup_heading),
+      sub: text(m.auth_signup_sub),
+      action: text(m.auth_signup_action),
+    }
+  : {
+      title: text(m.auth_signin_title),
+      description: text(m.auth_signin_description),
+      heading: text(m.auth_signin_heading),
+      sub: text(m.auth_signin_sub),
+      action: text(m.auth_signin_action),
+    }
+
+const benefits = [
+  {
+    title: text(m.auth_benefit_limits_title),
+    text: text(m.auth_benefit_limits_text),
+    tile: 'bg-mango-tint text-mango-ink',
+    icon: 'M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M15 9h.01',
+    outlined: true,
+  },
+  {
+    title: text(m.auth_benefit_tools_title),
+    text: text(m.auth_benefit_tools_text),
+    tile: 'bg-ube-tint text-ube-ink',
+    icon: 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z',
+    outlined: false,
+  },
+  {
+    title: text(m.auth_benefit_privacy_title),
+    text: text(m.auth_benefit_privacy_text),
+    tile: 'bg-matcha-tint text-matcha-ink',
+    icon: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
+    outlined: false,
+  },
+  {
+    title: text(m.auth_benefit_free_title),
+    text: text(m.auth_benefit_free_text),
+    tile: 'bg-strawberry-tint text-strawberry-ink',
+    icon: 'M5 12.5l4.5 4.5L19 7',
+    outlined: false,
+  },
+]
+const uses = [
+  text(m.auth_use_forms),
+  text(m.auth_use_work),
+  text(m.auth_use_school),
+  text(m.auth_use_photos),
+  text(m.auth_use_code),
+]
+
+// Inputs are not squished and have the control border (design system README › Shape, Colour).
+const control =
+  'min-h-target-primary w-full rounded-sm border-chip border-border-control bg-surface-card px-4 text-ink placeholder:text-ink-muted user-invalid:border-danger type-body focus-ring'
+const label = 'type-eyebrow uppercase'
+const errorLine = 'items-center gap-2 type-body-sm text-danger-ink'
+const errorIcon = 'M12 7.5v5.5M12 16.5h.01'
+const button =
+  'press inline-flex min-h-target-primary w-full items-center justify-center rounded-pill px-6 text-center type-label-lg focus-ring'
+const primary = `${button} bg-action text-action-ink`
+const linkButton =
+  'press inline-flex min-h-target-min items-center rounded-sm px-1 type-body-sm font-semibold text-accent underline hover:no-underline focus-ring'
+
+const previewLinks = [
+  { id: authStepId('code'), label: text(m.auth_preview_code) },
+  { id: authStepId('checking'), label: text(m.auth_preview_checking) },
+  { id: authStepId('wrong'), label: text(m.auth_preview_wrong) },
+  { id: authStepId('expired'), label: text(m.auth_preview_expired) },
+]
+---
+
+<BaseLayout locale={locale} title={copy.title} description={copy.description} paths={authPaths(mode)}>
+  <div class:list={['auth-page mx-auto flex w-full flex-col gap-8 pb-10 lg:pt-4', signUp ? 'max-w-[calc(var(--reading-max)*11/8)]' : 'items-center']}>
+    <div class:list={[signUp && 'grid items-center gap-8 lg:grid-cols-2 lg:gap-14', !signUp && 'flex w-full flex-col items-center gap-8']}>
+      {
+        signUp && (
+          <section aria-labelledby="auth-benefits" class="flex flex-col gap-2 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-5 sm:p-7">
+            <img
+              {...illustration('sheet-happy', '(min-width: 1024px) 420px, calc(100vw - 72px)')}
+              alt=""
+              decoding="async"
+              class="mb-3 h-auto w-full rounded-lg-squish-a"
+            />
+            <h2 id="auth-benefits" class="mb-2 type-block-title-sm sm:type-block-title">{text(m.auth_benefits_heading)}</h2>
+            <ul class="flex flex-col gap-2">
+              {
+                benefits.map((benefit) => (
+                  <li class:list={['flex items-start gap-4 rounded-md-squish-a p-3', benefit.outlined && 'border-chip border-line bg-surface-card']}>
+                    <span class:list={['flex size-10 shrink-0 items-center justify-center rounded-md-squish-a', benefit.tile]}>
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d={benefit.icon} /></svg>
+                    </span>
+                    <span class="flex flex-col gap-1">
+                      <span class:list={['type-body-strong', benefit.outlined && 'text-ube-ink']}>{benefit.title}</span>
+                      <span class="type-body-sm text-ink-muted">{benefit.text}</span>
+                    </span>
+                  </li>
+                ))
+              }
+            </ul>
+          </section>
+        )
+      }
+
+      <div class="flex w-full flex-col items-center gap-6">
+        <header class="flex flex-col items-center gap-3 text-center">
+          {
+            !signUp && (
+              <img
+                {...illustration('expr-wink')}
+                alt=""
+                loading="eager"
+                decoding="async"
+                class="h-auto w-[calc(var(--space-16)+var(--space-5))] rounded-md-squish-a"
+              />
+            )
+          }
+          <h1 class="type-section-title-sm text-balance sm:type-section-title">{copy.heading}</h1>
+          <p class="type-body text-ink-muted sm:type-body-lg">{copy.sub}</p>
+        </header>
+
+        <div class:list={['auth-steps flex w-full flex-col gap-5 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-5 sm:p-8', !signUp && 'max-w-[calc(var(--reading-max)*4/7)]']}>
+          {/* Said before anything can be sent: accounts and e-mail sign-in do not exist yet. */}
+          <p role="note" class="flex items-start gap-3 rounded-md-squish-a bg-ube-tint p-3 type-body-sm text-ube-ink">
+            <span class="inline-flex min-h-6 shrink-0 items-center rounded-pill bg-surface-card px-3 type-pill uppercase">{text(m.auth_preview_badge)}</span>
+            {text(m.auth_unavailable_notice)}
+          </p>
+          {/* The form. */}
+          <section id={authStepId('email')} data-step tabindex="-1" aria-label={copy.heading} class="flex flex-col gap-5 outline-none">
+            <button type="button" popovertarget="auth-google" class="press inline-flex min-h-target-primary w-full items-center justify-center gap-3 rounded-pill border-hairline border-border-control bg-surface-card px-6 type-label-lg focus-ring">
+              <GoogleG class="size-button-icon" />
+              {text(m.auth_google)}
+            </button>
+            <p class="auth-or flex items-center gap-3 type-body-sm text-ink-muted">{text(m.auth_or)}</p>
+            <form method="dialog" class="group/form flex flex-col gap-5">
+              <div class="group/field flex flex-col gap-2">
+                <label for={`${mode}-email`} class={label}>{text(m.auth_email_label)}</label>
+                <input id={`${mode}-email`} type="email" required autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="254" placeholder={text(m.auth_email_placeholder)} aria-describedby={`${mode}-email-error`} class={control} />
+                <p id={`${mode}-email-error`} role="alert" class:list={['hidden group-has-[:user-invalid]/field:flex', errorLine]}>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-5 shrink-0"><circle cx="12" cy="12" r="9" /><path d={errorIcon} /></svg>
+                  {text(m.auth_email_error)}
+                </p>
+              </div>
+              {
+                signUp && (
+                  <>
+                    <div class="flex flex-col gap-2">
+                      <label for="sign-up-use" class={label}>{text(m.auth_use_label)} <span class="font-semibold tracking-normal text-ink-muted normal-case">{text(m.auth_optional)}</span></label>
+                      <div class="relative">
+                        <select id="sign-up-use" class:list={[control, 'appearance-none pr-14']}>
+                          <option value="">{text(m.auth_use_none)}</option>
+                          {uses.map((use) => <option>{use}</option>)}
+                        </select>
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none absolute top-1/2 right-4 size-6 -translate-y-1/2 text-ink-muted"><path d="m6 9 6 6 6-6" /></svg>
+                      </div>
+                    </div>
+                    <label class="flex min-h-target-min items-start gap-3 type-body-sm">
+                      <input type="checkbox" class="mt-0.5 size-6 shrink-0 accent-action focus-ring" />
+                      <span><b>{text(m.auth_news_title)}</b> <span class="text-ink-muted">{text(m.auth_news_text)}</span></span>
+                    </label>
+                  </>
+                )
+              }
+              <div class="flex flex-col gap-3">
+                <div class="group-valid/form:hidden"><button type="submit" class={primary}>{copy.action}</button></div>
+                <div class="hidden group-valid/form:block"><button type="button" popovertarget="auth-unavailable" class={primary}>{copy.action}</button></div>
+                <p class="text-center type-body-sm text-ink-muted">{text(m.auth_passwordless_note)}</p>
+              </div>
+            </form>
+            {signUp && <p class="text-center type-body-sm text-ink-muted">{text(m.auth_terms)}</p>}
+          </section>
+
+          {/* The steps after the form: previews, one at a time (see the top of the file). */}
+          {
+            (['code', 'checking', 'wrong', 'expired'] as const).map((step) => {
+              const id = authStepId(step)
+              const heading = {
+                code: text(m.auth_code_heading),
+                checking: text(m.auth_checking_heading),
+                wrong: text(m.auth_code_heading),
+                expired: text(m.auth_expired_heading),
+              }[step]
+              const lead = {
+                code: text(m.auth_code_text),
+                checking: text(m.auth_checking_text),
+                wrong: text(m.auth_code_text),
+                expired: text(m.auth_expired_text),
+              }[step]
+              return (
+                <section id={id} data-step tabindex="-1" aria-labelledby={`${id}-heading`} class="flex flex-col gap-5 outline-none">
+                  <p class="flex items-center gap-2 rounded-md-squish-a bg-ube-tint p-3 type-body-sm text-ube-ink">
+                    <span class="inline-flex min-h-6 shrink-0 items-center rounded-pill bg-surface-card px-3 type-pill uppercase">{text(m.auth_preview_badge)}</span>
+                    {text(m.auth_preview_note)}
+                  </p>
+                  <div class="flex flex-col gap-2 text-center">
+                    <h2 id={`${id}-heading`} class="type-title-sm">{heading}</h2>
+                    {step !== 'expired' && <p class="type-body-sm text-ink-muted">{lead}</p>}
+                  </div>
+                  {
+                    step === 'expired' ? (
+                      <>
+                        <p role="alert" class="flex items-start gap-3 rounded-md-squish-a bg-warning-tint p-4 type-body-sm text-warning-ink">
+                          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 size-5 shrink-0"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                          <span>{lead}</span>
+                        </p>
+                        <button type="button" popovertarget="auth-unavailable" class={primary}>{text(m.auth_code_resend)}</button>
+                      </>
+                    ) : (
+                      <form method="dialog" class="group/form flex flex-col gap-5">
+                        <div class="group/field flex flex-col gap-2">
+                          <label for={`${id}-input`} class={label}>{text(m.auth_code_label)}</label>
+                          <input
+                            id={`${id}-input`}
+                            type="text"
+                            inputmode="numeric"
+                            pattern="[0-9]{6}"
+                            maxlength="6"
+                            required
+                            autocomplete="one-time-code"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            placeholder={text(m.auth_code_placeholder)}
+                            value={step === 'code' ? undefined : '123456'}
+                            disabled={step === 'checking'}
+                            aria-invalid={step === 'wrong' ? 'true' : undefined}
+                            aria-describedby={`${id}-error`}
+                            class:list={[control, 'auth-code text-center font-mono', step === 'wrong' && 'border-danger']}
+                          />
+                          <p id={`${id}-error`} role="alert" class:list={[errorLine, step === 'wrong' ? 'flex' : 'hidden group-has-[:user-invalid]/field:flex']}>
+                            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-5 shrink-0"><circle cx="12" cy="12" r="9" /><path d={errorIcon} /></svg>
+                            {step === 'wrong' ? text(m.auth_wrong_error) : text(m.auth_code_error)}
+                          </p>
+                        </div>
+                        {
+                          step === 'checking' ? (
+                            <>
+                              <div role="progressbar" aria-label={text(m.auth_checking_heading)} class="h-2 overflow-hidden rounded-pill bg-ube-tint">
+                                <div class="h-full w-1/3 rounded-pill bg-ube motion-safe:animate-indeterminate"></div>
+                              </div>
+                              <button type="button" disabled aria-busy="true" class={`${primary} disabled:cursor-not-allowed disabled:opacity-50`}>{text(m.auth_checking_action)}</button>
+                            </>
+                          ) : (
+                            <>
+                              <div class="group-valid/form:hidden"><button type="submit" class={primary}>{text(m.auth_code_action)}</button></div>
+                              <div class="hidden group-valid/form:block"><button type="button" popovertarget="auth-unavailable" class={primary}>{text(m.auth_code_action)}</button></div>
+                            </>
+                          )
+                        }
+                      </form>
+                    )
+                  }
+                  <p class="flex flex-wrap items-center justify-center gap-x-4">
+                    <a href={`#${authStepId('email')}`} class={linkButton}>{text(m.auth_code_other_email)}</a>
+                    {(step === 'code' || step === 'wrong') && <button type="button" popovertarget="auth-unavailable" class={linkButton}>{text(m.auth_code_resend)}</button>}
+                  </p>
+                </section>
+              )
+            })
+          }
+        </div>
+
+        <p class="flex flex-wrap items-center justify-center gap-x-1 type-body-sm text-ink-muted">
+          {signUp ? text(m.auth_have_account) : text(m.auth_no_account)}
+          <a href={authPaths(other)[locale]} class="inline-flex min-h-target-min items-center rounded-sm font-bold text-accent hover:underline focus-ring">{signUp ? text(m.auth_sign_in_link) : text(m.auth_create_one)}</a>
+        </p>
+
+        <nav aria-label={text(m.auth_preview_label)} class="flex flex-col items-center gap-2">
+          <p class="type-eyebrow text-ink-muted uppercase">{text(m.auth_preview_label)}</p>
+          <ul class="flex flex-wrap justify-center gap-2">
+            {
+              previewLinks.map((link) => (
+                <li><a href={`#${link.id}`} class="press inline-flex min-h-target-min items-center rounded-pill border-hairline border-card-line bg-surface-card shadow-chip px-4 type-body-sm focus-ring">{link.label}</a></li>
+              ))
+            }
+            <li><a href={`#${authStepId('email')}`} class="press inline-flex min-h-target-min items-center rounded-pill px-4 type-body-sm font-semibold text-accent underline hover:no-underline focus-ring">{text(m.auth_preview_back)}</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    {/* Not results: they say it is not available. A toast where the Popover API exists, text where it does not. */}
+    {
+      [
+        { id: 'auth-google', body: text(m.auth_unavailable_google) },
+        { id: 'auth-unavailable', body: text(m.auth_unavailable_account) },
+      ].map((notice) => (
+        <div
+          id={notice.id}
+          popover="auto"
+          role="alert"
+          class="rounded-lg-squish-a bg-ube-tint p-4 text-ube-ink with-popover:fixed with-popover:inset-x-4 with-popover:top-auto with-popover:bottom-4 with-popover:mx-auto with-popover:my-0 with-popover:w-auto with-popover:max-w-reading-max with-popover:border-chip with-popover:border-ube popover-open:block"
+        >
+          <div class="flex items-start gap-3">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="mt-0.5 size-6 shrink-0"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>
+            <p class="min-w-0 flex-1 type-body-sm"><strong class="type-body-strong">{text(m.auth_unavailable_title)}.</strong> {notice.body}</p>
+            <button type="button" popovertarget={notice.id} popovertargetaction="hide" aria-label={text(m.auth_close)} class="press -m-2 hidden size-target-min shrink-0 items-center justify-center rounded-pill focus-ring with-popover:flex">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="size-6"><path d="M6 6l12 12M18 6 6 18" /></svg>
+            </button>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style is:global>
+  /* One step at a time: the form, unless a preview step is the target of the address. */
+  .auth-steps > [data-step] {
+    display: none;
+  }
+  .auth-steps > #step-email {
+    display: flex;
+  }
+  .auth-steps:has(> [data-step]:not(#step-email):target) > #step-email {
+    display: none;
+  }
+  .auth-steps > [data-step]:target {
+    display: flex;
+  }
+  .auth-steps > [data-step] {
+    scroll-margin-top: var(--space-6);
+  }
+  /* "or" between the Google button and the form: a line on each side. */
+  .auth-or::before,
+  .auth-or::after {
+    content: "";
+    flex: 1;
+    border-top: 2px solid var(--line);
+  }
+  .auth-code {
+    letter-spacing: 0.4em;
+  }
+  .auth-code::placeholder {
+    letter-spacing: normal;
+  }
+</style>

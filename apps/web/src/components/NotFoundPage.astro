@@ -1,0 +1,83 @@
+---
+/**
+ * The 404 page, one per locale: `404.html` and `pt/404.html`. Cloudflare serves the nearest
+ * `404.html` up the path with status 404 (`not_found_handling: "404-page"`, ADR 0013), so an
+ * unknown address under `/pt/` gets this page in Portuguese and any other one gets English.
+ * The same file answers at every unknown depth, so every link and asset here is root-relative.
+ *
+ * The V2 NotFound artboard (MFNotFound): the worried mascot on its mango block, "Error 404",
+ * a heading with a marker under "wandered off.", a line saying nothing was uploaded, and two
+ * buttons: the way home and "See all tools". The second goes to Solutions when the site has
+ * that page, and to the first published tool until then: a 404 page never links to a 404.
+ *
+ * Typography, buttons, shadows and the mascot use the V2 tokens (ADR 0030).
+ *
+ * Not indexable and without alternates: it has no canonical address, and no language
+ * suggestion (ADR 0019). Static HTML, no script.
+ */
+import type { Locale } from '@mochifile/i18n'
+import { localePath } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { illustration } from '../lib/illustrations'
+import { seeAllToolsHref } from '../lib/not-found'
+import { samePathInAllLocales } from '../lib/seo'
+import { toolPaths, tools } from '../lib/tools'
+import '../styles/not-found.css'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+
+const firstTool = tools[0]
+const toolsHref = seeAllToolsHref({
+  locale,
+  hasSolutions: Object.keys(import.meta.glob('../pages/solutions.astro')).length > 0,
+  firstToolPath: firstTool ? toolPaths(firstTool.manifest)[locale] : undefined,
+})
+
+// Buttons: pills at the primary target height, with the label in the text face (the artboard's
+// 17px/700), not the display face.
+const button =
+  'press inline-flex min-h-target-lg items-center justify-center rounded-pill px-8 type-button-lg focus-ring'
+---
+
+<BaseLayout
+  locale={locale}
+  title={m.notfound_title({}, { locale })}
+  description={m.notfound_description({}, { locale })}
+  paths={samePathInAllLocales('/')}
+  noindex
+>
+  <div class="nf">
+  <section aria-labelledby="not-found-heading" class="not-found mx-auto flex w-full max-w-narrow flex-col items-center gap-5 pt-6 pb-10 text-center sm:pt-10 lg:pt-14">
+    {/* Decoration: the heading and the text say it all. The sheet carries its own block colour. */}
+    <img
+      {...illustration('sheet-lost', '(min-width: 600px) 320px, calc(100vw - 32px)')}
+      alt=""
+      decoding="async"
+      class="h-auto w-full max-w-[calc(var(--space-16)*5)] rounded-mascot"
+    />
+    <p class="type-eyebrow text-accent uppercase">{m.notfound_label({}, { locale })}</p>
+    <h1 id="not-found-heading" class="type-page-title-sm text-balance sm:type-page-title">{m.notfound_heading_before({}, { locale })}<span class="not-found-mark">{m.notfound_heading_mark({}, { locale })}</span></h1>
+    <p class="type-body text-ink-muted sm:type-body-lg">{m.notfound_text({}, { locale })}</p>
+    <div class="flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <a href={localePath(locale)} data-primary-action class:list={[button, 'bg-action text-action-ink shadow-action']}>{m.notfound_home({}, { locale })}</a>
+      <a href={toolsHref} class:list={[button, 'border-hairline border-card-line bg-surface-card text-ink shadow-card']}>{m.notfound_tools({}, { locale })}</a>
+    </div>
+  </section>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  /* The marker under "wandered off.": a flat band behind the lower part of the words, no gradient. */
+  .not-found-mark {
+    text-decoration: underline;
+    text-decoration-color: var(--mango);
+    text-decoration-thickness: 0.3em;
+    text-underline-offset: -0.15em;
+    text-decoration-skip-ink: none;
+  }
+</style>

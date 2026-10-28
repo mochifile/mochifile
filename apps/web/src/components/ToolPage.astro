@@ -4,8 +4,13 @@ import { localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import { formatBytes } from '@mochifile/tool-kit'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { illustration } from '../lib/illustrations.ts'
+import { stepParts } from '../lib/page-copy.ts'
 import { serializeJsonLd, toolJsonLd } from '../lib/seo'
+import { shellPaths } from '../lib/site-nav'
 import { contentId, type ToolPageProps, toolPages, tools } from '../lib/tools'
+import '../styles/tool-page.css'
+import '../styles/tool-page-light.css'
 import ToolIsland from './ToolIsland'
 
 type Props = ToolPageProps
@@ -17,11 +22,16 @@ const meta = page.meta[locale]
 const maxSize = formatBytes(manifest.limits.maxFileSizeBytes, locale)
 const site = Astro.site ?? Astro.url
 const absolute = (path: string) => new URL(path, site).href
-// Each category has its identity block (design system README › Colour).
-const categoryBlock = {
-  image: 'bg-mango',
-  media: 'bg-ube',
-  pdf: 'bg-strawberry',
+// Each category has its colour (design system README › Colour): the tile and tag of its cards.
+const categoryTint = {
+  image: 'tp-tint-mango',
+  media: 'tp-tint-ube',
+  pdf: 'tp-tint-strawberry',
+} as const satisfies Record<typeof manifest.category, string>
+const categoryLabel = {
+  image: m.category_image({}, { locale }),
+  media: m.category_media({}, { locale }),
+  pdf: m.category_pdf({}, { locale }),
 } as const satisfies Record<typeof manifest.category, string>
 
 // Presence is guaranteed by assertContentComplete() in getStaticPaths.
@@ -29,18 +39,15 @@ const entry = await getEntry('toolContent', contentId(page, locale))
 if (!entry) throw new Error(`Missing content ${contentId(page, locale)}`)
 const { Content } = await render(entry)
 const { steps = [], faq = [] } = entry.data
-// Neighbours vary their squish (design system README › Shape); the step cards also vary
-// their tint, as in the phone design.
-const stepCards = [
-  'bg-mango-tint text-mango-ink rounded-lg-squish-a',
-  'bg-ube-tint text-ube-ink rounded-lg-squish-b',
-  'bg-matcha-tint text-matcha-ink rounded-lg-squish-c',
-]
-const stepSquish = ['rounded-md-squish-a', 'rounded-md-squish-b', 'rounded-md-squish-c']
-const faqSquish = ['rounded-lg-squish-a', 'rounded-lg-squish-b', 'rounded-lg-squish-c']
+// The step cards' mascots, in the order of the steps (assets/illustrations expr-*).
+const normal = illustration('expr-normal')
+const sad = illustration('expr-sad')
+const stepMascots = [normal, illustration('expr-determined'), illustration('expr-celebrate')]
 
 const breadcrumbs = [
   { name: m.breadcrumb_home({}, { locale }), path: localePath(locale) },
+  // Home › Solutions › the tool, as in the artboard.
+  { name: m.nav_solutions({}, { locale }), path: shellPaths.solutions[locale] },
   { name: manifest.meta[locale].title, path: localePath(locale, manifest.meta[locale].slug) },
   ...(variant ? [{ name: meta.title, path: paths[locale] }] : []),
 ]
@@ -48,6 +55,15 @@ const breadcrumbs = [
 const siblings = toolPages(tools).filter(
   (other) => other.tool.dir === tool.dir && other.key !== page.key,
 )
+// The last two words of the title are highlighted, as the canvas does ("…the size you need").
+const words = meta.title.split(' ')
+const markFrom = words.length > 3 ? words.length - 2 : words.length
+const titleStart = words.slice(0, markFrom).join(' ')
+const titleMark = words.slice(markFrom).join(' ')
+// Related tools: the first three pages of the tool as cards, the rest as links.
+const relatedCards = siblings.slice(0, 3)
+const relatedLinks = siblings.slice(3)
+const compressIcon = 'M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7'
 const jsonLd = serializeJsonLd(
   toolJsonLd({
     name: meta.title,
@@ -62,160 +78,168 @@ const jsonLd = serializeJsonLd(
 
 <BaseLayout locale={locale} title={`${meta.title} — Mochifile`} description={meta.description} paths={paths}>
   <script is:inline type="application/ld+json" set:html={jsonLd} />
-  {/*
-    Category hero block ("Bloco e cartão", design-system proposal v1.1); the tool panel below
-    overlaps its bottom edge. From 1024 px the steps sit beside the title; below that they
-    follow the tool panel, so the panel's primary action stays above the fold on phones.
-  */}
-  <div class:list={['rounded-2xl-squish-a px-5 pt-4 pb-16 text-ink-on-block sm:px-10 sm:pt-8 lg:flex lg:items-start lg:gap-10 lg:px-14 lg:pt-10', categoryBlock[manifest.category]]}>
-  {/* From 1024 px the panel overlaps the block further (`space-16`); this keeps the gap above it. */}
-  <div class="min-w-0 lg:mb-10 lg:flex-1">
-  <nav aria-label={m.breadcrumb_label({}, { locale })} class="mb-2 type-caption">
-    {/*
-      On phones only the parent level shows (the logo already links home), on one line, a long
-      name cut with "…"; the other crumbs and full names stay for screen readers. Wrapping or
-      neighbours of varying width would depend on the font, and the hero must keep its layout
-      when the brand font replaces the fallback, or the page would shift.
-    */}
-    <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
-      {
-        breadcrumbs.map((item, index) => {
-          const current = index === breadcrumbs.length - 1
-          const parent = index === breadcrumbs.length - 2
-          return (
-            <li class:list={['flex min-w-0 items-center gap-2', !parent && 'max-sm:sr-only']}>
-              {index > 0 && <span aria-hidden="true" class="max-sm:hidden">›</span>}
-              {current ? (
-                <span aria-current="page">{item.name}</span>
-              ) : (
-                <a href={item.path} class="min-w-0 rounded-sm underline focus-ring max-sm:truncate">{item.name}</a>
-              )}
-            </li>
-          )
-        })
-      }
-    </ol>
-  </nav>
-  {/* Everything except the interactive widget is static HTML, for SEO and no-JS visitors. */}
-  <h1 class="type-title sm:type-display-xl">{meta.title}</h1>
-  {/*
-    Two lines are reserved on phones (a tagline has at most 60 characters, so it never needs
-    more): the fallback font can wrap it differently from Figtree, and the hero must keep its
-    height when the font swaps in, or the tool panel below would shift.
-  */}
-  <p class="mt-2 min-h-14 max-w-reading-max type-body sm:min-h-0 sm:type-body-lg">{meta.tagline}</p>
-  </div>
-  {
-    steps.length > 0 && (
-      <ol aria-label={m.tool_steps_heading({}, { locale })} data-hero-steps class="hidden lg:mt-10 lg:flex lg:w-1/3 lg:shrink-0 lg:flex-col lg:gap-3">
-        {steps.map((step, index) => (
-          <li class="flex items-center gap-3 type-body-strong">
-            <span aria-hidden="true" class:list={['flex size-10 shrink-0 items-center justify-center border-strong border-ink-on-block type-label-lg', stepSquish[index % stepSquish.length]]}>
-              {index + 1}
-            </span>
-            {step}
-          </li>
-        ))}
-      </ol>
-    )
-  }
-  </div>
-  {/*
-    client:only: the tool UI is useless without JavaScript, and server-rendering it would show a
-    file input that silently ignores files picked before hydration finishes.
-  */}
-  {/*
-    The tool panel reserves the usual height of a tool's controls (tool-reserve, measured per
-    screen width), so the text below does not jump when the client-only widget appears
-    (layout shift, a Core Web Vital). Content added later, such as results, may
-    still grow the page: that follows a user action and does not count as a shift.
-    It keeps the full width under 1024 px, where tool-reserve was measured; from 1024 px it is
-    inset from the block's edges, as in the design.
-  */}
-  <div class="tool-reserve relative -mt-10 rounded-xl-squish-a bg-surface-card p-5 sm:p-8 lg:mx-8 lg:-mt-16">
-    <ToolIsland
-      client:only="react"
-      dir={tool.dir}
-      locale={locale}
-      {...variant ? { initialOptions: variant.options } : {}}
-    >
-    </ToolIsland>
-    <noscript>
-      <p class="text-center">{m.tool_requires_js({}, { locale })}</p>
-    </noscript>
-  </div>
-  {
-    steps.length > 0 && (
-      <section aria-labelledby="tool-steps" class="mt-16 flex flex-col gap-4 lg:hidden">
-        <h2 id="tool-steps" class="type-title-sm sm:type-title">{m.tool_steps_heading({}, { locale })}</h2>
-        <ol class="flex flex-col gap-3">
-          {steps.map((step, index) => (
-            <li class:list={['flex items-center gap-4 px-5 py-4 type-body-strong', stepCards[index % stepCards.length]]}>
-              <span aria-hidden="true" class="type-title-sm text-ink">{index + 1}</span>
-              {step}
-            </li>
-          ))}
-        </ol>
-      </section>
-    )
-  }
-  {/* From 1024 px: the copy and its FAQ on the left, the tool's other pages and facts beside it. */}
-  <div class="mt-16 grid gap-16 lg:grid-cols-3 lg:gap-14 lg:px-8">
-    <article class="page-copy lg:col-span-2">
-      {/* The page's description leads the long-form copy, keeping the hero short on phones. */}
-      <p class="type-body-lg">{meta.description}</p>
-      <Content />
-      {
-        faq.length > 0 && (
-          <section aria-labelledby="tool-faq" class="flex flex-col gap-3">
-            <h2 id="tool-faq">{m.tool_faq_heading({}, { locale })}</h2>
-            {/*
-              Native <details>: no script, and the answers stay in the HTML for search engines
-              and in-page search. The chevron turns without animation (proposal v1.1: no
-              chevron motion in v1).
-            */}
-            {faq.map((item, index) => (
-              <details class:list={['group bg-surface-card', faqSquish[index % faqSquish.length]]}>
-                <summary class:list={['flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 type-body-strong focus-ring sm:px-6 [&::-webkit-details-marker]:hidden', faqSquish[index % faqSquish.length]]}>
-                  {item.question}
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="size-5 shrink-0 group-open:rotate-180">
+  <div class="tp">
+    <section class="tp-w tp-hero" aria-labelledby="tool-title">
+      <div class="tp-stack tp-g16 tp-hero-body">
+        <nav aria-label={m.breadcrumb_label({}, { locale })}>
+          <ol class="tp-crumbs">
+            {
+              breadcrumbs.map((item, index) => {
+                const current = index === breadcrumbs.length - 1
+                return (
+                  <li>
+                    {index > 0 && <span aria-hidden="true">›</span>}
+                    {current ? <span aria-current="page">{item.name}</span> : <a href={item.path}>{item.name}</a>}
+                  </li>
+                )
+              })
+            }
+          </ol>
+        </nav>
+        {/* Everything except the interactive widget is static HTML, for SEO and no-JS visitors. */}
+        <h1 id="tool-title" class="tp-h1">
+          {titleStart}{titleMark && ' '}{titleMark && <span class="tp-mark">{titleMark}</span>}
+        </h1>
+        <p class="tp-lead">{meta.tagline}</p>
+      </div>
+      {/*
+        client:only: the tool UI is useless without JavaScript, and server-rendering it would show
+        a file input that silently ignores files picked before hydration finishes. The card
+        reserves the usual height of the tool's panel (tool-reserve, measured per width), so the
+        text below does not jump when the widget appears (layout shift, a Core Web Vital).
+        Content added later, such as results, follows a user action and does not count as one.
+      */}
+      <div class="tp-panel">
+        <div class="tool-reserve tp-panel-card">
+          <ToolIsland
+            client:only="react"
+            dir={tool.dir}
+            locale={locale}
+            {...variant ? { initialOptions: variant.options } : {}}
+          >
+          </ToolIsland>
+          {/* Asserted in the markup (tool-page.spec.ts): <noscript> never renders in tests. */}
+          <noscript>
+            <div class="tp-nojs">
+              <img src={sad.src} width={sad.width} height={sad.height} alt="" />
+              <p class="tp-nojs-title">{m.tool_requires_js_title({}, { locale })}</p>
+              <p>{m.tool_requires_js_text({}, { locale })}</p>
+            </div>
+          </noscript>
+        </div>
+      </div>
+    </section>
+
+    {
+      steps.length > 0 && (
+        <section class="tp-w tp-sec tp-stack tp-g32" aria-labelledby="tool-steps">
+          <div class="tp-stack tp-g12">
+            <h2 id="tool-steps" class="tp-h2">{m.tool_steps_heading({}, { locale })}</h2>
+            <span class="tp-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+          </div>
+          <ol class="tp-grid" aria-labelledby="tool-steps">
+            {steps.map((entry, index) => {
+              const step = stepParts(entry)
+              const mascot = stepMascots[index % stepMascots.length] ?? normal
+              return (
+                <li class="tp-card tp-step">
+                  <img src={mascot.src} width={mascot.width} height={mascot.height} alt="" loading="lazy" decoding="async" />
+                  <h3 class="tp-h4">
+                    <span aria-hidden="true">{index + 1}. </span>{step.title}
+                  </h3>
+                  {step.text && <p class="tp-small tp-muted">{step.text}</p>}
+                </li>
+              )
+            })}
+          </ol>
+        </section>
+      )
+    }
+
+    {
+      siblings.length > 0 && (
+        <section class="tp-w tp-sec-sm tp-stack tp-g32" aria-labelledby="tool-more-pages">
+          <div class="tp-stack tp-g12">
+            <h2 id="tool-more-pages" class="tp-h2">{m.tool_related_heading({}, { locale })}</h2>
+            <span class="tp-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+          </div>
+          <ul class="tp-grid">
+            {relatedCards.map((other) => (
+              <li class="tp-stack">
+                <a href={other.paths[locale]} class="tp-card tp-tool">
+                  <span class="tp-tool-top">
+                    <span aria-hidden="true" class:list={['tp-tile', categoryTint[manifest.category]]}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d={compressIcon} />
+                      </svg>
+                    </span>
+                    <span class:list={['tp-pill', categoryTint[manifest.category]]}>{categoryLabel[manifest.category]}</span>
+                  </span>
+                  <span class="tp-tool-title">{other.meta[locale].title}</span>
+                  <span class="tp-small tp-muted">{other.meta[locale].tagline}</span>
+                  <span class="tp-open" aria-hidden="true">
+                    {m.tool_open({}, { locale })}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          {
+            relatedLinks.length > 0 && (
+              <nav aria-label={manifest.relatedPagesLabel?.[locale] ?? m.tool_more_pages_heading({}, { locale })}>
+                <ul class="tp-more">
+                  {relatedLinks.map((other) => (
+                    <li><a href={other.paths[locale]}>{other.meta[locale].title}</a></li>
+                  ))}
+                </ul>
+              </nav>
+            )
+          }
+        </section>
+      )
+    }
+
+    {
+      faq.length > 0 && (
+        <section class="tp-w tp-sec tp-stack tp-g32" aria-labelledby="tool-faq">
+          <div class="tp-stack tp-g12">
+            <h2 id="tool-faq" class="tp-h2">{m.tool_faq_heading({}, { locale })}</h2>
+            <span class="tp-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+          </div>
+          {/*
+            Native <details>: no script, and the answers stay in the HTML for search engines and
+            in-page search. The first one starts open, as in the canvas.
+          */}
+          <div class="tp-faq">
+            {faq.map((item) => (
+              <details class="tp-faq-row">
+                <summary>
+                  <span>{item.question}</span>
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m6 9 6 6 6-6" />
                   </svg>
                 </summary>
-                <p class="px-5 pb-5 text-ink-muted sm:px-6">{item.answer}</p>
+                <p>{item.answer}</p>
               </details>
             ))}
-          </section>
-        )
-      }
-    </article>
-    <div class="flex flex-col gap-10">
-      {
-        siblings.length > 0 && (
-          <nav aria-labelledby="tool-more-pages">
-            <h2 id="tool-more-pages" class="mb-3 type-label-lg sm:type-title-sm">
-              {manifest.relatedPagesLabel?.[locale] ?? m.tool_more_pages_heading({}, { locale })}
-            </h2>
-            <ul class="flex flex-wrap gap-2">
-              {siblings.map((other) => (
-                <li>
-                  <a
-                    href={other.paths[locale]}
-                    class="press inline-flex min-h-target-min items-center rounded-pill border-chip border-border-control bg-surface-card px-4 py-2 type-body-sm font-semibold hover:border-ink focus-ring"
-                  >
-                    {other.meta[locale].title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )
-      }
-      <section class="flex flex-col gap-2 rounded-lg-squish-b bg-ube-tint p-6 text-ube-ink" aria-labelledby="tool-facts">
+          </div>
+        </section>
+      )
+    }
+
+    {/* The page's own copy (intro, how it gets there, tips), kept for readers and search engines. */}
+    <section class="tp-w tp-w-mid tp-sec-sm tp-stack tp-g32">
+      <article class="page-copy">
+        {/* The page's description leads the copy: the lead above is the short tagline. */}
+        <p class="type-body-lg">{meta.description}</p>
+        <Content />
+      </article>
+      <section class="tp-facts" aria-labelledby="tool-facts">
         <h2 id="tool-facts" class="type-label-lg sm:type-title-sm">{m.tool_facts_heading({}, { locale })}</h2>
         {manifest.runtime === 'browser' && <p>{m.tool_privacy_browser({}, { locale })}</p>}
         <p>{m.tool_max_file_size({ maxSize }, { locale })}</p>
       </section>
-    </div>
+    </section>
   </div>
 </BaseLayout>

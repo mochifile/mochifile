@@ -72,4 +72,20 @@ describe('SizeChips', () => {
     const legend = screen.getByRole('group', { name: 'Target size' }).querySelector('legend')
     expect(legend?.className).toContain('max-sm:sr-only')
   })
+
+  it('can make its legend a heading, keeping the group named by it', () => {
+    render(
+      <SizeChips
+        legend="1. Choose the maximum size"
+        headingLevel={2}
+        options={options}
+        value="large"
+        onChange={() => {}}
+      />,
+    )
+    expect(
+      screen.getByRole('heading', { level: 2, name: '1. Choose the maximum size' }),
+    ).toBeDefined()
+    expect(screen.getByRole('group', { name: '1. Choose the maximum size' })).toBeDefined()
+  })
 })

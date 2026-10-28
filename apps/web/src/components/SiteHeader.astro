@@ -1,19 +1,26 @@
 ---
 /**
- * The site header with its "Skip to content" link and the phone menu (ADR 0023).
+ * The site header with its "Skip to content" link and the phone menu (V2 canvas: MFHeader,
+ * MFMenuMobile; ADR 0023, ADR 0030).
  *
- * From 1024 px the tool links sit in the header. Below 1024 px they move to a menu opened by a
- * native button and the declarative Popover API: no JavaScript, so Enter, Space, Escape, closing
- * by tapping outside and returning focus to the button all come from the browser. While the menu
- * is open the rest of the page steps out of view (global.css), so the next Tab after the last
- * item never reaches content hidden beneath it. Browsers without the Popover API get the menu's
- * links in the page flow instead of a button.
+ * From 1024 px the header shows Solutions · Guides · Docs · Pricing · Sign in · Get started.
+ * Under 1024 px they move into a menu opened by a native button and the declarative Popover API:
+ * no JavaScript, so Enter, Space, Escape, closing by tapping outside and returning focus to the
+ * button all come from the browser. While the menu is open the rest of the page steps out of view
+ * (global.css), so the next Tab after the last item never reaches content hidden beneath it.
+ * Browsers without the Popover API get the menu's content in the page flow instead of a button.
  *
- * Every destination comes from the tool registry; nothing unreleased is listed.
+ * The language selector lives only in the footer (ADR 0030): neither the header nor the menu has
+ * one. A destination that does not exist yet is a `ComingSoon` control, not a link; see
+ * lib/site-nav.ts.
  */
-import { type Locale, localeNames, localePath, locales, localeTags } from '@mochifile/i18n'
+import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import { toolPaths, tools } from '../lib/tools'
+import { illustration } from '../lib/illustrations'
+import { accountLinks, isCurrent, mainLinks } from '../lib/site-nav'
+import ArrowRight from './ArrowRight.astro'
+import ComingSoon from './ComingSoon.astro'
+import ComingSoonNotice from './ComingSoonNotice.astro'
 import Logo from './Logo.astro'
 
 interface Props {
@@ -23,13 +30,17 @@ interface Props {
 }
 
 const { locale, paths } = Astro.props
-const toolLinks = tools.map(({ manifest }) => ({
-  href: toolPaths(manifest)[locale],
-  title: manifest.meta[locale].title,
-  tagline: manifest.meta[locale].tagline,
-}))
-const otherLocales = locales.filter((target) => target !== locale)
-const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
+const links = mainLinks(locale)
+const { signIn, getStarted } = accountLinks(locale)
+
+const navItem =
+  'press inline-flex min-h-target-min items-center rounded-pill px-3 type-nav hover:bg-accent-soft focus-ring aria-[current=page]:bg-accent-soft aria-[current=page]:text-ube-ink'
+const primaryPill =
+  'press inline-flex min-h-target-min items-center justify-center rounded-pill bg-action px-pill-sm type-button-sm text-action-ink shadow-action focus-ring'
+const menuRow =
+  'press flex min-h-menu-row w-full items-center justify-between border-hairline border-x-0 border-t-0 border-card-line px-1 text-left type-menu-link focus-ring'
+const bigPill =
+  'press inline-flex min-h-target-lg w-full items-center justify-center rounded-pill px-6 type-button-lg focus-ring'
 ---
 
 {/*
@@ -43,65 +54,63 @@ const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
 >
   {m.skip_to_content({}, { locale })}
 </a>
-<header class="group/header">
-  {/*
-    The gap keeps the logo's clear space (0.715 × its height: 15px, then 24px from 600px). Under
-    1024 px the row is exactly `--site-header-height` tall (its tallest items are `target-min`),
-    which places the menu and the phone language suggestion right below it.
-  */}
-  <div class="mx-auto flex max-w-content-max items-center gap-4 px-4 py-2 sm:gap-6 lg:py-5">
+<header class="group/header relative z-10">
+  <div class="mx-auto flex min-h-site-header max-w-site-max items-center justify-between gap-6 px-5 sm:px-8">
     <Logo href={localePath(locale)} />
-    {/*
-      Each tool link starts its own equal cell between the logo and the language links, all of
-      fixed width, and stays on one line, so neither its position nor the header's height
-      depends on how wide a font draws the titles: right-aligned, the links moved 7 px when
-      Figtree replaced its fallback, and a wrapping title made the header 4 px taller (layout
-      shifts). A title wider than its cell (only with several tools on a narrow screen) is cut
-      with "…" on screen; its accessible name stays whole.
-    */}
-    <nav aria-label={m.nav_main({}, { locale })} class="hidden min-w-0 flex-1 lg:block">
-      <ul class="flex gap-1 type-body-sm font-semibold">
-        {
-          toolLinks.map((link) => (
-            <li class="min-w-0 flex-1">
-              <a
-                href={link.href}
-                aria-current={current(link.href)}
-                class="press inline-flex min-h-target-min max-w-full items-center rounded-pill border-chip border-transparent px-3 hover:border-border-control focus-ring aria-[current=page]:border-ink"
-              >
-                <span class="truncate">{link.title}</span>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
-    <div class="ml-auto flex items-center gap-2 lg:gap-6">
-      <nav aria-label={m.nav_language({}, { locale })}>
-        <ul class="flex gap-1 type-body-sm font-semibold">
-          {/* Fixed-width cells: see --spacing-language-link. */}
+    <div class="flex items-center gap-3">
+      <nav aria-label={m.nav_main({}, { locale })} data-main-nav class="hidden lg:block">
+        <ul class="flex items-center gap-1">
           {
-            locales.map((target) => (
-              // Under 600 px only the other languages show, so the menu button fits at 360 px.
-              <li class:list={[target === locale && 'max-sm:hidden']}>
-                <a
-                  href={paths[target]}
-                  hreflang={localeTags[target]}
-                  lang={localeTags[target]}
-                  data-language-switch
-                  aria-current={target === locale ? 'true' : undefined}
-                  class:list={[
-                    'press inline-flex min-h-target-min w-language-link items-center justify-center rounded-pill border-chip px-1 focus-ring',
-                    target === locale
-                      ? 'border-ink font-bold'
-                      : 'border-transparent hover:border-border-control',
-                  ]}
-                >
-                  {localeNames[target]}
-                </a>
+            links.map((link) => (
+              <li>
+                {link.href ? (
+                  <a
+                    href={link.href}
+                    aria-current={isCurrent(link.href, paths[locale]) ? 'page' : undefined}
+                    class={navItem}
+                    data-shell-link={link.key}
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <ComingSoon locale={locale} class={navItem} data-shell-link={link.key}>
+                    {link.label}
+                  </ComingSoon>
+                )}
               </li>
             ))
           }
+          <li class="ml-2">
+            {signIn.href ? (
+              <a
+                href={signIn.href}
+                aria-current={isCurrent(signIn.href, paths[locale]) ? 'page' : undefined}
+                class:list={[navItem, 'text-ink-muted']}
+                data-shell-link={signIn.key}
+              >
+                {signIn.label}
+              </a>
+            ) : (
+              <ComingSoon
+                locale={locale}
+                class:list={[navItem, 'text-ink-muted']}
+                data-shell-link={signIn.key}
+              >
+                {signIn.label}
+              </ComingSoon>
+            )}
+          </li>
+          <li class="ml-1">
+            {getStarted.href ? (
+              <a href={getStarted.href} class={primaryPill} data-shell-link={getStarted.key}>
+                {getStarted.label}
+              </a>
+            ) : (
+              <ComingSoon locale={locale} class={primaryPill} data-shell-link={getStarted.key}>
+                {getStarted.label}
+              </ComingSoon>
+            )}
+          </li>
         </ul>
       </nav>
       {/* The browser exposes its open and closed state (aria-expanded) from `popovertarget`. */}
@@ -109,16 +118,16 @@ const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
         type="button"
         popovertarget="site-menu"
         aria-label={m.nav_menu({}, { locale })}
-        class="press hidden size-target-min items-center justify-center rounded-pill border-chip border-border-control bg-surface-page text-ink hover:border-ink focus-ring group-has-[[data-site-menu]:popover-open]/header:border-ink group-has-[[data-site-menu]:popover-open]/header:bg-surface-card with-popover:max-lg:inline-flex"
+        class="press hidden size-target-min items-center justify-center rounded-small border-hairline border-card-line bg-surface-card text-ink shadow-card focus-ring with-popover:max-lg:inline-flex"
       >
-        {/* Line icons on the 24px grid, 2px stroke (README › Iconography). */}
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          stroke-width="2"
+          stroke-width="2.4"
           stroke-linecap="round"
+          stroke-linejoin="round"
           class="size-button-icon group-has-[[data-site-menu]:popover-open]/header:hidden"
         >
           <path d="M4 7h16M4 12h16M4 17h10"></path>
@@ -128,8 +137,9 @@ const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          stroke-width="2"
+          stroke-width="2.4"
           stroke-linecap="round"
+          stroke-linejoin="round"
           class="hidden size-button-icon group-has-[[data-site-menu]:popover-open]/header:block"
         >
           <path d="M6 6l12 12M18 6 6 18"></path>
@@ -151,43 +161,71 @@ const current = (href: string) => (href === paths[locale] ? 'page' : undefined)
     aria-label={m.nav_menu({}, { locale })}
     class="border-0 bg-surface-page p-0 text-ink lg:hidden with-popover:absolute with-popover:inset-x-0 with-popover:top-(--site-header-height) with-popover:m-0 with-popover:h-auto with-popover:w-full"
   >
-    <div class="mx-auto flex max-w-content-max flex-col gap-6 px-4 pt-2 pb-10">
-      <div class="flex flex-col gap-3">
-        <p id="site-menu-tools" class="type-label-lg">{m.nav_tools({}, { locale })}</p>
-        <ul aria-labelledby="site-menu-tools" class="flex flex-col rounded-lg-squish-a bg-surface-card p-2">
-          {
-            toolLinks.map((link) => (
-              <li>
+    <div class="mx-auto flex max-w-site-max flex-col px-5 pt-3 pb-8 sm:px-8">
+      <ul>
+        {
+          links.map((link) => (
+            <li>
+              {link.href ? (
                 <a
                   href={link.href}
-                  aria-current={current(link.href)}
-                  class="group/link flex min-h-target-primary flex-col justify-center rounded-sm px-3 py-2 focus-ring"
+                  aria-current={isCurrent(link.href, paths[locale]) ? 'page' : undefined}
+                  class={menuRow}
+                  data-shell-link={link.key}
                 >
-                  <span class="font-bold group-hover/link:underline">{link.title}</span>
-                  <span class="type-body-sm text-ink-muted">{link.tagline}</span>
+                  {link.label}
+                  <ArrowRight />
                 </a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-      <ul aria-label={m.nav_language({}, { locale })} class="flex flex-col rounded-lg-squish-b bg-surface-card p-2">
-        {
-          otherLocales.map((target) => (
-            <li>
-              <a
-                href={paths[target]}
-                hreflang={localeTags[target]}
-                lang={localeTags[target]}
-                data-language-switch
-                class="flex min-h-target-primary items-center rounded-sm px-3 font-semibold hover:underline focus-ring"
-              >
-                {localeNames[target]}
-              </a>
+              ) : (
+                <ComingSoon
+                  locale={locale}
+                  notice="coming-soon-menu"
+                  class={menuRow}
+                  data-shell-link={link.key}
+                >
+                  {link.label}
+                  <ArrowRight />
+                </ComingSoon>
+              )}
             </li>
           ))
         }
       </ul>
+      <div class="mt-6 flex flex-col gap-3">
+        {
+          [
+            { link: getStarted, tone: 'bg-action text-action-ink shadow-action' },
+            {
+              link: signIn,
+              tone: 'border-hairline border-card-line bg-surface-card text-ink shadow-card',
+            },
+          ].map(({ link, tone }) =>
+            link.href ? (
+              <a href={link.href} class:list={[bigPill, tone]} data-shell-link={link.key}>
+                {link.label}
+              </a>
+            ) : (
+              <ComingSoon
+                locale={locale}
+                notice="coming-soon-menu"
+                class:list={[bigPill, tone]}
+                data-shell-link={link.key}
+              >
+                {link.label}
+              </ComingSoon>
+            ),
+          )
+        }
+      </div>
+      {/* The approved "happy" mascot on its green block; decorative, once, never over a control. */}
+      <img
+        {...illustration('sheet-happy', 'calc(100vw - 32px)')}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        class="mt-8 h-auto w-full rounded-mascot"
+      />
     </div>
+    <ComingSoonNotice locale={locale} id="coming-soon-menu" />
   </nav>
 </header>

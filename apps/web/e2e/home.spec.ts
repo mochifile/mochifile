@@ -8,18 +8,18 @@ const pages = [
   {
     path: '/',
     lang: 'en',
-    heading: 'Your files, the right size.',
+    heading: 'Compress images, video and PDFs in plain words.',
     canonical: `${SITE}/`,
     description:
-      'Compress JPG, PNG and WebP images to the file size you need. Free and private, right in your browser. Your photos never leave your device.',
+      'Compress images to the size you need, free and private, right in your browser. Say what you need in plain words; browser tools keep your files on your device.',
   },
   {
     path: '/pt/',
     lang: 'pt',
-    heading: 'Seus arquivos do tamanho certo.',
+    heading: 'Comprima imagens, vídeos e PDFs em palavras simples.',
     canonical: `${SITE}/pt/`,
     description:
-      'Comprima imagens JPG, PNG e WebP para o tamanho que você precisa. Grátis, privado e direto no navegador. Suas fotos não saem do seu aparelho.',
+      'Comprima imagens para o tamanho que você precisa, de graça e com privacidade, direto no navegador. Diga o que quer em palavras simples; as ferramentas do navegador mantêm seus arquivos no seu aparelho.',
   },
 ]
 
@@ -29,10 +29,8 @@ for (const { path, lang, heading, canonical, description } of pages) {
       const response = await page.goto(path)
       expect(response?.status()).toBe(200)
       await expect(page.locator('html')).toHaveAttribute('lang', lang)
-      // The accessible name leaves out the decorative measure line inside the heading.
       await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(heading)
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonical)
-      // Describes what the site does today: only image compression is published.
       await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', description)
       await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
         'content',
@@ -84,11 +82,12 @@ test('never redirects based on the browser language', async ({ testBrowser }) =>
 
 test('language switcher links between locales', async ({ page }) => {
   await page.goto('/')
-  // The footer repeats the link (site-footer.spec.ts): this is the header's.
-  await page.getByRole('banner').getByRole('link', { name: 'Português' }).click()
+  // The selector is in the footer only (ADR 0030); the header has none.
+  await expect(page.getByRole('banner').locator('[lang], [data-language-switch]')).toHaveCount(0)
+  await page.getByRole('contentinfo').getByRole('link', { name: 'Português (Brasil)' }).click()
   await expect(page).toHaveURL('/pt/')
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt')
-  await page.getByRole('banner').getByRole('link', { name: 'English' }).click()
+  await page.getByRole('contentinfo').getByRole('link', { name: 'English' }).click()
   await expect(page).toHaveURL('/')
 })
 

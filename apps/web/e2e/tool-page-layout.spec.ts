@@ -5,16 +5,13 @@ import { expect, projectContextOptions, test } from './fixtures.ts'
 import { pageCopySources, toolPaths } from './tool-pages.ts'
 
 /**
- * The static part of tool pages ("Bloco e cartão", design-system proposal v1.1): the steps sit
- * beside the title from 1024 px and after the tool panel below it, the FAQ is native
- * <details>, and the copy sits beside the tool's other pages from 1024 px. Steps and FAQ come
- * from each page's Markdown frontmatter, and both are optional: a page without them has no
- * empty heading or list in their place.
+ * The static part of tool pages (V2, docs/design-ref/v2 MFTool): the hero, the tool's panel in
+ * its card, the step cards ("How it works"), the related tools, the FAQ as native <details> and
+ * the page's own copy. Steps and FAQ come from each page's Markdown frontmatter, and both are
+ * optional: a page without them has no empty heading or list in their place.
  */
 
 const WIDTHS = [320, 360, 390, 600, 768, 1024, 1440] as const
-/** The design's desktop breakpoint (Tailwind `lg`, 64rem). */
-const DESKTOP = 1024
 
 const pages = [
   {
@@ -24,7 +21,7 @@ const pages = [
     faq: 'Frequently asked questions',
     content: {
       question: 'Do I need to press a button to compress?',
-      answer: 'Each photo is compressed as soon as you add it',
+      answer: 'Yes, once. Add your photos, check the size and format',
     },
   },
   {
@@ -34,7 +31,7 @@ const pages = [
     faq: 'Perguntas frequentes',
     content: {
       question: 'Preciso apertar algum botão para comprimir?',
-      answer: 'Cada foto é comprimida assim que você a adiciona',
+      answer: 'Sim, uma vez. Adicione as fotos, confira o tamanho e o formato',
     },
   },
   // The template tool's variant leaves out both steps and FAQ (part of the e2e build).
@@ -56,14 +53,13 @@ const pages = [
 
 /**
  * Focusable elements around the tool (the tool's own controls are its UI's business) that
- * nobody can see. The breadcrumb's visually hidden crumbs on phones are a known, separate
- * issue (#32) and are left out here.
+ * nobody can see.
  */
 function hiddenFocusables(page: Page) {
   return page.evaluate(() => {
     const focusable = 'a[href], button, summary, input, select, textarea, [tabindex]'
     return [...document.querySelectorAll<HTMLElement>(`main ${focusable}`)]
-      .filter((element) => !element.closest('.tool-reserve, main > div:first-of-type nav'))
+      .filter((element) => !element.closest('.tool-reserve'))
       .filter(
         (element) =>
           element.tabIndex >= 0 && !element.closest('details:not([open]) > :not(summary)'),
@@ -83,22 +79,24 @@ function outlineOf(page: Page) {
   return page.evaluate(() => {
     const text = (element: Element | null | undefined) =>
       element?.textContent?.replace(/\s+/g, ' ').trim() ?? ''
-    // Without the decorative step numbers (aria-hidden); the list's own numbering is announced.
+    // A step is its title and, if it has one, the sentence under it (the decorative number is
+    // aria-hidden and left out; the list's own numbering is announced).
     const steps = (selector: string) =>
       [...document.querySelectorAll(selector)].map((li) => {
         const copy = li.cloneNode(true) as Element
         for (const hidden of copy.querySelectorAll('[aria-hidden="true"]')) hidden.remove()
-        return text(copy)
+        return {
+          title: text(copy.querySelector('h3')),
+          text: text(copy.querySelector('p')),
+        }
       })
     return {
       lang: document.documentElement.lang,
       levels: [...document.querySelectorAll('main :is(h1, h2, h3, h4, h5, h6)')].map((h) =>
         Number(h.tagName.slice(1)),
       ),
-      heroList: document.querySelectorAll('[data-hero-steps]').length,
-      heroSteps: steps('[data-hero-steps] li'),
       stepsHeading: document.querySelectorAll('#tool-steps').length,
-      steps: steps('#tool-steps + ol li'),
+      steps: steps('[aria-labelledby="tool-steps"] ol li'),
       faqHeading: document.querySelectorAll('#tool-faq').length,
       faq: [...document.querySelectorAll('main details')].map((details) => ({
         inFaq: details.closest('[aria-labelledby="tool-faq"]') !== null,
@@ -165,19 +163,18 @@ test('every tool page shows the steps and FAQ its copy has, and only those', asy
       }
 
       if (has.steps) {
-        if (outline.heroList !== 1 || outline.stepsHeading !== 1) {
-          failures.push(`${path}: steps without their hero list or heading`)
-        }
+        if (outline.stepsHeading !== 1) failures.push(`${path}: steps without their heading`)
         if (outline.steps.length < 2 || outline.steps.length > 4) {
           failures.push(`${path}: ${outline.steps.length} steps`)
         }
-        if (JSON.stringify(outline.steps) !== JSON.stringify(outline.heroSteps)) {
-          failures.push(`${path}: hero and phone steps differ`)
-        }
         for (const step of outline.steps) {
-          if (!fromCopy(step)) failures.push(`${path}: step «${step}» is not in its copy`)
+          if (!fromCopy(step.title))
+            failures.push(`${path}: step «${step.title}» is not in its copy`)
+          if (step.text !== '' && !fromCopy(step.text)) {
+            failures.push(`${path}: step text «${step.text}» is not in its copy`)
+          }
         }
-      } else if (outline.heroList + outline.stepsHeading + outline.steps.length > 0) {
+      } else if (outline.stepsHeading + outline.steps.length > 0) {
         failures.push(`${path}: shows steps its copy does not have`)
       }
 
@@ -257,16 +254,16 @@ for (const p of pages) {
         await page.locator('.tool-reserve input[type="file"]').waitFor({ state: 'attached' })
         await page.evaluate(() => document.fonts.ready)
 
-        const heroSteps = page.getByRole('list', { name: p.steps })
-        const phoneSteps = page.getByRole('heading', { level: 2, name: p.steps })
+        const steps = page.getByRole('list', { name: p.steps })
+        const stepsHeading = page.getByRole('heading', { level: 2, name: p.steps })
         const faq = page.getByRole('heading', { level: 2, name: p.faq })
         if (p.content === null) {
-          await expect(heroSteps).toHaveCount(0)
-          await expect(phoneSteps).toHaveCount(0)
+          await expect(steps).toHaveCount(0)
+          await expect(stepsHeading).toHaveCount(0)
           await expect(faq).toHaveCount(0)
         } else {
-          await expect(width >= DESKTOP ? heroSteps : phoneSteps).toBeVisible()
-          await expect(width >= DESKTOP ? phoneSteps : heroSteps).toBeHidden()
+          await expect(steps).toBeVisible()
+          await expect(stepsHeading).toBeVisible()
           await expect(faq).toBeVisible()
         }
 

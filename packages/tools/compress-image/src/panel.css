@@ -1,0 +1,699 @@
+/*
+ * The compressor's panel, Mochifile V2 (docs/design-ref/v2, artboard MFPanel: 22 states).
+ *
+ * Plain CSS scoped to `.cp`, because the canvas uses sizes the token-only Tailwind theme cannot
+ * generate (48 px tiles, 300 px drop area, squish corners of 14 to 36 px). It holds no raw
+ * colours: every colour is a token. The canvas values that are not tokens yet (card line,
+ * accent; README › "Values introduced by the canvas") are read as `var(--card-line, …)`, so the
+ * shell's tokens take over when they land and nothing here changes. The tool shell around the
+ * panel (the card, the hero) is the page's, not this file's.
+ *
+ * Phone rules follow the canvas's 640 px and 900 px container breakpoints.
+ */
+
+.cp {
+  --cp-card-line: var(--card-line, var(--line));
+  --cp-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 3%, transparent),
+    0 12px 32px -12px color-mix(in srgb, var(--ube) 40%, transparent);
+  --cp-r-row: 20px;
+  --cp-r-chip: 14px 16px 13px 15px;
+  --cp-r-block: 26px 30px 24px 32px;
+  --cp-r-notice: 22px 26px 20px 28px;
+  --cp-r-drop: 30px 34px 28px 36px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.cp[data-dragging] {
+  /* Photos are being dragged over the panel: dropping them anywhere adds them. */
+  outline: 3px dashed var(--ink);
+  outline-offset: 8px;
+  border-radius: 4px;
+}
+
+.cp :is(a, button, summary, select, input):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- type ---------- */
+.cp-h-md {
+  font-family: var(--family-display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 30px;
+}
+.cp-h-sm {
+  font-family: var(--family-display);
+  font-weight: 600;
+  font-size: 19px;
+  line-height: 25px;
+}
+.cp-small {
+  font-size: 14.5px;
+  line-height: 22px;
+}
+.cp-muted {
+  color: var(--ink-muted);
+}
+.cp-mono {
+  font-family: var(--family-mono);
+  font-size: 14px;
+}
+.cp-detail {
+  font-family: var(--family-mono);
+  font-size: 15px;
+  line-height: 24px;
+}
+
+/* ---------- layout ---------- */
+.cp-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 32px;
+  align-items: stretch;
+}
+.cp-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.cp-g8 {
+  gap: 8px;
+}
+.cp-g12 {
+  gap: 12px;
+}
+.cp-g16 {
+  gap: 16px;
+}
+.cp-g20 {
+  gap: 20px;
+}
+.cp-g24 {
+  gap: 24px;
+}
+.cp-row-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.cp-nowrap {
+  flex-wrap: nowrap;
+}
+.cp-grow {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.cp-self-start {
+  align-self: flex-start;
+}
+
+/* ---------- options ---------- */
+.cp-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.cp-step legend {
+  margin-bottom: 12px;
+  padding: 0;
+}
+.cp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cp-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid var(--border-control);
+  border-radius: var(--cp-r-chip);
+  background: var(--surface-card);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cp-chip:has(input:checked) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface-page);
+}
+.cp-chip:has(input:focus-visible) {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.cp-chip:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+/* The radio is the chip itself: invisible, over it, so a click anywhere on the chip is a click on it. */
+.cp-chip input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+.cp-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+.cp-custom-label {
+  font-weight: 700;
+}
+.cp-field-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+.cp-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 2.5px solid var(--border-control);
+  border-radius: 16px 18px 15px 19px;
+  background: var(--surface-card);
+  color: var(--ink);
+  font: inherit;
+}
+.cp-input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.cp-unit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.cp-unit select {
+  min-height: 52px;
+  padding: 0 40px 0 16px;
+  border: 1.5px solid var(--border-control);
+  border-radius: var(--cp-r-chip);
+  background: var(--surface-card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  appearance: none;
+  cursor: pointer;
+}
+.cp-unit svg {
+  position: absolute;
+  right: 14px;
+  pointer-events: none;
+}
+.cp-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--danger-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+.cp-error:empty {
+  display: none;
+}
+
+/* ---------- buttons, tags ---------- */
+.cp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--family-sans);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cp-btn-lg {
+  min-height: 52px;
+  padding: 0 28px;
+  font-size: 17px;
+}
+.cp-btn-primary {
+  background: var(--ink);
+  color: var(--surface-page);
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--ink) 55%, transparent);
+}
+.cp-btn-ghost {
+  border-color: var(--ink);
+  background: var(--surface-card);
+  color: var(--ink);
+}
+.cp-btn-soft {
+  border-color: var(--cp-card-line);
+  background: var(--surface-card);
+  color: var(--ink);
+  box-shadow: var(--cp-shadow);
+}
+.cp-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+/*
+ * A chip may be longer than the room beside the Download button on a phone ("Transparency filled
+ * with white" at 320 px), so it wraps inside its column instead of running under the button: the
+ * text breaks, the chip stays inside `.cp-facts` and the button keeps its place.
+ */
+.cp-tag {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 26px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+.cp-tag-ube {
+  background: var(--ube-tint);
+  color: var(--ube-ink);
+}
+.cp-tag-matcha {
+  background: var(--matcha-tint);
+  color: var(--matcha-ink);
+}
+.cp-tag-mango {
+  background: var(--mango-tint);
+  color: var(--mango-ink);
+}
+.cp-icon-btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--cp-card-line);
+  border-radius: 999px;
+  background: var(--surface-card);
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+}
+.cp-icon-btn[download] {
+  border-color: var(--ink);
+}
+
+/* ---------- drop area ---------- */
+.cp-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 300px;
+  padding: 28px;
+  border: 2.5px dashed var(--border-dashed);
+  border-radius: var(--cp-r-drop);
+  background: var(--surface-sunken);
+  text-align: center;
+  cursor: pointer;
+}
+.cp-drop[data-dragging] {
+  border: 3px solid var(--ink);
+  background: var(--mango-tint);
+}
+.cp-drop[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.cp-drop:has(input:focus-visible) .cp-drop-button {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.cp-drop input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.cp-expr {
+  width: 92px;
+  height: auto;
+  border-radius: 18px;
+}
+.cp-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--ink-muted);
+  font-size: 14.5px;
+  line-height: 22px;
+}
+.cp-privacy svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+/* ---------- list ---------- */
+.cp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cp-item {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border: 2px solid transparent;
+  border-radius: var(--cp-r-row);
+  background: var(--surface-sunken);
+}
+.cp-item[data-attention] {
+  border-color: var(--mango);
+}
+.cp-item[data-failed] {
+  border-color: var(--danger);
+}
+.cp-item[data-status="done"] {
+  animation: cp-ready 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.cp-tile {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--cp-r-chip);
+  background: var(--surface-sunken);
+}
+.cp-tile-mango {
+  background: var(--mango-tint);
+  color: var(--mango-ink);
+}
+.cp-tile-danger {
+  background: var(--danger-tint);
+  color: var(--danger-ink);
+}
+.cp-name {
+  display: flex;
+  min-width: 0;
+  font-weight: 700;
+}
+.cp-name > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cp-facts {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.cp-item s {
+  color: var(--ink-muted);
+}
+.cp-note {
+  font-size: 14.5px;
+  line-height: 22px;
+  color: var(--ink-muted);
+}
+.cp-note-danger {
+  color: var(--danger-ink);
+  font-weight: 600;
+}
+.cp-wait {
+  color: var(--ink-muted);
+  font-size: 14.5px;
+  white-space: nowrap;
+}
+.cp-more {
+  color: var(--ink-muted);
+  font-size: 14.5px;
+}
+
+/* ---------- progress ---------- */
+.cp-meter {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ube-tint);
+  overflow: hidden;
+}
+.cp-meter-sm {
+  height: 8px;
+  max-width: 260px;
+}
+.cp-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ube);
+}
+/* Work with no measurable progress: a third of the bar slides across; still under reduced motion. */
+.cp-meter > .cp-indet {
+  width: 38%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cp-meter > .cp-indet {
+    animation: cp-indet 1.6s ease-in-out infinite;
+  }
+}
+@keyframes cp-indet {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 263% 0;
+  }
+}
+@keyframes cp-ready {
+  from {
+    transform: translateY(-6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-item[data-status="done"] {
+    animation: none;
+  }
+}
+
+/* ---------- whole-panel states ---------- */
+.cp-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 16px;
+  text-align: center;
+}
+.cp-center .cp-expr {
+  width: 96px;
+}
+.cp-center > :is(.cp-h-md, .cp-muted) {
+  max-width: 520px;
+}
+
+/* ---------- status header and banners ---------- */
+/*
+ * One element for every tone, so the status text stays a single live region. Working is the
+ * plain header (mascot, text, bar, Cancel); the others are the coloured result blocks.
+ */
+.cp-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+}
+.cp-banner[data-tone="plain"] {
+  display: none;
+}
+.cp-banner[data-tone="working"] {
+  flex-wrap: nowrap;
+  gap: 16px;
+}
+.cp-banner-body {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.cp-banner .cp-expr {
+  width: 84px;
+}
+.cp-banner[data-tone="working"] .cp-expr {
+  width: 72px;
+}
+.cp-banner:not([data-tone="working"]) {
+  padding: 22px 24px;
+  border-radius: var(--cp-r-block);
+}
+/* Each tint has its own ink, so the text holds its contrast in either colour scheme. */
+.cp-banner[data-tone="ready"] {
+  background: var(--matcha-tint);
+  color: var(--matcha-ink);
+}
+.cp-banner[data-tone="attention"] {
+  background: var(--mango-tint);
+  color: var(--mango-ink);
+}
+.cp-banner[data-tone="cancelled"] {
+  background: var(--ube-tint);
+  color: var(--ube-ink);
+}
+.cp-banner[data-ready] {
+  animation: cp-ready 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-banner[data-ready] {
+    animation: none;
+  }
+}
+.cp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.cp-actions:empty {
+  display: none;
+}
+.cp-progress {
+  display: block;
+  width: 100%;
+  height: 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ube-tint);
+  overflow: hidden;
+  appearance: none;
+}
+.cp-progress::-webkit-progress-bar {
+  background: var(--ube-tint);
+}
+.cp-progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--ube);
+}
+.cp-progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--ube);
+}
+.cp-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: var(--cp-r-notice);
+  background: var(--mango-tint);
+  color: var(--mango-ink);
+}
+.cp-notice svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.cp-notice-body {
+  display: flex;
+  flex: 1 1 200px;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ---------- responsive ---------- */
+.cp-only-desk {
+  display: block;
+}
+@media (max-width: 900px) {
+  .cp-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+@media (max-width: 640px) {
+  .cp-h-md {
+    font-size: 21px;
+    line-height: 27px;
+  }
+  .cp-banner:not([data-tone="working"]) {
+    padding: 18px;
+  }
+  .cp-only-desk {
+    display: none;
+  }
+  /* A row's status ("Waiting…", "Compressing…") goes under the name, so the name keeps its room. */
+  .cp-item:has(.cp-wait) {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .cp-wait {
+    flex: 1 0 100%;
+    padding-left: 64px;
+    white-space: normal;
+  }
+  .cp-drop {
+    padding: 20px;
+  }
+  .cp-btn-block-phone {
+    width: 100%;
+  }
+  /* Banner buttons take the whole row and may wrap their label ("Compress again with these
+     settings" is wider than a phone), so nothing runs off the panel. */
+  .cp-banner .cp-actions {
+    width: 100%;
+  }
+  .cp-notice .cp-btn {
+    flex: 1 1 100%;
+    padding-block: 12px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+  .cp-banner .cp-actions > .cp-btn {
+    flex: 1 1 100%;
+    padding-block: 12px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+  .cp-banner[data-tone="working"] .cp-actions > .cp-btn {
+    flex: 0 0 auto;
+  }
+  .cp-banner[data-tone="working"] {
+    flex-wrap: wrap;
+  }
+}

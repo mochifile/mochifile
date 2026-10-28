@@ -84,3 +84,11 @@ do not merge; the last one wins** (see [ADR 0014](0014-block-search-indexing-unt
   other hosts redirect to it ([ADR 0015](0015-canonical-host-and-domain-redirects.md)).
   Contrary to the consequence above, the existing token needs no extra permission: Workers
   Custom Domains are managed with the account-level `Workers Scripts Write` permission.
+- **2026-10-27: one 404 page per locale.** `404-page` serves "the nearest `404.html`" up from
+  the requested path. With `wrangler dev` (4.143.0) against our build, `/pt/nope/`,
+  `/pt/a/b/c/`, `/pt/nope` and `/pt/x.png` return 404 with `pt/404.html`; `/nope/`, `/a/b/c/`,
+  `/ptx/` and `/PT/nope/` return 404 with `404.html`; all carry the `_headers` headers. As for
+  the root page, `/pt/404.html` redirects to `/pt/404`, which returns the page with status 200
+  (noindex). Astro writes `pages/pt/404.astro` to `pt/404/index.html`, so the
+  `locale-not-found` integration moves it to `pt/404.html` and keeps it out of the sitemap;
+  `e2e/serve.ts` looks for the nearest `404.html` the same way.

@@ -1,0 +1,27 @@
+---
+import { type Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+
+/**
+ * The "Coming soon" notice that `ComingSoon` controls open: a small ink pill at the bottom of
+ * the screen. A press anywhere else, or Escape, closes it, and it fades by itself (global.css).
+ * The page has one; each popover that holds such controls has its own inside it, so opening it
+ * does not close the popover the control is in.
+ */
+interface Props {
+  locale: Locale
+  id?: string
+}
+
+const { locale, id = 'coming-soon' } = Astro.props
+---
+
+<div
+  id={id}
+  popover
+  role="status"
+  data-coming-soon
+  class="fixed inset-auto bottom-[calc(var(--space-4)+env(safe-area-inset-bottom))] left-1/2 m-0 w-max max-w-reading-max -translate-x-1/2 rounded-pill border-0 bg-action px-5 py-3 type-nav text-center text-action-ink shadow-action"
+>
+  {m.coming_soon_notice({}, { locale })}
+</div>

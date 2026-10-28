@@ -1,0 +1,37 @@
+---
+/** Closing call to action: leads to the image compressor, the one tool that works today. */
+import type { Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import { illustration } from '../../lib/illustrations'
+import Icon from './Icon.astro'
+
+interface Props {
+  locale: Locale
+  /** The compressor's page; the button is left out if the tool is not published. */
+  toolHref: string | undefined
+}
+const { locale, toolHref } = Astro.props
+---
+
+<section class="hv2-w hv2-sec-sm" aria-labelledby="hv2-cta-title">
+  <div class="hv2-card hv2-card-lg hv2-card-cta">
+    <div class="hv2-split hv2-cta-split">
+      <div class="hv2-stack hv2-g16">
+        <span class="hv2-pill hv2-pill-matcha hv2-self-start">{m.hv2_cta_pill({}, { locale })}</span>
+        <h2 id="hv2-cta-title" class="hv2-h2">{m.hv2_cta_title({}, { locale })}</h2>
+        <p class="hv2-lead">{m.hv2_cta_lead({}, { locale })}</p>
+        {
+          toolHref && (
+            <div class="hv2-row hv2-g12">
+              <a class="hv2-btn hv2-btn-primary hv2-btn-lg" href={toolHref}>
+                {m.hv2_cta_action({}, { locale })}
+                <Icon d="M5 12h14M13 6l6 6-6 6" />
+              </a>
+            </div>
+          )
+        }
+      </div>
+      <img {...illustration('sheet-squish', '(min-width: 1101px) 370px, (min-width: 901px) 340px, (min-width: 641px) calc(100vw - 146px), calc(100vw - 122px)')} alt="" loading="lazy" decoding="async" class="hv2-media" />
+    </div>
+  </div>
+</section>
