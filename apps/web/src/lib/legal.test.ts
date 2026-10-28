@@ -84,6 +84,16 @@ describe('legal pages', () => {
     }
   })
 
+  it('does not present Paddle as a confirmed sub-processor, or promise a policy that is not written', () => {
+    for (const locale of locales) {
+      const texts = messages(locale)
+      expect(texts.legal_dpa_not_confirmed).toBeTruthy()
+      expect(texts.legal_dpa_paddle).toMatch(/(not confirmed|não confirmado)/i)
+      expect(texts.legal_dpa_paddle).toMatch(/(do not exist|não existem)/i)
+      expect(texts.legal_privacy_short_text).not.toMatch(/explained below|explicado abaixo/i)
+    }
+  })
+
   it('varies the width of the grey lines and repeats the same on every build', () => {
     const widths = Array.from({ length: 16 }, (_, index) => lineWidth(index))
     expect(new Set(widths).size).toBeGreaterThan(3)

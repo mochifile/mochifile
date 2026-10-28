@@ -9,9 +9,10 @@
  * hidden from assistive technology), "Last updated" is marked pending instead of dated, and a
  * notice says the page is a draft and not in force. What can be stated from the project's own
  * documentation is shown as such: the Privacy Policy's short version, three "documented fact"
- * notes, and the DPA's browser-tools measure and sub-processors (Cloudflare and Paddle, ADR
- * 0008 and 0010). Whatever is not known (dates, regions, the operator's legal name) is marked
- * "Pending".
+ * notes, and the DPA's browser-tools measure and Cloudflare as sub-processor (ADR 0008). Paddle
+ * (ADR 0010) is listed as planned and not confirmed: payments do not exist yet, so it is not a
+ * sub-processor today. Whatever is not known (dates, regions, the operator's legal
+ * name) is marked "Pending".
  *
  * The DPA's "Download DPA (PDF)" button is there, as drawn, but there is no PDF: it opens a
  * notice that says so (the Popover API; plain text where it is missing).
@@ -251,7 +252,7 @@ const icon = 'size-6 shrink-0'
                         <td role="cell"><span class={pending}>{text('legal_pending')}</span></td>
                       </tr>
                       <tr role="row">
-                        <th role="rowheader" scope="row" class="legal-term">Paddle</th>
+                        <th role="rowheader" scope="row" class="legal-term">Paddle <span class={`${pending} ml-1`}>{text('legal_dpa_not_confirmed')}</span></th>
                         <td role="cell">{text('legal_dpa_paddle')}</td>
                         <td role="cell"><span class={pending}>{text('legal_pending')}</span></td>
                       </tr>
@@ -264,6 +265,7 @@ const icon = 'size-6 shrink-0'
                   </table>
                 </div>
               </div>
+              <p class="type-body-sm text-ink-muted">{text('legal_dpa_subprocessors_note')}</p>
             </section>
           </>
         )

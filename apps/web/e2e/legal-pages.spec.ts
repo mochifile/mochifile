@@ -172,6 +172,8 @@ for (const locale of ['en', 'pt'] as const) {
     const text = await main.innerText()
     // Only what the project documents: no retention period, no company, no jurisdiction.
     expect(text).not.toMatch(/\b\d+\s*(days|months|years|dias|meses|anos)\b/i)
+    // The short version must not promise a policy that does not exist yet.
+    expect(text).not.toMatch(/explained below|explicado abaixo/i)
   })
 
   test(`terms and conditions (${locale}): the operator's details are pending, the contact is real`, async ({
