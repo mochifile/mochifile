@@ -5,6 +5,7 @@ import { type Locale, localePath, locales } from '@mochifile/i18n'
 import { MAIN_PAGE_KEY, type ToolManifest } from '@mochifile/tool-kit'
 import { manifest as templateManifest } from '@mochifile/tool-template/manifest'
 import { askPaths } from '../src/lib/ask.ts'
+import { guidesSection } from '../src/lib/guides.ts'
 import { pageIds, pageSlugs } from '../src/lib/pages.ts'
 import { pricingPaths } from '../src/lib/pricing.ts'
 
@@ -34,7 +35,7 @@ const institutionalSlugs = new Set(pageIds.flatMap((id) => Object.values(pageSlu
 
 /**
  * Tool pages of the sitemap: everything but the home pages, the V2 pages that are not tools
- * (pricing, Ask, the institutional pages) and the template tool.
+ * (pricing, Ask, the institutional pages, the guides) and the template tool.
  */
 export async function toolPaths(request: {
   get: (url: string) => Promise<{ text(): Promise<string> }>
@@ -44,6 +45,9 @@ export async function toolPaths(request: {
     .map((match) => new URL(match[1] ?? '').pathname)
     .filter((path) => !nonToolPaths.has(path))
     .filter((path) => {
+      if (Object.values(guidesSection).some((section) => path.split('/').includes(section))) {
+        return false
+      }
       const slug = path.split('/').filter(Boolean).at(-1)
       return (
         slug !== undefined &&

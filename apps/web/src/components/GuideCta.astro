@@ -1,0 +1,49 @@
+---
+/**
+ * The white band that closes the guides: a free-tool pill, a heading, a line, the way to the
+ * tool and a mascot on its own block (MFGuides, MFGuide). The mascot sheet already carries its
+ * block colour; it is decoration.
+ */
+import sheetHappy380 from '../assets/brand/sheet-happy-380.webp'
+import sheetHappy700 from '../assets/brand/sheet-happy-700.webp'
+import sheetSquish380 from '../assets/brand/sheet-squish-380.webp'
+import sheetSquish700 from '../assets/brand/sheet-squish-700.webp'
+
+interface Props {
+  pill: string
+  heading: string
+  text: string
+  action: string
+  href: string
+  mascot: 'squish' | 'happy'
+}
+
+const { pill, heading, text, action, href, mascot } = Astro.props
+const sheet = {
+  squish: { small: sheetSquish380, large: sheetSquish700 },
+  happy: { small: sheetHappy380, large: sheetHappy700 },
+}[mascot]
+---
+
+<section aria-label={heading} class="grid items-center gap-8 rounded-xl-squish-a bg-surface-card p-6 sm:p-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:p-14">
+  <div class="flex flex-col items-start gap-4">
+    <span class="inline-flex min-h-6 items-center rounded-pill bg-matcha-tint px-3 type-caption tracking-wider text-matcha-ink uppercase">{pill}</span>
+    <h2 class="type-title text-balance sm:type-display-lg">{heading}</h2>
+    <p class="type-body text-ink-muted sm:type-body-lg">{text}</p>
+    <a href={href} class="press inline-flex min-h-target-primary items-center justify-center gap-2 rounded-pill bg-action px-6 type-label-lg text-action-ink focus-ring">
+      {action}
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-button-icon"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+    </a>
+  </div>
+  <img
+    src={sheet.large.src}
+    srcset={`${sheet.small.src} 380w, ${sheet.large.src} 700w`}
+    sizes="(min-width: 1024px) 336px, 100vw"
+    alt=""
+    width={1100}
+    height={651}
+    loading="lazy"
+    decoding="async"
+    class="h-auto w-full rounded-lg-squish-a"
+  />
+</section>

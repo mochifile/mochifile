@@ -1,6 +1,7 @@
 import { defineCollection } from 'astro:content'
 import { glob } from 'astro/loaders'
 import { z } from 'astro/zod'
+import { guideSchema } from './lib/guides.ts'
 import { pageCopySchema } from './lib/page-copy.ts'
 
 /**
@@ -32,4 +33,19 @@ const pageContent = defineCollection({
   schema: z.object({}).strict(),
 })
 
-export const collections = { toolContent, pageContent }
+/**
+ * Guides: `content/guides/<key>/<locale>.md`, one file per locale for every guide in
+ * `guideOrder` (lib/guides.ts). A file with `draft: true` has no body and no page: it shows in
+ * the list as a draft until the article is written. Rendered to static HTML at build time.
+ */
+const guides = defineCollection({
+  // `<key>/<locale>`: the default id would be the frontmatter's `slug`, which differs per locale.
+  loader: glob({
+    pattern: '*/*.md',
+    base: './src/content/guides',
+    generateId: ({ entry }) => entry.replace(/\.md$/, ''),
+  }),
+  schema: guideSchema,
+})
+
+export const collections = { toolContent, pageContent, guides }
