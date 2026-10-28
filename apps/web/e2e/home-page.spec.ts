@@ -107,23 +107,31 @@ for (const c of LOCALES) {
       await expect(others).toHaveText([...c.others])
       await expect(nav.getByRole('list', { name: c.otherSizes })).toBeVisible()
 
+      // Read every link first: the checks below open the pages in another tab.
+      const entries: Array<{ href: string; label: string; name: string }> = []
       for (const link of [...(await featured.all()), ...(await others.all())]) {
-        const href = (await link.getAttribute('href')) ?? ''
-        const label = (await link.textContent()) ?? ''
-        expect(published.has(href), `${href} is published`).toBe(true)
-        // Named by the page it opens, which contains the visible label (WCAG 2.5.3).
-        const name = await link.evaluate((el) => el.getAttribute('aria-label') ?? '')
-        expect(name).toContain(label)
-        const target = await request.get(href)
-        expect(target.status(), href).toBe(200)
-        // The title's last words are marked up, so compare the text of the heading.
-        const heading = /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(await target.text())?.[1] ?? ''
-        expect(
-          heading
-            .replace(/<[^>]+>/g, '')
-            .replace(/\s+/g, ' ')
-            .trim(),
-        ).toBe(name)
+        entries.push({
+          href: (await link.getAttribute('href')) ?? '',
+          label: (await link.textContent()) ?? '',
+          // Named by the page it opens, which contains the visible label (WCAG 2.5.3).
+          name: await link.evaluate((el) => el.getAttribute('aria-label') ?? ''),
+        })
+      }
+      expect(entries.length).toBeGreaterThan(0)
+
+      const tab = await page.context().newPage()
+      try {
+        for (const { href, label, name } of entries) {
+          expect(published.has(href), `${href} is published`).toBe(true)
+          expect(name).toContain(label)
+          const target = await request.get(href)
+          expect(target.status(), href).toBe(200)
+          // The title's last words are marked up, so compare the heading as the browser reads it.
+          await tab.goto(href)
+          await expect(tab.getByRole('heading', { level: 1 }), href).toHaveText(name)
+        }
+      } finally {
+        await tab.close()
       }
     })
 

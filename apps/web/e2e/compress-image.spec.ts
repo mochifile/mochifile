@@ -656,10 +656,11 @@ async function expectNoOverflow(page: Page, width = 390) {
 async function expectThumbSized(locator: Locator) {
   const box = await locator.boundingBox()
   if (!box) throw new Error('no box')
-  expect(box.height).toBeGreaterThanOrEqual(44)
-  expect(box.width).toBeGreaterThanOrEqual(44)
+  // To the pixel: a 44 px button is measured as 43.99997 while its row's bounce is under way.
+  expect(Math.round(box.height)).toBeGreaterThanOrEqual(44)
+  expect(Math.round(box.width)).toBeGreaterThanOrEqual(44)
   expect(box.x).toBeGreaterThanOrEqual(0)
-  expect(box.x + box.width).toBeLessThanOrEqual(390)
+  expect(Math.round(box.x + box.width)).toBeLessThanOrEqual(390)
 }
 
 test.describe('on a phone, while photos are compressed', () => {
