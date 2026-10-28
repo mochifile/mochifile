@@ -396,8 +396,11 @@ for (const input of ['mouse', 'touch'] as const) {
       page.on('filechooser', () => {
         chooser = true
       })
-      // Where "Choose photos" is: blank while the menu is open.
-      const action = await centre(page.locator('[data-primary-action]'))
+      // Where the "20 KB" option is: blank while the menu is open. A press that got through
+      // would choose it.
+      // (By its markup: the page is hidden from the accessibility tree while the menu is open.)
+      const option = page.locator('input[name="cp-size"][value="20kb"]')
+      const action = await centre(page.locator('label.cp-chip', { hasText: '20 KB' }))
 
       await trigger(page).click()
       await expect(menu(page)).toBeVisible()
@@ -405,6 +408,7 @@ for (const input of ['mouse', 'touch'] as const) {
       await page.waitForTimeout(300)
       expect(await isOpen(page)).toBe(true)
       expect(chooser).toBe(false)
+      await expect(option).not.toBeChecked()
 
       // The button closes it.
       const button = await centre(trigger(page))
@@ -412,6 +416,7 @@ for (const input of ['mouse', 'touch'] as const) {
       await expect(menu(page)).toBeHidden()
       await expect(page.locator('main')).toBeVisible()
       expect(chooser).toBe(false)
+      await expect(option).not.toBeChecked()
 
       // So does a press on the header outside the menu (between the logo and the language).
       await trigger(page).click()
@@ -449,6 +454,7 @@ test('photos keep compressing while the menu is open, and download afterwards', 
   await page.goto('/compress-image-to-50kb/')
   await waitForEngine(page)
   await page.locator('input[type="file"]').setInputFiles([await photo('flowers')])
+  await page.getByRole('button', { name: 'Compress 1 photo' }).click()
   await trigger(page).click()
   await expect(menu(page)).toBeVisible()
   // Finishes behind the open menu.
