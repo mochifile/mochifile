@@ -13,7 +13,7 @@
   /* ToolCard README: "min height 124px". */
   --spacing-tool-card-min: 124px;
   /*
-   * Header wordmark width (ADR 0026): the official lettering (1800 × 333 px) at the canvas's
+   * Header wordmark width (ADR 0030): the official lettering (1800 × 333 px) at the canvas's
    * 28px height is 151px wide, above the brand book's 96px minimum.
    */
   --spacing-logo: 151px;
@@ -39,7 +39,7 @@
   --spacing-ask-gap: 6px;
   /*
    * Soft shadows of the V2 canvas (mf.css). They tint with ube (cards) or ink (primary pill and
-   * chips) and replace v1's "no drop shadows" for these surfaces only (ADR 0026).
+   * chips) and replace v1's "no drop shadows" for these surfaces only (ADR 0030).
    */
   --shadow-card: 0 1px 0 rgba(30, 27, 46, 0.03), 0 12px 32px -12px rgba(91, 60, 196, 0.16);
   --shadow-lift: 0 2px 0 rgba(30, 27, 46, 0.03), 0 24px 60px -20px rgba(91, 60, 196, 0.28);
@@ -190,7 +190,7 @@
 }
 
 /*
- * Header cell widths (ADR 0026). The header's links and language button are right-aligned, so
+ * Header cell widths (ADR 0030). The header's links and language button are right-aligned, so
  * when Figtree replaces its fallback face the cluster moved 7px (a layout shift). Each cell
  * keeps the width its label has in Figtree, and its text sits centred in it: the fallback is
  * narrower, so nothing moves when the font arrives. Measured values, not design tokens: the

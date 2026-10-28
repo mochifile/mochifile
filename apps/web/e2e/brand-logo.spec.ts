@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures.ts'
 
 /**
- * The wordmark (Logo.astro, ADR 0024, ADR 0026) comes in two files and global.css shows the one
+ * The wordmark (Logo.astro, ADR 0024, ADR 0030) comes in two files and global.css shows the one
  * that matches the theme: the system's colour scheme, or a forced `data-theme`. V2 draws it in
  * the header only; the footer has no logo. `home.spec.ts` covers the logo's name, minimum size
  * and clear space.

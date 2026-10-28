@@ -3,7 +3,7 @@ import { m } from '@mochifile/i18n/messages'
 import { type RegisteredTool, toolPages } from './tools.ts'
 
 /**
- * What the header, the phone menu and the footer list (ADR 0026). Everything the V2 canvas
+ * What the header, the phone menu and the footer list (ADR 0030). Everything the V2 canvas
  * draws is here, whether it exists yet or not: a link with no `href` is a destination that is
  * not built, and renders as a "Coming soon" control instead of a link, so no link ever leads
  * nowhere. When a page ships, give its entry an `href`; nothing else changes.

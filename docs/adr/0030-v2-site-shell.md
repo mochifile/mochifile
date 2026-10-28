@@ -1,4 +1,4 @@
-# 0026. The V2 site shell: header, phone menu, footer and "Coming soon" controls
+# 0030. The V2 site shell: header, phone menu, footer and "Coming soon" controls
 
 - **Status:** Proposed in the draft PR for `feat/v2-header-footer`; Accepted on merge. It amends
   [ADR 0023](0023-phone-menu-with-the-popover-api.md) (what the menu lists) and

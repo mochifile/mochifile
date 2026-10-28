@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test'
 import { expect, projectContextOptions, test } from './fixtures.ts'
 
 /**
- * The site footer (V2 canvas, ADR 0026): three link columns, two pills, company and legal links,
+ * The site footer (V2 canvas, ADR 0030): three link columns, two pills, company and legal links,
  * the language row, the credit, GitHub, two badges and the "Ask AI" line. Everything the canvas
  * draws is there; a destination that does not exist yet is a "Coming soon" button, so every link
  * leads somewhere real.

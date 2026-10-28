@@ -5,7 +5,7 @@ import { readLayoutShifts, recordLayoutShifts } from './layout-shifts.ts'
 import { PHONES } from './tool-pages.ts'
 
 /**
- * The site header (ADR 0023, ADR 0026): "Skip to content", the V2 links and language button from
+ * The site header (ADR 0023, ADR 0030): "Skip to content", the V2 links and language button from
  * 1024 px, and below it a phone menu built on the declarative Popover API, without JavaScript.
  * Destinations that do not exist yet are "Coming soon" buttons, not links.
  */
@@ -684,7 +684,7 @@ for (const PHONE of PHONES) {
 }
 
 /**
- * The language selector (ADR 0026): from 1024 px a button in the header opens a list of the six
+ * The language selector (ADR 0030): from 1024 px a button in the header opens a list of the six
  * languages in their own names; under 1024 px the same languages are chips in the menu.
  * English and Portuguese are links to this page's alternate; the rest are "Coming soon".
  */
