@@ -96,20 +96,35 @@
 /*
  * Height reserved for the tool panel (padding included) before its client-only tool renders,
  * so the page below does not shift (layout shift fix, see apps/web ToolPage). A measured
- * layout height, not a design token. Tallest compress-image panel, English and Portuguese:
- * 473 px at 360–599 px wide, with the options as a compact list (PR 8); 606 px at 600–1023 px;
- * 441 px from 1024 px. Each value below adds a margin for text that renders wider on other
- * systems. At 320 px the panel is 529 px (710 px before the compact list), 17 px over: a
- * larger reserve would leave every common phone with a gap under the tool. Checked at 360
- * and 390 px by apps/web/e2e/layout-shift.spec.ts; recalibrate whenever the panel changes.
+ * layout height, not a design token. Tallest compress-image panel (V2: options above the drop
+ * area on one column, side by side from 900 px), English and Portuguese, in the page's card:
+ * 988 px at 320 px, 930 at 360, 878 at 390, 738 at 599, 784 at 600, 728 at 768, 460 from
+ * 900 px. Each step below adds a margin of 30 to 40 px for text that renders wider on other
+ * systems, and falls where the panel's height does; between two steps the reserve is the
+ * taller one's, so it is never short and a phone shows a gap rather than a jump. Under 360 px
+ * the panel is taller than the reserve (a phone that narrow is rare). Checked at 360 and
+ * 390 px by apps/web/e2e/layout-shift.spec.ts; recalibrate whenever the panel or the card
+ * around it changes.
  */
 @utility tool-reserve {
-  min-height: 512px;
-  @media (width >= 600px) {
-    min-height: 648px;
+  min-height: 1000px;
+  @media (width >= 360px) {
+    min-height: 960px;
   }
-  @media (width >= 64rem) {
-    min-height: 480px;
+  @media (width >= 390px) {
+    min-height: 920px;
+  }
+  @media (width >= 480px) {
+    min-height: 840px;
+  }
+  @media (width >= 600px) {
+    min-height: 820px;
+  }
+  @media (width >= 768px) {
+    min-height: 770px;
+  }
+  @media (width >= 900px) {
+    min-height: 490px;
   }
 }
 
