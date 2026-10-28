@@ -116,7 +116,14 @@ for (const c of LOCALES) {
         expect(name).toContain(label)
         const target = await request.get(href)
         expect(target.status(), href).toBe(200)
-        expect(await target.text()).toMatch(new RegExp(`<h1[^>]*>${name}</h1>`))
+        // The title's last words are marked up, so compare the text of the heading.
+        const heading = /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(await target.text())?.[1] ?? ''
+        expect(
+          heading
+            .replace(/<[^>]+>/g, '')
+            .replace(/\s+/g, ' ')
+            .trim(),
+        ).toBe(name)
       }
     })
 

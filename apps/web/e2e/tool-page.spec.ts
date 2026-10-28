@@ -43,7 +43,7 @@ for (const c of cases) {
       expect(html).toMatch(new RegExp(`<h1[^>]*>${c.title}</h1>`))
       expect(html).toContain(c.description)
       expect(html).toMatch(new RegExp(`<h2[^>]*>${c.steps}</h2>`))
-      expect(html).toMatch(new RegExp(`<summary[^>]*>\\s*${c.question}`))
+      expect(html).toMatch(new RegExp(`<summary[^>]*>\\s*(?:<span>)?\\s*${c.question}`))
       expect(html).toContain(c.privacy)
       expect(html).toContain(c.maxSize)
       // Asserted in the markup: browser automation with JavaScript disabled does not switch the
@@ -67,7 +67,7 @@ for (const c of cases) {
 
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(c.title)
       await expect(page.getByText(c.description)).toBeVisible()
-      // From 1024 px (the project's desktop viewport) the steps sit in the hero, as a named list.
+      // The steps are a named list of cards.
       await expect(page.getByRole('list', { name: c.steps })).toBeVisible()
       await expect(page.getByText(c.question)).toBeVisible()
       await expect(page.getByText(c.privacy)).toBeVisible()
