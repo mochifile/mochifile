@@ -23,7 +23,7 @@ const templateSlugs = new Set(
     .map((meta) => meta.slug),
 )
 
-/** Tool pages of the sitemap: everything but the home pages and the template tool. */
+/** Tool pages of the sitemap: everything but the home pages, the docs and the template tool. */
 export async function toolPaths(request: {
   get: (url: string) => Promise<{ text(): Promise<string> }>
 }) {
@@ -32,7 +32,7 @@ export async function toolPaths(request: {
     .map((match) => new URL(match[1] ?? '').pathname)
     .filter((path) => {
       const slug = path.split('/').filter(Boolean).at(-1)
-      return slug !== undefined && slug !== 'pt' && !templateSlugs.has(slug)
+      return slug !== undefined && slug !== 'pt' && slug !== 'docs' && !templateSlugs.has(slug)
     })
 }
 
