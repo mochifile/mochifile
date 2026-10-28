@@ -1,0 +1,99 @@
+---
+/**
+ * "Compression is just one thing you can ask for": twelve one-line examples in three cards of
+ * equal size. The examples are the concept of Ask Mochifile; only the one the image compressor
+ * already does leads somewhere (its 50 KB page). The others open the "not available yet" message.
+ */
+import type { Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import useImages from '../../assets/home/use-images.webp'
+import usePdf from '../../assets/home/use-pdf.webp'
+import useVideo from '../../assets/home/use-video.webp'
+import Icon from './Icon.astro'
+
+interface Props {
+  locale: Locale
+  /** The compressor's page for a 50 KB target, when it is published. */
+  under50Href: string | undefined
+}
+const { locale, under50Href } = Astro.props
+
+const cards = [
+  {
+    id: 'images',
+    image: useImages,
+    title: m.hv2_ask_images({}, { locale }),
+    examples: [
+      { label: m.hv2_ask_images_1({}, { locale }), href: under50Href },
+      { label: m.hv2_ask_images_2({}, { locale }) },
+      { label: m.hv2_ask_images_3({}, { locale }) },
+      { label: m.hv2_ask_images_4({}, { locale }) },
+    ],
+  },
+  {
+    id: 'pdfs',
+    image: usePdf,
+    title: m.hv2_ask_pdfs({}, { locale }),
+    examples: [
+      { label: m.hv2_ask_pdfs_1({}, { locale }) },
+      { label: m.hv2_ask_pdfs_2({}, { locale }) },
+      { label: m.hv2_ask_pdfs_3({}, { locale }) },
+      { label: m.hv2_ask_pdfs_4({}, { locale }) },
+    ],
+  },
+  {
+    id: 'video',
+    image: useVideo,
+    title: m.hv2_ask_video({}, { locale }),
+    examples: [
+      { label: m.hv2_ask_video_1({}, { locale }) },
+      { label: m.hv2_ask_video_2({}, { locale }) },
+      { label: m.hv2_ask_video_3({}, { locale }) },
+      { label: m.hv2_ask_video_4({}, { locale }) },
+    ],
+  },
+] as {
+  id: string
+  image: ImageMetadata
+  title: string
+  examples: { label: string; href?: string | undefined }[]
+}[]
+---
+
+<section class="hv2-w hv2-sec hv2-stack hv2-g40" aria-labelledby="hv2-ask-title">
+  <div class="hv2-stack hv2-g12 hv2-center">
+    <h2 id="hv2-ask-title" class="hv2-h2">{m.hv2_ask_title({}, { locale })}</h2>
+    <span class="hv2-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+    <p class="hv2-lead hv2-lead-max">{m.hv2_ask_lead({}, { locale })}</p>
+  </div>
+  <ul class="hv2-grid hv2-grid-stretch">
+    {
+      cards.map((card) => (
+        <li class="hv2-card hv2-example" aria-labelledby={`hv2-ask-${card.id}`}>
+          <img src={card.image.src} width={card.image.width} height={card.image.height} alt="" loading="lazy" decoding="async" class="hv2-media hv2-example-img" />
+          <h3 id={`hv2-ask-${card.id}`} class="hv2-h3 hv2-example-title">{card.title}</h3>
+          <ul class="hv2-stack hv2-g8">
+            {
+              card.examples.map((example) => (
+                <li>
+                  {example.href ? (
+                    <a class="hv2-example-btn" href={example.href}>
+                      <span>{example.label}</span>
+                      <Icon d="M5 12h14M13 6l6 6-6 6" size={16} stroke={2.2} />
+                    </a>
+                  ) : (
+                    <button type="button" class="hv2-example-btn" popovertarget="hv2-soon">
+                      <span>{example.label}</span>
+                      <Icon d="M5 12h14M13 6l6 6-6 6" size={16} stroke={2.2} />
+                    </button>
+                  )}
+                </li>
+              ))
+            }
+          </ul>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="hv2-small hv2-muted hv2-center-text">{m.hv2_ask_note({}, { locale })}</p>
+</section>

@@ -1,0 +1,187 @@
+---
+/**
+ * "Works where you work": one engine and six ways in. A picture, not a live diagram, so it is
+ * one image for assistive technology. Dots travel along each line (ube: request, surface to
+ * engine; mango: result, engine to surface) with SVG `<animate>`, no script; under
+ * `prefers-reduced-motion` they stop and a still dot sits mid-line. On phones it becomes a list.
+ * The six cards below describe each surface. Only the web app exists today; the rest say so.
+ */
+import type { Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import appIcon from '../../assets/home/sheet-app-icon-208.webp'
+import Icon from './Icon.astro'
+
+interface Props {
+  locale: Locale
+}
+const { locale } = Astro.props
+
+/** Positions are percentages of the hub box, as on the canvas; `delay` staggers the dots. */
+const nodes = [
+  {
+    id: 'cli',
+    x: 28,
+    y: 14,
+    delay: 0,
+    label: m.hv2_hub_cli({}, { locale }),
+    icon: 'M4 5h16v14H4zM8 10l3 2-3 2M13 15h4',
+  },
+  {
+    id: 'local',
+    x: 18,
+    y: 46,
+    delay: 0.43,
+    label: m.hv2_hub_local_mcp({}, { locale }),
+    icon: 'M5 12h14M13 6l6 6-6 6',
+  },
+  {
+    id: 'chrome',
+    x: 26,
+    y: 80,
+    delay: 0.86,
+    label: m.hv2_hub_chrome({}, { locale }),
+    icon: 'M10 4a2 2 0 1 1 4 0v2h4v4h-2a2 2 0 1 0 0 4h2v4h-4v-2a2 2 0 1 0-4 0v2H6v-4H4a2 2 0 1 1 0-4h2V6h4z',
+  },
+  {
+    id: 'web',
+    x: 72,
+    y: 14,
+    delay: 1.29,
+    label: m.hv2_hub_web({}, { locale }),
+    icon: 'M3 5h18v14H3zM3 9h18',
+  },
+  {
+    id: 'hosted',
+    x: 82,
+    y: 46,
+    delay: 1.72,
+    label: m.hv2_hub_hosted_mcp({}, { locale }),
+    icon: 'M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 19.5 10 4 4 0 0 1 18 18z',
+  },
+  {
+    id: 'api',
+    x: 74,
+    y: 80,
+    delay: 2.15,
+    label: m.hv2_hub_api({}, { locale }),
+    icon: 'M8 7l-5 5 5 5M16 7l5 5-5 5',
+  },
+] as const
+const CORE = { x: 50, y: 46 }
+const DURATION = 2.6
+const opacityValues = '0;1;1;0'
+const opacityTimes = '0;0.15;0.8;1'
+
+const surfaces = [
+  {
+    tag: m.hv2_surface_local_mcp_tag({}, { locale }),
+    title: m.hv2_hub_local_mcp({}, { locale }),
+    text: m.hv2_surface_local_mcp_text({}, { locale }),
+    code: 'mochifile serve',
+    live: false,
+  },
+  {
+    tag: m.hv2_surface_cli_tag({}, { locale }),
+    title: m.hv2_hub_cli({}, { locale }),
+    text: m.hv2_surface_cli_text({}, { locale }),
+    code: 'mochifile *.jpg -p "…"',
+    live: false,
+  },
+  {
+    tag: m.hv2_surface_chrome_tag({}, { locale }),
+    title: m.hv2_hub_chrome({}, { locale }),
+    text: m.hv2_surface_chrome_text({}, { locale }),
+    code: 'mochifile.com/chrome',
+    live: false,
+  },
+  {
+    tag: m.hv2_surface_web_tag({}, { locale }),
+    title: m.hv2_hub_web({}, { locale }),
+    text: m.hv2_surface_web_text({}, { locale }),
+    code: 'mochifile.com',
+    live: true,
+  },
+  {
+    tag: m.hv2_surface_hosted_tag({}, { locale }),
+    title: m.hv2_hub_hosted_mcp({}, { locale }),
+    text: m.hv2_surface_hosted_text({}, { locale }),
+    code: 'mochifile.com/mcp',
+    live: false,
+  },
+  {
+    tag: m.hv2_surface_api_tag({}, { locale }),
+    title: m.hv2_hub_api({}, { locale }),
+    text: m.hv2_surface_api_text({}, { locale }),
+    code: 'api.mochifile.com',
+    live: false,
+  },
+]
+---
+
+<section class="hv2-band" aria-labelledby="hv2-hub-title">
+  <div class="hv2-w hv2-sec hv2-stack hv2-g48">
+    <div class="hv2-stack hv2-g12">
+      <h2 id="hv2-hub-title" class="hv2-h2">{m.hv2_hub_title({}, { locale })}</h2>
+      <span class="hv2-uline" aria-hidden="true"><i></i><b></b><b></b></span>
+      <p class="hv2-lead hv2-lead-max">{m.hv2_hub_lead({}, { locale })}</p>
+    </div>
+
+    <div class="hv2-hub" role="img" aria-label={m.hv2_hub_alt({}, { locale })}>
+      <svg class="hv2-hub-lines" aria-hidden="true" focusable="false">
+        {
+          nodes.map((node) => {
+            const mid = { x: (node.x + CORE.x) / 2, y: (node.y + CORE.y) / 2 }
+            const back = node.delay + DURATION / 2
+            return (
+              <>
+                <line class="hv2-hub-line" x1={`${node.x}%`} y1={`${node.y}%`} x2={`${CORE.x}%`} y2={`${CORE.y}%`} />
+                <circle class="hv2-hub-static hv2-hub-request" cx={`${mid.x}%`} cy={`${mid.y}%`} r="3.5" />
+                <circle class="hv2-hub-flow hv2-hub-request" r="5" cx={`${node.x}%`} cy={`${node.y}%`} opacity="0">
+                  <animate attributeName="cx" values={`${node.x}%;${CORE.x}%`} dur={`${DURATION}s`} begin={`${node.delay}s`} repeatCount="indefinite" />
+                  <animate attributeName="cy" values={`${node.y}%;${CORE.y}%`} dur={`${DURATION}s`} begin={`${node.delay}s`} repeatCount="indefinite" />
+                  <animate attributeName="opacity" values={opacityValues} keyTimes={opacityTimes} dur={`${DURATION}s`} begin={`${node.delay}s`} repeatCount="indefinite" />
+                </circle>
+                <circle class="hv2-hub-flow hv2-hub-result" r="5" cx={`${CORE.x}%`} cy={`${CORE.y}%`} opacity="0">
+                  <animate attributeName="cx" values={`${CORE.x}%;${node.x}%`} dur={`${DURATION}s`} begin={`${back}s`} repeatCount="indefinite" />
+                  <animate attributeName="cy" values={`${CORE.y}%;${node.y}%`} dur={`${DURATION}s`} begin={`${back}s`} repeatCount="indefinite" />
+                  <animate attributeName="opacity" values={opacityValues} keyTimes={opacityTimes} dur={`${DURATION}s`} begin={`${back}s`} repeatCount="indefinite" />
+                </circle>
+              </>
+            )
+          })
+        }
+      </svg>
+      <span class="hv2-eyebrow hv2-eyebrow-sm hv2-hub-label hv2-l-once">{m.hv2_hub_install_once({}, { locale })}</span>
+      <span class="hv2-eyebrow hv2-eyebrow-sm hv2-hub-label hv2-l-none">{m.hv2_hub_no_install({}, { locale })}</span>
+      <div class="hv2-hub-core">
+        <img src={appIcon.src} width={appIcon.width} height={appIcon.height} alt="" loading="lazy" decoding="async" />
+        <span class="hv2-eyebrow">{m.hv2_hub_core({}, { locale })}<br />{m.hv2_hub_core_2({}, { locale })}</span>
+      </div>
+      {
+        nodes.map((node) => (
+          <div class={`hv2-hub-node hv2-n-${node.id}`}>
+            <span class="hv2-chip"><Icon d={node.icon} size={16} stroke={2.2} />{node.label}</span>
+          </div>
+        ))
+      }
+    </div>
+
+    <ul class="hv2-grid">
+      {
+        surfaces.map((surface) => (
+          <li class="hv2-card hv2-card-pad hv2-surface">
+            <div class="hv2-surface-head">
+              <span class="hv2-eyebrow hv2-eyebrow-sm">{surface.tag}</span>
+              <span class:list={['hv2-pill', surface.live ? 'hv2-pill-matcha' : 'hv2-pill-mango']}>
+                {surface.live ? m.hv2_surface_status_live({}, { locale }) : m.hv2_surface_status_soon({}, { locale })}
+              </span>
+            </div>
+            <h3 class="hv2-h4">{surface.title}</h3>
+            <p class="hv2-small hv2-muted">{surface.text}</p>
+            <span class="hv2-surface-code"><span class="hv2-code-chip">{surface.code}</span></span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
