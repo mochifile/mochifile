@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { gzipSync } from 'node:zlib'
 import AxeBuilder from '@axe-core/playwright'
-import type { Download, Page } from '@playwright/test'
+import type { Browser, Download, Locator, Page } from '@playwright/test'
 import { expect, projectContextOptions, test } from './fixtures.ts'
 import {
   bytesContain,
@@ -590,6 +590,223 @@ test('takes a photo pasted with Ctrl+V', async ({ page }) => {
   await startButton(page).click()
   await expect(rows(page).first()).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
   await expect(page.getByText('Ready! It fits your 50 KB limit.')).toBeVisible()
+})
+
+/** What a browser dispatches when files are dragged over the page and dropped. */
+async function dropFiles(page: Page, ...files: UploadFile[]) {
+  const send = (kind: 'dragover' | 'drop') =>
+    page.evaluate(
+      ({ list, kind }) => {
+        const data = new DataTransfer()
+        for (const { bytes, name, type } of list) {
+          data.items.add(new File([new Uint8Array(bytes)], name, { type }))
+        }
+        const event = new Event(kind, { bubbles: true, cancelable: true })
+        Object.defineProperty(event, 'dataTransfer', { value: data })
+        document.querySelector('.cp')?.dispatchEvent(event)
+      },
+      {
+        list: files.map((file) => ({
+          bytes: [...file.buffer],
+          name: file.name,
+          type: file.mimeType,
+        })),
+        kind,
+      },
+    )
+  await send('dragover')
+  // While photos are over the panel it says so, wherever they would land.
+  await expect(page.locator('.cp')).toHaveAttribute('data-dragging', 'true')
+  await send('drop')
+  await expect(page.locator('.cp')).not.toHaveAttribute('data-dragging', '')
+}
+
+/** A phone: 390 × 844, touch. Taps, not clicks. */
+async function phonePage(testBrowser: Browser, path: string) {
+  const context = await testBrowser.newContext({
+    ...projectContextOptions(),
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+  })
+  const page = await context.newPage()
+  await page.goto(path)
+  await waitForEngine(page)
+  return { context, page }
+}
+
+/** Nothing in the panel, and not the page, runs off the screen's edge. */
+async function expectNoOverflow(page: Page, width = 390) {
+  const outside = await page.locator('.cp').evaluate((root, max) => {
+    return [...root.querySelectorAll('*')]
+      .filter((el) => {
+        const r = el.getBoundingClientRect()
+        return r.width > 0 && (r.left < -0.5 || r.right > max + 0.5)
+      })
+      .map((el) => `${el.tagName} «${el.textContent?.trim().slice(0, 30)}»`)
+  }, width)
+  expect(outside).toEqual([])
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0)
+}
+
+/** A control a thumb can hit: at least 44 px each way, and inside the screen. */
+async function expectThumbSized(locator: Locator) {
+  const box = await locator.boundingBox()
+  if (!box) throw new Error('no box')
+  // To the pixel: a 44 px button is measured as 43.99997 while its row's bounce is under way.
+  expect(Math.round(box.height)).toBeGreaterThanOrEqual(44)
+  expect(Math.round(box.width)).toBeGreaterThanOrEqual(44)
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(Math.round(box.x + box.width)).toBeLessThanOrEqual(390)
+}
+
+test.describe('on a phone, while photos are compressed', () => {
+  test('photos pasted or dropped meanwhile join the batch, and all download together', async ({
+    testBrowser,
+  }) => {
+    test.setTimeout(180_000)
+    const { context, page } = await phonePage(testBrowser, '/compress-image-to-20kb/')
+    try {
+      await add(
+        page,
+        await photo('landscape', 'a.jpg'),
+        await photo('flowers', 'b.jpg'),
+        await photo('portrait', 'c.jpg'),
+      )
+      await startButton(page).tap()
+      await expect(page.locator('.cp-banner[data-tone="working"]')).toBeVisible()
+
+      // One more arrives by paste, one by drop, while the first are on their way.
+      await paste(page, await photo('landscape', 'd.jpg'))
+      await expect(rows(page)).toHaveCount(4)
+      await dropFiles(page, await photo('flowers', 'e.jpg'))
+      await expect(rows(page)).toHaveCount(5)
+      // The count of the batch follows, and the header is still the working one.
+      await expect(page.getByText(/^\d of 5 ready$/)).toBeVisible()
+
+      await expect(rows(page).nth(4)).toHaveAttribute('data-status', 'done', { timeout: 150_000 })
+      await expect(page.locator('li[data-status="done"]')).toHaveCount(5)
+      await expect(page.getByText('Ready! All 5 photos fit 20 KB.')).toBeVisible()
+      await expectNoOverflow(page)
+
+      // All of them in one ZIP, tapped.
+      const zipButton = page.getByRole('button', { name: 'Download all (ZIP)' })
+      await expectThumbSized(zipButton)
+      const download = page.waitForEvent('download')
+      await zipButton.tap()
+      const zip = await download
+      expect(zip.suggestedFilename()).toBe('compressed-photos.zip')
+      const bytes = await downloadBytes(zip)
+      expect(bytes.subarray(0, 2).toString()).toBe('PK')
+      expect(bytes.toString('latin1').split('PK\x01\x02').length - 1).toBe(5)
+    } finally {
+      await context.close()
+    }
+  })
+
+  test('photos over the limit of 20 are told apart, also while compressing', async ({
+    testBrowser,
+  }) => {
+    test.setTimeout(120_000)
+    const { context, page } = await phonePage(testBrowser, '/compress-image-to-20kb/')
+    try {
+      await addAndCompress(page, await photo('landscape', 'first.jpg'))
+      await expect(page.locator('.cp-banner[data-tone="working"]')).toBeVisible()
+      const many = await Promise.all(
+        Array.from({ length: 20 }, (_, n) => photo('flowers', `more-${n}.jpg`)),
+      )
+      await paste(page, ...many)
+      // 1 + 19 fit; the notice says so where the person is looking.
+      await expect(rows(page)).toHaveCount(20)
+      await expect(
+        page.getByRole('alert').filter({ hasText: 'You can add up to 20 photos at a time.' }),
+      ).toBeVisible()
+      await page.getByRole('button', { name: 'Cancel' }).tap()
+      await expect(page.getByText('You cancelled.')).toBeVisible()
+    } finally {
+      await context.close()
+    }
+  })
+
+  test('Cancel is a thumb-sized button, stops the rest, and the batch can go on', async ({
+    testBrowser,
+  }) => {
+    test.setTimeout(150_000)
+    const { context, page } = await phonePage(testBrowser, '/compress-image-to-20kb/')
+    try {
+      await add(
+        page,
+        ...(await Promise.all([1, 2, 3, 4].map((n) => photo('landscape', `p${n}.jpg`)))),
+      )
+      await startButton(page).tap()
+      const cancel = page.getByRole('button', { name: 'Cancel' })
+      await expect(cancel).toBeVisible()
+      await expectThumbSized(cancel)
+      await cancel.tap()
+
+      await expect(page.getByText('You cancelled.')).toBeVisible()
+      await expect(page.locator('li[data-status="queued"], li[data-status="working"]')).toHaveCount(
+        0,
+      )
+      const carryOn = page.getByRole('button', { name: 'Compress again with these settings' })
+      await expect(carryOn).toBeFocused()
+      await expectThumbSized(carryOn)
+      await expectNoOverflow(page)
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+
+      // Photos added after a cancel start at once, and the cancelled ones can still be resumed.
+      await paste(page, await photo('flowers', 'late.jpg'))
+      await expect(rows(page)).toHaveCount(5)
+      await carryOn.tap()
+      await expect(page.locator('li[data-status="done"]')).toHaveCount(5, { timeout: 120_000 })
+      await expect(page.getByText('Ready! All 5 photos fit 20 KB.')).toBeVisible()
+    } finally {
+      await context.close()
+    }
+  })
+
+  test('a result downloads with a tap, from its row and from the banner', async ({
+    testBrowser,
+  }) => {
+    test.setTimeout(120_000)
+    const { context, page } = await phonePage(testBrowser, '/compress-image-to-50kb/')
+    try {
+      await addAndCompress(page, await photoWithLocation())
+      const row = rows(page).first()
+      await expect(row).toHaveAttribute('data-status', 'done', { timeout: 60_000 })
+
+      // The row's download icon is thumb-sized and downloads the file.
+      const rowLink = row.getByRole('link', { name: /^Download/ })
+      await expectThumbSized(rowLink)
+      let download = page.waitForEvent('download')
+      await rowLink.tap()
+      let file = await download
+      expect(file.suggestedFilename()).toBe('holiday-50kb.jpg')
+      const fromRow = await downloadBytes(file)
+      expect(fromRow.length).toBeLessThanOrEqual(50_000)
+      expect(bytesContain(fromRow, SECRET)).toBe(false)
+
+      // So does the banner's button, with the same file.
+      const bannerLink = page.locator('.cp-banner').getByRole('link', { name: /^Download/ })
+      await expectThumbSized(bannerLink)
+      download = page.waitForEvent('download')
+      await bannerLink.tap()
+      file = await download
+      expect(file.suggestedFilename()).toBe('holiday-50kb.jpg')
+      expect((await downloadBytes(file)).length).toBe(fromRow.length)
+      // Nothing on the screen runs off its edge.
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        ),
+      ).toBeLessThanOrEqual(0)
+    } finally {
+      await context.close()
+    }
+  })
 })
 
 test.describe('loading', () => {

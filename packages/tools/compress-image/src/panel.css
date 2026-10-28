@@ -30,6 +30,13 @@
   line-height: 26px;
 }
 
+.cp[data-dragging] {
+  /* Photos are being dragged over the panel: dropping them anywhere adds them. */
+  outline: 3px dashed var(--ink);
+  outline-offset: 8px;
+  border-radius: 4px;
+}
+
 .cp :is(a, button, summary, select, input):focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
@@ -655,6 +662,26 @@
   }
   .cp-btn-block-phone {
     width: 100%;
+  }
+  /* Banner buttons take the whole row and may wrap their label ("Compress again with these
+     settings" is wider than a phone), so nothing runs off the panel. */
+  .cp-banner .cp-actions {
+    width: 100%;
+  }
+  .cp-notice .cp-btn {
+    flex: 1 1 100%;
+    padding-block: 12px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+  .cp-banner .cp-actions > .cp-btn {
+    flex: 1 1 100%;
+    padding-block: 12px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+  .cp-banner[data-tone="working"] .cp-actions > .cp-btn {
+    flex: 0 0 auto;
   }
   .cp-banner[data-tone="working"] {
     flex-wrap: wrap;

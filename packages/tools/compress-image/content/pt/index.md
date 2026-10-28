@@ -1,9 +1,21 @@
 ---
 steps:
-  - "Escolha o limite que o site pede"
-  - "Adicione as fotos: a compressão começa na hora"
-  - "Baixe uma a uma ou todas em um ZIP"
+  - title: "Escolha um tamanho"
+    text: "Escolha 50 KB, 100 KB ou o tamanho que o formulário pede."
+  - title: "Adicione as fotos e comprima"
+    text: "JPG, PNG ou WebP, até 20 de uma vez e 50 MB cada. Toque em Comprimir quando a lista estiver pronta."
+  - title: "Baixe"
+    text: "Cada foto é conferida com o seu limite antes de você salvar, uma a uma ou todas em um ZIP."
 faq:
+  - question: "Comprimir piora a qualidade?"
+    answer: >-
+      Um pouco, e só o necessário. O Mochifile procura a melhor qualidade que ainda cabe no seu
+      limite. Se nem a menor qualidade que usamos couber, ele também diminui os pixels, e avisa
+      quando fez isso.
+  - question: "Minhas fotos são enviadas?"
+    answer: >-
+      Não. Tudo acontece no seu navegador, então suas fotos não saem do seu aparelho. Detalhes
+      ocultos, como localização e modelo da câmera, são removidos de todos os resultados.
   - question: "50 KB é o mesmo que 50.000 bytes?"
     answer: >-
       Alguns sites contam 1 KB como 1.000 bytes e outros como 1.024 bytes. O resultado sempre
@@ -11,9 +23,8 @@ faq:
       casos.
   - question: "Preciso apertar algum botão para comprimir?"
     answer: >-
-      Não. Cada foto é comprimida assim que você a adiciona, com o tamanho e o formato
-      escolhidos naquele momento. Se mudar as opções depois, use "Comprimir de novo com estas
-      opções".
+      Sim, uma vez. Adicione as fotos, confira o tamanho e o formato e aperte "Comprimir". As
+      fotos são comprimidas uma depois da outra, e você pode cancelar a qualquer momento.
   - question: "Quais formatos posso adicionar e quais recebo de volta?"
     answer: >-
       Você pode adicionar fotos JPG, PNG e WebP; arquivos HEIC e AVIF não são aceitos aqui. Os
