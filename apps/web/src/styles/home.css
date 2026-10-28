@@ -753,29 +753,98 @@ body:has(.hv2) {
 .hv2-hub-static {
   display: none;
 }
+/* Where each surface sits (percent of the hub) and when its dots start. */
 .hv2-n-cli {
-  left: 28%;
-  top: 14%;
+  --ax: 28;
+  --ay: 14;
+  --delay: 0s;
 }
 .hv2-n-local {
-  left: 18%;
-  top: 46%;
+  --ax: 18;
+  --ay: 46;
+  --delay: 0.43s;
 }
 .hv2-n-chrome {
-  left: 26%;
-  top: 80%;
+  --ax: 26;
+  --ay: 80;
+  --delay: 0.86s;
 }
 .hv2-n-web {
-  left: 72%;
-  top: 14%;
+  --ax: 72;
+  --ay: 14;
+  --delay: 1.29s;
 }
 .hv2-n-hosted {
-  left: 82%;
-  top: 46%;
+  --ax: 82;
+  --ay: 46;
+  --delay: 1.72s;
 }
 .hv2-n-api {
-  left: 74%;
-  top: 80%;
+  --ax: 74;
+  --ay: 80;
+  --delay: 2.15s;
+}
+
+/*
+ * The dots, placed with container-relative lengths so they follow the lines at any width. A
+ * request goes from the surface to the engine (ube); the result comes back (mango) half a cycle
+ * later. SVG <animate> is not used: Firefox writes inline styles for it, which the CSP blocks.
+ * The hub is a size container only from 641 px, where it has a fixed height (below that the
+ * dots are hidden and the hub is a list).
+ */
+.hv2-hub-flow {
+  --bx: 50;
+  --by: 46;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.hv2-flow-request {
+  background: var(--ube);
+  animation: hv2-request 2.6s linear var(--delay) infinite;
+}
+.hv2-flow-result {
+  background: var(--mango);
+  animation: hv2-result 2.6s linear calc(var(--delay) + 1.3s) infinite;
+}
+@keyframes hv2-request {
+  0% {
+    translate: calc(var(--ax) * 1cqw) calc(var(--ay) * 1cqh);
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    translate: calc(var(--bx) * 1cqw) calc(var(--by) * 1cqh);
+    opacity: 0;
+  }
+}
+@keyframes hv2-result {
+  0% {
+    translate: calc(var(--bx) * 1cqw) calc(var(--by) * 1cqh);
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    translate: calc(var(--ax) * 1cqw) calc(var(--ay) * 1cqh);
+    opacity: 0;
+  }
+}
+@media (min-width: 641px) {
+  .hv2-hub {
+    container-type: size;
+  }
 }
 .hv2-l-once {
   left: 27%;

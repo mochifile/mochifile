@@ -277,6 +277,47 @@ test('the hub is a list of surfaces on phones and a diagram on wider screens', a
   }
 })
 
+test('the hub dots travel along the lines, inside the hub, with CSS animations', async ({
+  testBrowser,
+}) => {
+  const { context, page } = await openHome(testBrowser, LOCALES[0], { width: 1440 })
+  try {
+    const hub = page.locator('.hv2-hub')
+    await hub.scrollIntoViewIfNeeded()
+    const dots = page.locator('.hv2-flow-request')
+    await expect(dots).toHaveCount(6)
+    const where = () =>
+      dots.evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect()
+          return [Math.round(r.left), Math.round(r.top)]
+        }),
+      )
+    const box = await hub.boundingBox()
+    if (!box) throw new Error('no hub box')
+    // Some dot is visible and has moved between two moments, and none leaves the hub.
+    const seen = new Set<string>()
+    for (let i = 0; i < 6; i++) {
+      for (const [x, y] of await where()) {
+        expect(x).toBeGreaterThanOrEqual(box.x - 6)
+        expect(x).toBeLessThanOrEqual(box.x + box.width + 6)
+        expect(y).toBeGreaterThanOrEqual(box.y - 6)
+        expect(y).toBeLessThanOrEqual(box.y + box.height + 6)
+        seen.add(`${x},${y}`)
+      }
+      await page.waitForTimeout(250)
+    }
+    expect(seen.size, 'the dots change place').toBeGreaterThan(6)
+    // At least a dot is visible (opacity above 0) at some moment of the cycle.
+    const opacities = await dots.evaluateAll((els) =>
+      els.map((el) => +getComputedStyle(el).opacity),
+    )
+    expect(Math.max(...opacities)).toBeGreaterThan(0)
+  } finally {
+    await context.close()
+  }
+})
+
 test('the hub stops moving under reduced motion and shows still dots', async ({ testBrowser }) => {
   const context = await testBrowser.newContext({
     ...projectContextOptions(),
