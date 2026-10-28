@@ -1,8 +1,11 @@
 ---
 steps:
-  - "Mantenha 1 MB ou escolha o limite que o site pede"
-  - "Adicione as fotos: a compressão começa na hora"
-  - "Baixe os resultados, com 1 MB ou menos"
+  - title: "Mantenha 1 MB ou escolha outro tamanho"
+    text: "Use o limite que o site pede."
+  - title: "Adicione as fotos e comprima"
+    text: "JPG, PNG ou WebP, até 20 de uma vez e 50 MB cada. Toque em Comprimir quando a lista estiver pronta."
+  - title: "Baixe resultados de 1 MB ou menos"
+    text: "Cada foto é conferida antes de você salvar, uma a uma ou todas em um ZIP."
 faq:
   - question: "1 MB é o mesmo que 1.000 KB?"
     answer: >-
