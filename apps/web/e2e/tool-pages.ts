@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { type Locale, localePath, locales } from '@mochifile/i18n'
 import { MAIN_PAGE_KEY, type ToolManifest } from '@mochifile/tool-kit'
 import { manifest as templateManifest } from '@mochifile/tool-template/manifest'
+import { legalPageIds, legalSlugs } from '../src/lib/legal.ts'
 
 /**
  * Tool pages for checks that must hold on every page: they come from the sitemap, so new
@@ -23,7 +24,10 @@ const templateSlugs = new Set(
     .map((meta) => meta.slug),
 )
 
-/** Tool pages of the sitemap: everything but the home pages and the template tool. */
+/** Slugs of the legal pages: in the sitemap, but not tools. */
+const legalPageSlugs = new Set(legalPageIds.flatMap((id) => Object.values(legalSlugs[id])))
+
+/** Tool pages of the sitemap: everything but the home pages, the legal pages and the template tool. */
 export async function toolPaths(request: {
   get: (url: string) => Promise<{ text(): Promise<string> }>
 }) {
@@ -32,7 +36,9 @@ export async function toolPaths(request: {
     .map((match) => new URL(match[1] ?? '').pathname)
     .filter((path) => {
       const slug = path.split('/').filter(Boolean).at(-1)
-      return slug !== undefined && slug !== 'pt' && !templateSlugs.has(slug)
+      return (
+        slug !== undefined && slug !== 'pt' && !templateSlugs.has(slug) && !legalPageSlugs.has(slug)
+      )
     })
 }
 

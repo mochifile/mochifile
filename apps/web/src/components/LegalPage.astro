@@ -1,0 +1,416 @@
+---
+/**
+ * The legal pages (the "Site final" artboards MFPrivacy, MFTermsService, MFTerms and MFDpa):
+ * an eyebrow, the title, the three-dot underline, "Last updated", a notice, and numbered
+ * clauses under their headings. Static HTML, no script, light theme only.
+ *
+ * The artboards are layout templates and say so: the clause text must come from a lawyer. So
+ * nothing here is written as a policy or a contract: every clause is a grey line (decoration,
+ * hidden from assistive technology), "Last updated" is marked pending instead of dated, and a
+ * notice says the page is a draft and not in force. What can be stated from the project's own
+ * documentation is shown as such: the Privacy Policy's short version, three "documented fact"
+ * notes, and the DPA's browser-tools measure and sub-processors (Cloudflare and Paddle, ADR
+ * 0008 and 0010). Whatever is not known (dates, regions, the operator's legal name) is marked
+ * "Pending".
+ *
+ * The DPA's "Download DPA (PDF)" button is there, as drawn, but there is no PDF: it opens a
+ * notice that says so (the Popover API; plain text where it is missing).
+ */
+import type { Locale } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import {
+  definitionTerms,
+  type LegalPageId,
+  legalPaths,
+  legalSections,
+  lineWidth,
+  numberSections,
+} from '../lib/legal'
+
+interface Props {
+  page: LegalPageId
+  locale: Locale
+}
+
+const { page, locale } = Astro.props
+
+type Message = (inputs: Record<string, never>, options: { locale: Locale }) => string
+const messages = m as unknown as Record<string, Message | undefined>
+/** A message by key; a key that does not exist is a build error, not an empty heading. */
+function text(key: string): string {
+  const message = messages[key]
+  if (!message) throw new Error(`Missing message ${key}`)
+  return message({}, { locale })
+}
+const key = (...parts: string[]) => ['legal', page.replaceAll('-', '_'), ...parts].join('_')
+
+const sections = numberSections(legalSections[page])
+// Running index of the grey lines, so neighbouring ones differ in length.
+let line = 0
+const nextLine = () => lineWidth(line++)
+const skeleton = (count: number) => Array.from({ length: count }, nextLine)
+
+// Which sections carry a documented fact (all in the Privacy Policy).
+const facts: Record<string, string> = {
+  never: text('legal_privacy_fact_never'),
+  website: text('legal_privacy_fact_website'),
+  cookies: text('legal_privacy_fact_cookies'),
+}
+
+const pending =
+  'inline-flex min-h-6 items-center rounded-pill bg-warning-tint px-3 type-caption font-bold text-warning-ink'
+const tableCard = 'overflow-hidden rounded-lg-squish-a bg-surface-card'
+const icon = 'size-6 shrink-0'
+---
+
+<BaseLayout locale={locale} title={text(key('title'))} description={text(key('description'))} paths={legalPaths(page)}>
+  <article aria-labelledby="legal-heading" class="legal-page mx-auto flex w-full max-w-reading-max flex-col gap-6 pb-10 lg:pt-4">
+    <header class="flex flex-col items-start gap-4">
+      <p class="type-caption tracking-widest text-ube-ink uppercase">{text('legal_eyebrow')}</p>
+      <h1 id="legal-heading" class="type-title text-balance sm:type-display-lg lg:type-display-xl">{text(key('heading'))}</h1>
+      <span aria-hidden="true" class="flex items-center gap-2">
+        <span class="block h-1 w-10 rounded-pill bg-ube"></span>
+        <span class="block size-2 rounded-pill bg-strawberry"></span>
+        <span class="block size-2 rounded-pill bg-matcha"></span>
+      </span>
+      <p class="flex flex-wrap items-center gap-2 type-body-sm text-ink-muted">{text('legal_last_updated')} <span class={pending}>{text('legal_pending')}</span></p>
+    </header>
+
+    {/* The page says what it is. Attention colours (design system README › Colour). */}
+    <p class="flex items-start gap-3 rounded-md-squish-a bg-warning-tint p-4 type-body-sm font-semibold text-warning-ink">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`${icon} mt-0.5`}><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7h.01" /></svg>
+      <span>{text('legal_notice')}</span>
+    </p>
+
+    <div class="page-copy legal-copy">
+      {
+        page === 'privacy' && (
+          <p class="flex items-start gap-3 rounded-md-squish-a bg-surface-card p-4">
+            <span class="flex size-10 shrink-0 items-center justify-center rounded-md-squish-a bg-matcha-tint text-matcha-ink">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" /></svg>
+            </span>
+            <span class="type-body-sm"><b>{text('legal_privacy_short_title')}</b> {text('legal_privacy_short_text')}</span>
+          </p>
+        )
+      }
+
+      {
+        page === 'terms-of-service' && (
+          <>
+            <h2>{text('legal_terms_of_service_definitions')}</h2>
+            <div class={tableCard}>
+              <div class="legal-table-wrap">
+                <table role="table" class="legal-table">
+                  <thead role="rowgroup">
+                    <tr role="row">
+                      <th role="columnheader" scope="col" class="legal-term">{text('legal_definitions_term')}</th>
+                      <th role="columnheader" scope="col">{text('legal_definitions_definition')}</th>
+                    </tr>
+                  </thead>
+                  <tbody role="rowgroup">
+                    {definitionTerms.map((term) => (
+                      <tr role="row">
+                        <th role="rowheader" scope="row" class="legal-term">{text(`legal_def_${term.id}`)}</th>
+                        <td role="cell">
+                          <span aria-hidden="true" class="flex flex-col gap-2">
+                            {skeleton(term.lines).map((width) => <span class={`block h-3 rounded-pill bg-line ${width}`} />)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )
+      }
+
+      {
+        page === 'terms-and-conditions' && (
+          <blockquote class="flex flex-col gap-3">
+            <b class="not-italic">{text('legal_terms_and_conditions_introduction')}</b>
+            <span aria-hidden="true" class="flex flex-col gap-2">
+              {skeleton(5).map((width) => <span class={`block h-3 rounded-pill bg-surface-card ${width}`} />)}
+            </span>
+          </blockquote>
+        )
+      }
+
+      {
+        page === 'dpa' && (
+          <>
+            <div class="flex flex-col gap-4 rounded-lg-squish-a bg-surface-card p-5 sm:p-7">
+              <span aria-hidden="true" class="flex flex-col gap-2">
+                {skeleton(5).map((width) => <span class={`block h-3 rounded-pill bg-line ${width}`} />)}
+              </span>
+              <h2 class="legal-card-title">{text('legal_dpa_how_heading')}</h2>
+              <ul class="flex flex-col gap-2">
+                {['legal_dpa_how_1', 'legal_dpa_how_2', 'legal_dpa_how_3'].map((item) => (
+                  <li class="type-body-sm"><span class={`${pending} mr-2`}>{text('legal_pending')}</span>{text(item)}</li>
+                ))}
+              </ul>
+              <button type="button" popovertarget="legal-pdf" class="press inline-flex min-h-target-primary items-center justify-center gap-2 self-start rounded-pill bg-action px-6 no-underline type-label-lg text-action-ink focus-ring">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-button-icon"><path d="M12 4v12M7 11l5 5 5-5M5 20h14" /></svg>
+                {text('legal_dpa_download')}
+              </button>
+            </div>
+            <p class="text-center type-body-sm text-ink-muted italic">{text('legal_dpa_reference')}</p>
+          </>
+        )
+      }
+
+      {
+        sections.map((section) => (
+          <section aria-labelledby={`legal-${section.id}`} class="flex flex-col gap-4">
+            <h2 id={`legal-${section.id}`}>{text(key(section.id))}</h2>
+            <ol start={section.start} aria-hidden="true" class="legal-clauses">
+              {section.lines.map((count) => (
+                <li>
+                  <span class="flex flex-col gap-2">
+                    {skeleton(count).map((width) => <span class={`block h-3 rounded-pill bg-line ${width}`} />)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+            {
+              page === 'privacy' && facts[section.id] && (
+                <p class="flex items-start gap-3 rounded-md-squish-a bg-matcha-tint p-4 type-body-sm text-matcha-ink">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`${icon} mt-0.5`}><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>
+                  <span><b>{text('legal_fact_label')}.</b> {facts[section.id]} <span class="font-semibold">({text('legal_fact_note')})</span></span>
+                </p>
+              )
+            }
+          </section>
+        ))
+      }
+
+      {
+        page === 'terms-and-conditions' && (
+          <section aria-labelledby="legal-details" class="flex flex-col gap-4">
+            <h2 id="legal-details">{text('legal_terms_and_conditions_details')}</h2>
+            <p><span class={pending}>{text('legal_pending')}</span> {text('legal_terms_and_conditions_details_pending')}</p>
+            <p>{text('legal_terms_and_conditions_contact')} <a href="mailto:hello@mochifile.com">hello@mochifile.com</a></p>
+          </section>
+        )
+      }
+
+      {
+        page === 'dpa' && (
+          <>
+            <section aria-labelledby="legal-signatures" class="flex flex-col gap-4">
+              <h2 id="legal-signatures">{text('legal_dpa_signatures')}</h2>
+              <div class={tableCard}>
+                <div class="legal-table-wrap">
+                  <table class="legal-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">{text('legal_dpa_supplier')}</th>
+                        <th scope="col">{text('legal_dpa_customer')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {['legal_dpa_name', 'legal_dpa_signature', 'legal_dpa_date'].map((row) => (
+                        <tr><td>{text(row)}</td><td>{text(row)}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+            <section aria-labelledby="legal-schedule-1" class="flex flex-col gap-4">
+              <h2 id="legal-schedule-1">{text('legal_dpa_schedule1')}</h2>
+              <span aria-hidden="true" class="flex flex-col gap-2">
+                {skeleton(3).map((width) => <span class={`block h-3 rounded-pill bg-line ${width}`} />)}
+              </span>
+            </section>
+            <section aria-labelledby="legal-schedule-2" class="flex flex-col gap-4">
+              <h2 id="legal-schedule-2">{text('legal_dpa_schedule2')}</h2>
+              <ul>
+                <li>{text('legal_dpa_measure_browser')}</li>
+                <li><span class={`${pending} mr-2`}>{text('legal_pending')}</span>{text('legal_dpa_measure_pending')}</li>
+              </ul>
+            </section>
+            <section aria-labelledby="legal-schedule-3" class="flex flex-col gap-4">
+              <h2 id="legal-schedule-3">{text('legal_dpa_schedule3')}</h2>
+              <div class={tableCard}>
+                <div class="legal-table-wrap">
+                  <table role="table" class="legal-table">
+                    <thead role="rowgroup">
+                      <tr role="row">
+                        <th role="columnheader" scope="col" class="legal-term">{text('legal_dpa_col_sub')}</th>
+                        <th role="columnheader" scope="col">{text('legal_dpa_col_purpose')}</th>
+                        <th role="columnheader" scope="col">{text('legal_dpa_col_location')}</th>
+                      </tr>
+                    </thead>
+                    <tbody role="rowgroup">
+                      <tr role="row">
+                        <th role="rowheader" scope="row" class="legal-term">Cloudflare</th>
+                        <td role="cell">{text('legal_dpa_cloudflare')}</td>
+                        <td role="cell"><span class={pending}>{text('legal_pending')}</span></td>
+                      </tr>
+                      <tr role="row">
+                        <th role="rowheader" scope="row" class="legal-term">Paddle</th>
+                        <td role="cell">{text('legal_dpa_paddle')}</td>
+                        <td role="cell"><span class={pending}>{text('legal_pending')}</span></td>
+                      </tr>
+                      <tr role="row">
+                        <th role="rowheader" scope="row" class="legal-term">{text('legal_dpa_others')}</th>
+                        <td role="cell"><span class={pending}>{text('legal_pending')}</span> {text('legal_dpa_others_purpose')}</td>
+                        <td role="cell"><span class={pending}>{text('legal_pending')}</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          </>
+        )
+      }
+    </div>
+
+    {
+      page === 'dpa' && (
+        <div
+          id="legal-pdf"
+          popover="auto"
+          role="alert"
+          class="rounded-lg-squish-a bg-ube-tint p-4 text-ube-ink with-popover:fixed with-popover:inset-x-4 with-popover:top-auto with-popover:bottom-4 with-popover:mx-auto with-popover:my-0 with-popover:w-auto with-popover:max-w-reading-max with-popover:border-chip with-popover:border-ube popover-open:block"
+        >
+          <div class="flex items-start gap-3">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class={`${icon} mt-0.5`}><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>
+            <p class="min-w-0 flex-1 type-body-sm"><strong class="type-body-strong">{text('legal_unavailable_title')}.</strong> {text('legal_dpa_unavailable')}</p>
+            <button type="button" popovertarget="legal-pdf" popovertargetaction="hide" aria-label={text('legal_close')} class="press -m-2 hidden size-target-min shrink-0 items-center justify-center rounded-pill focus-ring with-popover:flex">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class={icon}><path d="M6 6l12 12M18 6 6 18" /></svg>
+            </button>
+          </div>
+        </div>
+      )
+    }
+  </article>
+</BaseLayout>
+
+<style is:global>
+  @reference "../styles/global.css";
+
+  .legal-copy > h2:first-child {
+    margin-top: 0;
+  }
+  .legal-copy a {
+    color: var(--ube-ink);
+    font-weight: 600;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  .legal-copy a:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  .legal-copy li::marker {
+    color: var(--ube);
+  }
+  /* The numbered clauses: the number stays, the text is a grey line. */
+  .legal-copy ol.legal-clauses {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    list-style: decimal;
+    padding-left: var(--space-8);
+  }
+  .legal-copy ol.legal-clauses li::marker {
+    font-weight: 800;
+    color: var(--ink-muted);
+  }
+  .legal-copy ol.legal-clauses li + li {
+    margin-top: 0;
+  }
+  .legal-copy blockquote {
+    @apply rounded-lg-squish-a;
+    background-color: var(--ube-tint);
+    color: var(--ube-ink);
+    padding: var(--space-5) var(--space-6);
+  }
+  /* A card's title is an h2 (the card comes before any section) in the size of an h3. */
+  .legal-copy h2.legal-card-title {
+    @apply type-label-lg;
+    margin-top: 0;
+  }
+
+  /* Tables, as in the API reference; under 600 px each row becomes a block. */
+  .legal-table-wrap {
+    overflow: hidden;
+  }
+  .legal-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    @apply type-body-sm;
+  }
+  .legal-table th {
+    @apply type-caption;
+    text-align: left;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    background-color: var(--surface-sunken);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 2px solid var(--line);
+  }
+  .legal-table td,
+  .legal-table tbody th {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 2px solid var(--line);
+    vertical-align: top;
+  }
+  .legal-table tbody th {
+    @apply type-body-sm;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink);
+    background-color: transparent;
+  }
+  .legal-table tbody tr:last-child th,
+  .legal-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .legal-table .legal-term {
+    width: 30%;
+  }
+  @media (width < 600px) {
+    .legal-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+    .legal-table,
+    .legal-table thead,
+    .legal-table tbody,
+    .legal-table tr,
+    .legal-table td,
+    .legal-table tbody th {
+      display: block;
+      width: 100%;
+    }
+    .legal-table tr {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 2px solid var(--line);
+    }
+    .legal-table tbody tr:last-child {
+      border-bottom: 0;
+    }
+    .legal-table td,
+    .legal-table tbody th {
+      padding: var(--space-1) 0;
+      border: 0;
+    }
+    .legal-table tbody tr:last-child th,
+    .legal-table tbody tr:last-child td {
+      border: 0;
+    }
+  }
+</style>
