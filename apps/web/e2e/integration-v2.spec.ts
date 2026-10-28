@@ -325,3 +325,56 @@ test('the phone menu is light too under a dark system theme', async ({ page, pag
   }
   pageErrors.splice(0, pageErrors.length, ...pageErrors.filter((error) => !OWN_404.test(error)))
 })
+
+const ACCOUNT_PAGES = [
+  { path: '/sign-in/', notice: /Accounts and sign-in by email are not available yet/ },
+  { path: '/sign-up/', notice: /Accounts and sign-in by email are not available yet/ },
+  { path: '/pt/entrar/', notice: /As contas e o login por e-mail ainda não estão disponíveis/ },
+  {
+    path: '/pt/criar-conta/',
+    notice: /As contas e o login por e-mail ainda não estão disponíveis/,
+  },
+] as const
+
+for (const { path, notice } of ACCOUNT_PAGES) {
+  test(`${path} says accounts are not available before anything can be sent, and promises no account benefit`, async ({
+    page,
+  }) => {
+    await page.goto(path)
+    const note = page.getByRole('note').filter({ hasText: notice })
+    await expect(note).toBeVisible()
+    // It comes before the form's first field, so it is read before anything is typed.
+    const [noteBox, emailBox] = await Promise.all([
+      note.boundingBox(),
+      page.locator('input[type="email"]').first().boundingBox(),
+    ])
+    expect(noteBox?.y ?? Infinity).toBeLessThan(emailBox?.y ?? 0)
+    const text = (await page.locator('main').innerText()).toLowerCase()
+    // No limits that depend on an account, no "free plan" card promise, no code sent in the present.
+    expect(text).not.toMatch(
+      /higher limits|more files, and bigger|limites maiores|mais arquivos, e maiores/,
+    )
+    expect(text).not.toMatch(/free plan needs no credit card|plano grátis não pede cartão/)
+    expect(text).not.toMatch(
+      /you will get a one-time code|você receberá um código|the email we send you|e-mail que enviaremos|we will email it/,
+    )
+    // The free browser tools need no account.
+    if (path.includes('sign-up') || path.includes('criar')) {
+      expect(text).toMatch(
+        /free browser tools need no (account|sign-up)|ferramentas gratuitas do navegador não (exigem|pedem)/,
+      )
+      expect(text).toMatch(
+        /limits do not depend on an account|limites delas não dependem de uma conta/,
+      )
+    }
+    // Nothing was sent: the form still only opens its "not available yet" message.
+    const requests: string[] = []
+    page.on('request', (request) => {
+      if (request.method() !== 'GET') requests.push(request.url())
+    })
+    await page.locator('input[type="email"]').first().fill('someone@example.com')
+    await page.locator('#step-email form button:visible').first().click()
+    await expect(page.locator('#auth-unavailable:popover-open')).toBeVisible()
+    expect(requests).toEqual([])
+  })
+}

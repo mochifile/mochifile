@@ -176,6 +176,11 @@ const previewLinks = [
         </header>
 
         <div class:list={['auth-steps flex w-full flex-col gap-5 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-5 sm:p-8', !signUp && 'max-w-[calc(var(--reading-max)*4/7)]']}>
+          {/* Said before anything can be sent: accounts and e-mail sign-in do not exist yet. */}
+          <p role="note" class="flex items-start gap-3 rounded-md-squish-a bg-ube-tint p-3 type-body-sm text-ube-ink">
+            <span class="inline-flex min-h-6 shrink-0 items-center rounded-pill bg-surface-card px-3 type-pill uppercase">{text(m.auth_preview_badge)}</span>
+            {text(m.auth_unavailable_notice)}
+          </p>
           {/* The form. */}
           <section id={authStepId('email')} data-step tabindex="-1" aria-label={copy.heading} class="flex flex-col gap-5 outline-none">
             <button type="button" popovertarget="auth-google" class="press inline-flex min-h-target-primary w-full items-center justify-center gap-3 rounded-pill border-hairline border-border-control bg-surface-card px-6 type-label-lg focus-ring">
