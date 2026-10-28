@@ -1,0 +1,443 @@
+---
+/**
+ * The pricing page, Mochifile V2 (docs/design-ref/v2, artboard MFPricing). Light theme only,
+ * visual first: the three paid plans, the free plan, the comparison table, the questions and the
+ * closing card are all drawn as designed, although nothing paid can be bought yet. Every paid
+ * button is disabled and says "Coming soon"; the page never simulates a purchase.
+ *
+ * The Monthly / Yearly switch is two radio buttons, and `pricing.css` shows the matching prices
+ * with `:has()`: no script (AGENTS.md rule 5). Without `:has()` the page stays on Monthly, as
+ * the artboard. The questions are `<details>`. "Learn more" has no page to go to yet, so it is a
+ * button that opens a "Coming soon" popover, like the shell's controls.
+ */
+import { type Locale, localePath } from '@mochifile/i18n'
+import { m } from '@mochifile/i18n/messages'
+import mascot380 from '../assets/pricing/sheet-happy-380.webp'
+import mascot760 from '../assets/pricing/sheet-happy-760.webp'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import {
+  formatUsd,
+  type Plan,
+  plans,
+  pricingPaths,
+  savePercent,
+  yearlyPerMonthCents,
+} from '../lib/pricing'
+import { toolPaths, tools } from '../lib/tools'
+import '../styles/pricing.css'
+
+interface Props {
+  locale: Locale
+}
+
+const { locale } = Astro.props
+const usd = (cents: number) => formatUsd(cents, locale)
+const number = (value: number) =>
+  new Intl.NumberFormat(locale === 'pt' ? 'pt-BR' : 'en-US').format(value)
+// The free tools' page: the first published tool's main page, or the home page without any.
+const [firstTool] = tools
+const freeTools = firstTool ? toolPaths(firstTool.manifest)[locale] : localePath(locale)
+const soon = m.pricing_coming_soon({}, { locale })
+
+/** Each plan's pill colour, text and features, in the canvas's order. */
+const cards: Array<{ plan: Plan; pill: string; features: string[] }> = [
+  {
+    plan: plans[0],
+    pill: 'prc-pill--straw',
+    features: [
+      m.pricing_feature_credits_100({}, { locale }),
+      m.pricing_feature_cloud({}, { locale }),
+      m.pricing_feature_batch_25({}, { locale }),
+      m.pricing_feature_no_watermarks({}, { locale }),
+    ],
+  },
+  {
+    plan: plans[1],
+    pill: 'prc-pill--ube',
+    features: [
+      m.pricing_feature_credits_300({}, { locale }),
+      m.pricing_feature_batch_100({}, { locale }),
+      m.pricing_feature_priority({}, { locale }),
+      m.pricing_feature_advanced({}, { locale }),
+      m.pricing_feature_api({}, { locale }),
+    ],
+  },
+  {
+    plan: plans[2],
+    pill: 'prc-pill--matcha',
+    features: [
+      m.pricing_feature_credits_1000({}, { locale }),
+      m.pricing_feature_batch_250({}, { locale }),
+      m.pricing_feature_priority_highest({}, { locale }),
+      m.pricing_feature_advanced_automations({}, { locale }),
+    ],
+  },
+]
+const freeFeatures = [
+  m.pricing_free_browser({}, { locale }),
+  m.pricing_free_no_signup({}, { locale }),
+  m.pricing_free_compressor({}, { locale }),
+  m.pricing_free_private({}, { locale }),
+]
+
+/** A cell of the comparison table: text, "included" (a check) or "not included" (a dash). */
+type Cell = string | true | false
+interface Row {
+  label: string
+  /** Free, Starter, Pro, Max. */
+  cells: [Cell, Cell, Cell, Cell]
+}
+const included = m.pricing_cell_included({}, { locale })
+const yes = m.pricing_cell_yes({}, { locale })
+const same = (cell: Cell): [Cell, Cell, Cell, Cell] => [cell, cell, cell, cell]
+const row4 = (free: Cell, starter: Cell, pro: Cell, max: Cell): [Cell, Cell, Cell, Cell] => [
+  free,
+  starter,
+  pro,
+  max,
+]
+const perMo = m.pricing_per_mo({}, { locale })
+const groups: Array<{ title: string; rows: Row[] }> = [
+  {
+    title: m.pricing_compare_group_browser({}, { locale }),
+    rows: [
+      { label: m.pricing_row_browser_tools({}, { locale }), cells: same(included) },
+      {
+        label: m.pricing_row_account({}, { locale }),
+        cells: row4(m.pricing_cell_no({}, { locale }), yes, yes, yes),
+      },
+      {
+        label: m.pricing_row_usage_limit({}, { locale }),
+        cells: same(m.pricing_cell_none({}, { locale })),
+      },
+      {
+        label: m.pricing_row_compressor_batch({}, { locale }),
+        cells: same(m.pricing_cell_batch({}, { locale })),
+      },
+      { label: m.pricing_row_on_device({}, { locale }), cells: same(true) },
+    ],
+  },
+  {
+    title: m.pricing_compare_group_cloud({}, { locale }),
+    rows: [
+      {
+        label: m.pricing_row_credits({}, { locale }),
+        cells: [false, number(100), number(300), number(1000)],
+      },
+      { label: m.pricing_row_cloud({}, { locale }), cells: [false, true, true, true] },
+      {
+        label: m.pricing_row_cloud_batch({}, { locale }),
+        cells: [false, number(25), number(100), number(250)],
+      },
+      {
+        label: m.pricing_row_priority({}, { locale }),
+        cells: [
+          false,
+          m.pricing_cell_standard({}, { locale }),
+          m.pricing_cell_priority({}, { locale }),
+          m.pricing_cell_highest({}, { locale }),
+        ],
+      },
+      { label: m.pricing_row_advanced({}, { locale }), cells: [false, false, true, true] },
+      { label: m.pricing_row_automations({}, { locale }), cells: [false, false, false, true] },
+      {
+        label: m.pricing_row_api({}, { locale }),
+        cells: [false, false, m.pricing_cell_api_future({}, { locale }), false],
+      },
+      {
+        label: m.pricing_row_watermarks({}, { locale }),
+        cells: same(m.pricing_cell_never({}, { locale })),
+      },
+    ],
+  },
+  {
+    title: m.pricing_compare_group_billing({}, { locale }),
+    rows: [
+      {
+        label: m.pricing_monthly({}, { locale }),
+        cells: row4(
+          usd(0),
+          ...(plans.map((plan) => usd(plan.monthlyCents)) as [string, string, string]),
+        ),
+      },
+      {
+        label: m.pricing_yearly({}, { locale }),
+        cells: [
+          usd(0),
+          ...plans.map(
+            (plan) => `${usd(plan.yearlyCents)} (${usd(yearlyPerMonthCents(plan))}${perMo})`,
+          ),
+        ] as [Cell, Cell, Cell, Cell],
+      },
+      {
+        label: m.pricing_row_availability({}, { locale }),
+        cells: row4(m.pricing_cell_available_now({}, { locale }), soon, soon, soon),
+      },
+    ],
+  },
+]
+const columns = [
+  { name: m.pricing_free({}, { locale }), highlight: false },
+  ...plans.map((plan) => ({ name: plan.name, highlight: plan.popular })),
+]
+
+const faq = [
+  { question: m.pricing_faq_1_q({}, { locale }), answer: m.pricing_faq_1_a({}, { locale }) },
+  { question: m.pricing_faq_2_q({}, { locale }), answer: m.pricing_faq_2_a({}, { locale }) },
+  { question: m.pricing_faq_3_q({}, { locale }), answer: m.pricing_faq_3_a({}, { locale }) },
+  { question: m.pricing_faq_4_q({}, { locale }), answer: m.pricing_faq_4_a({}, { locale }) },
+  { question: m.pricing_faq_5_q({}, { locale }), answer: m.pricing_faq_5_a({}, { locale }) },
+  { question: m.pricing_faq_6_q({}, { locale }), answer: m.pricing_faq_6_a({}, { locale }) },
+]
+
+const check = 'M5 12.5l4.5 4.5L19 7'
+---
+
+<BaseLayout
+  locale={locale}
+  title={m.pricing_title({}, { locale })}
+  description={m.pricing_description({}, { locale })}
+  paths={pricingPaths}
+>
+  <div class="prc" data-pricing>
+    <section class="prc-w prc-top" aria-labelledby="pricing-heading">
+      <div class="prc-stack prc-center prc-g16">
+        <p class="prc-eyebrow">{m.pricing_eyebrow({}, { locale })}</p>
+        <h1 id="pricing-heading" class="prc-h1">
+          {m.pricing_h1_before({}, { locale })}<span class="prc-mark">{m.pricing_h1_mark({}, { locale })}</span>{m.pricing_h1_after({}, { locale })}
+        </h1>
+        <p class="prc-lead">{m.pricing_lead({}, { locale })}</p>
+        <p class="prc-chip">{m.pricing_surfaces({}, { locale })}</p>
+        {/* Two radio buttons; pricing.css shows the prices of the checked one. */}
+        <fieldset class="prc-toggle">
+          <legend class="prc-sr">{m.pricing_billing_label({}, { locale })}</legend>
+          <input type="radio" name="billing" id="billing-monthly" value="monthly" checked />
+          <label for="billing-monthly">{m.pricing_monthly({}, { locale })}</label>
+          <input type="radio" name="billing" id="billing-yearly" value="yearly" />
+          <label for="billing-yearly">{m.pricing_yearly({}, { locale })}</label>
+        </fieldset>
+      </div>
+
+      <div class="prc-plans">
+        {
+          cards.map(({ plan, pill, features }) => (
+            <article class:list={['prc-card', 'prc-plan', plan.popular && 'prc-plan--pop']} data-plan={plan.id}>
+              {plan.popular && (
+                <p class="prc-pill prc-pill--ink prc-popular">{m.pricing_most_popular({}, { locale })}</p>
+              )}
+              <div class="prc-row prc-between prc-g8">
+                <h2 class:list={['prc-pill', pill]}>{plan.name}</h2>
+                <p class="prc-pill prc-pill--soon">{soon}</p>
+              </div>
+              <p class="prc-price-row">
+                <span class="prc-price" data-monthly>{usd(plan.monthlyCents)}</span>
+                <span class="prc-price" data-yearly>{usd(yearlyPerMonthCents(plan))}</span>
+                <span class="prc-small prc-muted">{m.pricing_per_month({}, { locale })}</span>
+              </p>
+              <div class="prc-billed prc-small prc-muted">
+                <span data-monthly>
+                  {m.pricing_billed_yearly(
+                    { monthly: usd(yearlyPerMonthCents(plan)), yearly: usd(plan.yearlyCents) },
+                    { locale },
+                  )}
+                </span>
+                <span data-yearly>
+                  {m.pricing_billed_yearly_selected(
+                    { monthly: usd(plan.monthlyCents), yearly: usd(plan.yearlyCents) },
+                    { locale },
+                  )}
+                </span>
+                <span class="prc-pill prc-pill--matcha">
+                  {m.pricing_save({ percent: String(savePercent(plan)) }, { locale })}
+                </span>
+              </div>
+              <ul class="prc-features">
+                {features.map((feature) => (
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d={check} />
+                    </svg>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              {/* Nothing can be bought yet: the button is drawn and disabled. */}
+              <button
+                type="button"
+                disabled
+                aria-label={m.pricing_plan_coming_soon({ plan: plan.name }, { locale })}
+                class:list={['prc-btn', 'prc-btn--block', plan.popular ? 'prc-btn--primary' : 'prc-btn--soft', 'prc-btn--disabled']}
+              >
+                {soon}
+              </button>
+            </article>
+          ))
+        }
+      </div>
+
+      <section class="prc-card prc-free" aria-labelledby="pricing-free">
+        <div class="prc-split prc-free-split">
+          <div class="prc-stack prc-g8">
+            <h2 id="pricing-free" class="prc-pill prc-pill--mango prc-self-start">{m.pricing_free({}, { locale })}</h2>
+            <p class="prc-price-row prc-price-row--small">
+              <span class="prc-price prc-price--small">{usd(0)}</span>
+              <span class="prc-small prc-muted">{m.pricing_forever({}, { locale })}</span>
+            </p>
+          </div>
+          <ul class="prc-grid prc-small prc-free-list">
+            {
+              freeFeatures.map((feature) => (
+                <li>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d={check} />
+                  </svg>
+                  <span>{feature}</span>
+                </li>
+              ))
+            }
+          </ul>
+          <div class="prc-stack prc-center prc-g8">
+            <a class="prc-btn prc-btn--soft" href={freeTools}>{m.pricing_use_free_tools({}, { locale })}</a>
+            <span class="prc-tiny prc-muted">{m.pricing_no_signup_needed({}, { locale })}</span>
+          </div>
+        </div>
+      </section>
+
+      <p class="prc-small prc-muted prc-note">{m.pricing_proposal_note({}, { locale })}</p>
+
+      <p class="prc-callout">
+        <span class="prc-tile" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5z" />
+          </svg>
+        </span>
+        <span class="prc-small">
+          <b>{m.pricing_private_bold({}, { locale })}</b>{' '}
+          {m.pricing_private_text({}, { locale })}{' '}
+          <button
+            type="button"
+            popovertarget="pricing-soon"
+            popovertargetaction="show"
+            title={soon}
+            class="prc-link"
+          >
+            {m.pricing_learn_more({}, { locale })}<span class="prc-sr">, {soon}</span>
+          </button>
+        </span>
+      </p>
+    </section>
+
+    <section class="prc-w prc-sec prc-stack prc-g24">
+      <h2 id="pricing-compare" class="prc-h3 prc-text-center">{m.pricing_compare_heading({}, { locale })}</h2>
+      <div class="prc-card prc-table-wrap" tabindex="0" role="region" aria-labelledby="pricing-compare">
+        <table class="prc-table">
+          <caption class="prc-sr">{m.pricing_compare_heading({}, { locale })}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{m.pricing_compare_feature({}, { locale })}</th>
+              {
+                columns.map((column) => (
+                  <th scope="col" class:list={['prc-c', column.highlight && 'prc-hl']}>
+                    {column.name}
+                  </th>
+                ))
+              }
+            </tr>
+          </thead>
+          {
+            groups.map((group) => (
+              <tbody>
+                <tr>
+                  <th scope="colgroup" colspan="5" class="prc-group">{group.title}</th>
+                </tr>
+                {group.rows.map((row) => (
+                  <tr>
+                    <th scope="row">{row.label}</th>
+                    {row.cells.map((cell, index) => (
+                      <td class:list={['prc-c', columns[index]?.highlight && 'prc-hl']}>
+                        {cell === true ? (
+                          <>
+                            <svg class="prc-yes" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <path d={check} />
+                            </svg>
+                            <span class="prc-sr">{included}</span>
+                          </>
+                        ) : cell === false ? (
+                          <>
+                            <span class="prc-muted" aria-hidden="true">—</span>
+                            <span class="prc-sr">{m.pricing_cell_not_included({}, { locale })}</span>
+                          </>
+                        ) : (
+                          cell
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            ))
+          }
+        </table>
+      </div>
+      <p class="prc-tiny prc-muted prc-text-center">{m.pricing_compare_note({}, { locale })}</p>
+    </section>
+
+    <section class="prc-w prc-w--mid prc-sec-sm prc-stack prc-g24" aria-labelledby="pricing-faq">
+      <div class="prc-stack prc-center prc-g8">
+        <h2 id="pricing-faq" class="prc-h2">{m.pricing_faq_heading({}, { locale })}</h2>
+        <p class="prc-muted">{m.pricing_faq_text({}, { locale })}</p>
+      </div>
+      <div class="prc-faq">
+        {
+          faq.map((item) => (
+            <details>
+              <summary>
+                <span>{item.question}</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </summary>
+              <p>{item.answer}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="prc-w prc-sec-sm" aria-labelledby="pricing-cta">
+      <div class="prc-card prc-card--lg prc-cta">
+        <div class="prc-split prc-cta-split">
+          <div class="prc-stack prc-g16">
+            <p class="prc-pill prc-pill--matcha prc-self-start">{m.pricing_cta_pill({}, { locale })}</p>
+            <h2 id="pricing-cta" class="prc-h2">{m.pricing_cta_heading({}, { locale })}</h2>
+            <p class="prc-lead">{m.pricing_cta_text({}, { locale })}</p>
+            <div class="prc-row prc-g12">
+              <a class="prc-btn prc-btn--primary prc-btn--lg" href={freeTools}>
+                {m.pricing_use_free_tools({}, { locale })}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </a>
+            </div>
+          </div>
+          {/* The approved "happy" mascot on its green block; decorative. */}
+          <img
+            src={mascot380.src}
+            srcset={`${mascot380.src} 380w, ${mascot760.src} 760w`}
+            sizes="(min-width: 900px) 380px, 100vw"
+            alt=""
+            width="380"
+            height="225"
+            loading="lazy"
+            decoding="async"
+            class="prc-mascot"
+          />
+        </div>
+      </div>
+    </section>
+
+    <div id="pricing-soon" popover role="status" class="prc-notice">
+      {m.pricing_notice({}, { locale })}
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,723 @@
+/*
+ * The pricing page, Mochifile V2 (docs/design-ref/v2, artboard MFPricing). Light theme only.
+ *
+ * Why plain CSS instead of utilities: the canvas uses values the design system does not hold yet
+ * (its README › "Values introduced by the canvas": the deep-ube accent, card lines, soft shadows,
+ * the "mochi squish" radii, 60/40/26 px headings, the 1104 px column). The Tailwind theme only
+ * generates token values, so this file spells them out once, scoped to `.prc`, with names
+ * prefixed `--prc-` so they never clash with the tokens the shell work is adding. When those
+ * values become tokens, replace each `--prc-*` with its token and delete the line here. The
+ * design guard allows raw values in this file only (design-guard.test.ts).
+ *
+ * Breakpoints are the canvas's: 1100, 900 and 640 px.
+ */
+
+/* The page is as wide as the window; the sections inside keep the 1104 px column. */
+body:has(.prc) {
+  overflow-x: clip;
+}
+
+.prc {
+  /*
+   * Light theme only (README › Current design decisions). The shell's tokens follow the system
+   * colour scheme, so the light values the page uses are repeated here, from tokens.json.
+   */
+  --surface-page: #fff7ec;
+  --surface-card: #ffffff;
+  --surface-sunken: #fffbf4;
+  --ink: #1e1b2e;
+  --ink-muted: #5c566b;
+  --mango: #ffb627;
+  --ube: #9b7bea;
+  --mango-tint: #fff0d1;
+  --strawberry-tint: #ffe3ea;
+  --matcha-tint: #e9f7df;
+  --ube-tint: #efe8fc;
+  --mango-ink: #5a3a00;
+  --strawberry-ink: #7a1532;
+  --matcha-ink: #17391f;
+  --ube-ink: #3b2770;
+  --focus-ring: #1f5eff;
+
+  --prc-accent: #5b3cc4;
+  --prc-card-line: #efe3d0;
+  --prc-soon-line: #b9a6ee;
+  --prc-pro-bg: #faf7ff;
+  --prc-shadow: 0 1px 0 rgba(30, 27, 46, 0.03), 0 12px 32px -12px rgba(91, 60, 196, 0.16);
+  --prc-shadow-lg: 0 2px 0 rgba(30, 27, 46, 0.03), 0 24px 60px -20px rgba(91, 60, 196, 0.28);
+  --prc-shadow-chip: 0 4px 10px -6px rgba(30, 27, 46, 0.18);
+  --prc-shadow-action: 0 10px 24px -10px rgba(30, 27, 46, 0.55);
+  --prc-r-card: 24px 28px 22px 26px;
+  --prc-r-small: 14px 16px 13px 15px;
+  --prc-r-tile: 12px 14px 11px 13px;
+  --prc-r-media: 22px 26px 20px 24px;
+
+  position: relative;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  margin-top: calc(-1 * var(--space-4));
+  background: var(--surface-page);
+  color: var(--ink);
+  font-family: var(--family-sans);
+  font-size: 16px;
+  line-height: 26px;
+  -webkit-font-smoothing: antialiased;
+}
+@media (min-width: 600px) {
+  .prc {
+    margin-top: calc(-1 * var(--space-6));
+  }
+}
+.prc :where(*, *::before, *::after) {
+  box-sizing: border-box;
+}
+.prc :where(a, button, summary, input, label):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.prc img {
+  display: block;
+  max-width: 100%;
+}
+
+/* ---------- layout ---------- */
+.prc-w {
+  width: 100%;
+  max-width: 1104px;
+  margin: 0 auto;
+  padding-inline: 32px;
+}
+.prc-w--mid {
+  max-width: 904px;
+}
+.prc-top {
+  padding-top: 40px;
+}
+.prc-sec {
+  padding-block: 96px;
+}
+.prc-sec-sm {
+  padding-block: 56px;
+}
+.prc-stack {
+  display: flex;
+  flex-direction: column;
+}
+.prc-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.prc-between {
+  justify-content: space-between;
+}
+.prc-center {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.prc-text-center {
+  text-align: center;
+}
+.prc-self-start {
+  align-self: flex-start;
+}
+.prc-g8 {
+  gap: 8px;
+}
+.prc-g12 {
+  gap: 12px;
+}
+.prc-g16 {
+  gap: 16px;
+}
+.prc-g24 {
+  gap: 24px;
+}
+.prc-split {
+  display: grid;
+  align-items: center;
+  gap: 56px;
+}
+.prc-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr));
+}
+.prc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- type ---------- */
+.prc-eyebrow {
+  font-size: 12.5px;
+  line-height: 18px;
+  font-weight: 700;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--prc-accent);
+}
+.prc-h1,
+.prc-h2,
+.prc-h3 {
+  font-family: var(--family-display);
+  font-weight: 700;
+  text-wrap: balance;
+}
+.prc-h1 {
+  font-size: 60px;
+  line-height: 64px;
+  letter-spacing: -1.4px;
+}
+.prc-h2 {
+  font-size: 40px;
+  line-height: 46px;
+  letter-spacing: -0.8px;
+}
+.prc-h3 {
+  font-size: 26px;
+  line-height: 32px;
+  letter-spacing: -0.2px;
+}
+.prc-lead {
+  max-width: 560px;
+  font-size: 19px;
+  line-height: 31px;
+  color: var(--ink-muted);
+}
+.prc-cta .prc-lead {
+  max-width: none;
+}
+.prc-small {
+  font-size: 14px;
+  line-height: 21px;
+}
+.prc-tiny {
+  font-size: 12.5px;
+  line-height: 18px;
+}
+.prc-muted {
+  color: var(--ink-muted);
+}
+/* The highlighted word: a mango marker stroke, like the hand-made brand sheet. */
+.prc-mark {
+  background: linear-gradient(
+    180deg,
+    transparent 58%,
+    rgba(255, 182, 39, 0.55) 58%,
+    rgba(255, 182, 39, 0.55) 92%,
+    transparent 92%
+  );
+  padding: 0 4px;
+  margin: 0 -4px;
+}
+
+/* ---------- buttons, pills, chips ---------- */
+.prc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--family-sans);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.prc-btn--lg {
+  min-height: 52px;
+  padding: 0 28px;
+  font-size: 17px;
+}
+.prc-btn--block {
+  width: 100%;
+}
+.prc-btn--primary {
+  background: var(--ink);
+  color: var(--surface-page);
+  box-shadow: var(--prc-shadow-action);
+}
+.prc-btn--soft {
+  background: var(--surface-card);
+  color: var(--ink);
+  border: 1.5px solid var(--prc-card-line);
+  box-shadow: var(--prc-shadow);
+}
+/* Nothing paid can be bought yet: the button is drawn, dimmed and cannot be pressed. */
+.prc-btn--disabled {
+  margin-top: auto;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.prc-pill {
+  font-family: var(--family-sans);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.prc-pill--ube {
+  background: var(--ube-tint);
+  color: var(--ube-ink);
+}
+.prc-pill--mango {
+  background: var(--mango-tint);
+  color: var(--mango-ink);
+}
+.prc-pill--matcha {
+  background: var(--matcha-tint);
+  color: var(--matcha-ink);
+}
+.prc-pill--straw {
+  background: var(--strawberry-tint);
+  color: var(--strawberry-ink);
+}
+.prc-pill--ink {
+  background: var(--ink);
+  color: var(--surface-page);
+}
+.prc-pill--soon {
+  background: var(--surface-card);
+  color: var(--ube-ink);
+  border: 1.5px dashed var(--prc-soon-line);
+}
+.prc-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--prc-card-line);
+  border-radius: 999px;
+  background: var(--surface-card);
+  box-shadow: var(--prc-shadow-chip);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 26px;
+  text-align: center;
+}
+
+/* ---------- Monthly / Yearly ---------- */
+.prc-toggle {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  margin: 12px 0 0;
+  padding: 4px;
+  border: 1.5px solid var(--prc-card-line);
+  border-radius: 999px;
+  background: var(--surface-card);
+}
+.prc-toggle legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.prc-toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.prc-toggle label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 21px;
+  cursor: pointer;
+}
+.prc-toggle input:checked + label {
+  background: var(--ink);
+  color: var(--surface-page);
+}
+/* Monthly is the default and what the page shows without :has(); the switch only shows more. */
+.prc [data-yearly] {
+  display: none;
+}
+.prc:has(#billing-yearly:checked) [data-yearly] {
+  display: revert;
+}
+.prc:has(#billing-yearly:checked) [data-monthly] {
+  display: none;
+}
+
+/* ---------- cards ---------- */
+.prc-card {
+  background: var(--surface-card);
+  border: 1.5px solid var(--prc-card-line);
+  border-radius: var(--prc-r-card);
+  box-shadow: var(--prc-shadow);
+}
+.prc-card--lg {
+  box-shadow: var(--prc-shadow-lg);
+}
+
+/* ---------- plans ---------- */
+.prc-plans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 18px;
+  margin-top: 40px;
+}
+.prc-plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 24px;
+}
+.prc-plan--pop {
+  border: 2px solid var(--ube);
+  background: var(--prc-pro-bg);
+  box-shadow: var(--prc-shadow-lg);
+}
+.prc-popular {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.prc-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.prc-price {
+  font-family: var(--family-display);
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 40px;
+  letter-spacing: -0.6px;
+}
+.prc-price--small {
+  font-size: 32px;
+}
+.prc-price-row--small {
+  gap: 6px;
+}
+.prc-billed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.prc-features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 20px;
+}
+.prc-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.prc-features svg,
+.prc-free-list svg {
+  flex: 0 0 auto;
+  color: var(--matcha-ink);
+  margin-top: 1px;
+}
+
+/* ---------- the free plan ---------- */
+.prc-free {
+  margin-top: 18px;
+  padding: 24px 28px;
+}
+.prc-free-split {
+  grid-template-columns: 160px minmax(0, 1fr) auto;
+  gap: 28px;
+}
+.prc-free-list {
+  --n: 2;
+  gap: 10px 24px;
+}
+.prc-free-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.prc-free-list svg {
+  margin-top: 2px;
+}
+.prc-note {
+  margin-top: 18px;
+  text-align: center;
+}
+.prc-callout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 760px;
+  margin: 24px auto 0;
+  padding: 16px 18px;
+  border: 1.5px solid var(--prc-card-line);
+  border-radius: var(--prc-r-small);
+  background: var(--surface-card);
+  font-size: 15px;
+  line-height: 24px;
+}
+.prc-tile {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--prc-r-tile);
+  background: var(--ube-tint);
+  color: var(--ube-ink);
+}
+.prc-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--prc-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.prc-link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- comparison table ---------- */
+.prc-table-wrap {
+  /* The table's visually hidden text is positioned in its far columns: keep it in this box. */
+  position: relative;
+  overflow-x: auto;
+}
+.prc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+  line-height: 21px;
+}
+.prc-table th,
+.prc-table td {
+  padding: 14px 16px;
+  border-bottom: 1.5px solid var(--prc-card-line);
+  vertical-align: top;
+  text-align: left;
+}
+.prc-table thead th {
+  vertical-align: middle;
+}
+.prc-table th[scope="col"] {
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.prc-table th[scope="row"] {
+  font-weight: 400;
+}
+.prc-table .prc-group {
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.prc-table .prc-c {
+  text-align: center;
+}
+.prc-table .prc-hl {
+  background: rgba(239, 232, 252, 0.45);
+}
+.prc-table th[scope="col"].prc-hl {
+  background: rgba(239, 232, 252, 0.45);
+}
+.prc-table tbody:last-of-type tr:last-child > * {
+  border-bottom: 0;
+}
+.prc-yes {
+  display: inline-block;
+  color: var(--matcha-ink);
+  vertical-align: middle;
+}
+
+/* ---------- questions ---------- */
+.prc-faq {
+  overflow: hidden;
+  border: 1.5px solid var(--prc-card-line);
+  border-radius: var(--prc-r-card);
+  background: var(--surface-card);
+  box-shadow: var(--prc-shadow);
+}
+.prc-faq details + details {
+  border-top: 1.5px solid var(--prc-card-line);
+}
+.prc-faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 22px;
+  font-size: 15px;
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+.prc-faq summary::-webkit-details-marker {
+  display: none;
+}
+.prc-faq summary svg {
+  flex: 0 0 auto;
+  color: var(--prc-accent);
+}
+.prc-faq details[open] summary svg {
+  transform: rotate(180deg);
+}
+.prc-faq details[open] summary {
+  padding-block: 14px 8px;
+}
+.prc-faq details p {
+  padding: 0 22px 18px;
+  color: var(--ink-muted);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+/* ---------- closing card ---------- */
+.prc-cta {
+  padding: 48px 40px;
+  background: #fff;
+}
+.prc-cta-split {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+  gap: 32px;
+}
+.prc-mascot {
+  width: 100%;
+  height: auto;
+  border-radius: var(--prc-r-media);
+}
+
+/* ---------- "Coming soon" notice ---------- */
+.prc-notice {
+  position: fixed;
+  inset: auto auto calc(16px + env(safe-area-inset-bottom)) 50%;
+  width: max-content;
+  max-width: 700px;
+  margin: 0;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--surface-page);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  text-align: center;
+  transform: translateX(-50%);
+  box-shadow: var(--prc-shadow-action);
+}
+.prc-notice:popover-open {
+  animation: prc-notice 4s ease-in forwards;
+}
+@keyframes prc-notice {
+  0%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 1100px) {
+  .prc-grid {
+    --n: 2;
+  }
+  .prc-plans {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 520px;
+    margin-inline: auto;
+  }
+}
+@media (max-width: 900px) {
+  .prc-split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+}
+@media (max-width: 640px) {
+  .prc-w {
+    padding-inline: 20px;
+  }
+  .prc-sec {
+    padding-block: 64px;
+  }
+  .prc-sec-sm {
+    padding-block: 40px;
+  }
+  .prc-h1 {
+    font-size: 40px;
+    line-height: 44px;
+    letter-spacing: -0.9px;
+  }
+  .prc-h2 {
+    font-size: 30px;
+    line-height: 35px;
+    letter-spacing: -0.5px;
+  }
+  .prc-h3 {
+    font-size: 22px;
+    line-height: 28px;
+  }
+  .prc-lead {
+    font-size: 17px;
+    line-height: 27px;
+  }
+  .prc-free-list {
+    --n: 1;
+  }
+  /* A long label (Portuguese) wraps instead of leaving the screen at 320 px. */
+  .prc-btn--lg {
+    padding-block: 12px;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+  }
+  .prc-table {
+    min-width: 620px;
+  }
+  .prc-cta {
+    padding: 32px 22px;
+  }
+}
