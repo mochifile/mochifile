@@ -14,8 +14,6 @@
  */
 import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import mascot144 from '../assets/brand/expr-idea-144.webp'
-import mascot276 from '../assets/brand/expr-idea-276.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import {
   API_BASE_URL,
@@ -27,6 +25,7 @@ import {
   jobsResponse,
   mergeExample,
 } from '../lib/docs-api'
+import { illustration } from '../lib/illustrations'
 import { samePathInAllLocales } from '../lib/seo'
 import DocsExample from './DocsExample.astro'
 
@@ -344,12 +343,8 @@ const label = 'type-eyebrow text-ink-muted uppercase'
 
         <section aria-labelledby="help-heading" class="flex flex-col items-center gap-3 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-6 text-center sm:p-10">
           <img
-            src={mascot144.src}
-            srcset={`${mascot144.src} 144w, ${mascot276.src} 276w`}
-            sizes="72px"
+            {...illustration('expr-idea')}
             alt=""
-            width={276}
-            height={252}
             loading="lazy"
             decoding="async"
             class="h-auto w-[calc(var(--space-16)+var(--space-2))] rounded-md-squish-a"

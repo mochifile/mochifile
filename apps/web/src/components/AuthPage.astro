@@ -25,13 +25,10 @@
  */
 import type { Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import wink168 from '../assets/brand/expr-wink-168.webp'
-import wink276 from '../assets/brand/expr-wink-276.webp'
-import sheet380 from '../assets/brand/sheet-happy-380.webp'
-import sheet700 from '../assets/brand/sheet-happy-700.webp'
 import GoogleG from '../assets/google-g.svg'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { type AuthMode, authPaths, authStepId } from '../lib/auth'
+import { illustration } from '../lib/illustrations'
 
 interface Props {
   mode: AuthMode
@@ -125,12 +122,8 @@ const previewLinks = [
         signUp && (
           <section aria-labelledby="auth-benefits" class="flex flex-col gap-2 rounded-card border-hairline border-card-line bg-surface-card shadow-card p-5 sm:p-7">
             <img
-              src={sheet700.src}
-              srcset={`${sheet380.src} 380w, ${sheet700.src} 700w`}
-              sizes="(min-width: 1024px) 420px, calc(100vw - 72px)"
+              {...illustration('sheet-happy', '(min-width: 1024px) 420px, calc(100vw - 72px)')}
               alt=""
-              width={1100}
-              height={651}
               decoding="async"
               class="mb-3 h-auto w-full rounded-lg-squish-a"
             />
@@ -159,12 +152,8 @@ const previewLinks = [
           {
             !signUp && (
               <img
-                src={wink168.src}
-                srcset={`${wink168.src} 168w, ${wink276.src} 276w`}
-                sizes="84px"
+                {...illustration('expr-wink')}
                 alt=""
-                width={276}
-                height={252}
                 loading="eager"
                 decoding="async"
                 class="h-auto w-[calc(var(--space-16)+var(--space-5))] rounded-md-squish-a"

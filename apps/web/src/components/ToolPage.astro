@@ -3,11 +3,8 @@ import { getEntry, render } from 'astro:content'
 import { localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
 import { formatBytes } from '@mochifile/tool-kit'
-import celebrate from '../assets/tool/expr-celebrate.webp'
-import determined from '../assets/tool/expr-determined.webp'
-import normal from '../assets/tool/expr-normal.webp'
-import sad from '../assets/tool/expr-sad.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { illustration } from '../lib/illustrations.ts'
 import { stepParts } from '../lib/page-copy.ts'
 import { serializeJsonLd, toolJsonLd } from '../lib/seo'
 import { shellPaths } from '../lib/site-nav'
@@ -42,8 +39,10 @@ const entry = await getEntry('toolContent', contentId(page, locale))
 if (!entry) throw new Error(`Missing content ${contentId(page, locale)}`)
 const { Content } = await render(entry)
 const { steps = [], faq = [] } = entry.data
-// The step cards' mascots, in the order of the steps (docs/design-ref/v2/assets expr-*).
-const stepMascots = [normal, determined, celebrate]
+// The step cards' mascots, in the order of the steps (assets/illustrations expr-*).
+const normal = illustration('expr-normal')
+const sad = illustration('expr-sad')
+const stepMascots = [normal, illustration('expr-determined'), illustration('expr-celebrate')]
 
 const breadcrumbs = [
   { name: m.breadcrumb_home({}, { locale }), path: localePath(locale) },

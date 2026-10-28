@@ -6,8 +6,7 @@
  * time); the title, eyebrow and description are Paraglide messages. Static HTML, no script.
  *
  * About opens with the happy mascot sheet, on its own green block as drawn, above the copy
- * (`assets/brand`: the artboard's `sheet-happy.png` at 380, 700 and 1100 px as WebP, 26 KB
- * together; the build has no image optimizer, like the wordmark's copies in `assets/logo`).
+ * (`assets/illustrations`, see `lib/illustrations.ts`).
  * The artboards' yellow placeholders (founding story, a line about the maker, a renewable-energy
  * claim, server locations, an analytics provider) are not shown: the README says to replace them
  * with real information or remove them, and nothing here may be invented.
@@ -15,10 +14,8 @@
 import { getEntry, render } from 'astro:content'
 import { type Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import sheet380 from '../assets/brand/sheet-happy-380.webp'
-import sheet700 from '../assets/brand/sheet-happy-700.webp'
-import sheet1100 from '../assets/brand/sheet-happy-1100.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { illustration } from '../lib/illustrations'
 import { type PageId, pageContentId, pagePaths } from '../lib/pages'
 import PageHeading from './PageHeading.astro'
 
@@ -68,12 +65,8 @@ const headingId = `${id}-heading`
       id === 'about' && (
         // Decoration: the headings say everything the picture does.
         <img
-          src={sheet700.src}
-          srcset={`${sheet380.src} 380w, ${sheet700.src} 700w, ${sheet1100.src} 1100w`}
-          sizes="(min-width: 764px) 700px, calc(100vw - 32px)"
+          {...illustration('sheet-happy', '(min-width: 764px) 720px, calc(100vw - 32px)')}
           alt=""
-          width={1100}
-          height={651}
           decoding="async"
           class="h-auto w-full rounded-mascot"
         />

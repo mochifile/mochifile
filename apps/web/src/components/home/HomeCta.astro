@@ -2,7 +2,7 @@
 /** Closing call to action: leads to the image compressor, the one tool that works today. */
 import type { Locale } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import squish from '../../assets/home/sheet-squish-800.webp'
+import { illustration } from '../../lib/illustrations'
 import Icon from './Icon.astro'
 
 interface Props {
@@ -31,7 +31,7 @@ const { locale, toolHref } = Astro.props
           )
         }
       </div>
-      <img src={squish.src} width={squish.width} height={squish.height} alt="" loading="lazy" decoding="async" class="hv2-media" />
+      <img {...illustration('sheet-squish', '(min-width: 1101px) 370px, (min-width: 901px) 340px, (min-width: 641px) calc(100vw - 146px), calc(100vw - 122px)')} alt="" loading="lazy" decoding="async" class="hv2-media" />
     </div>
   </div>
 </section>

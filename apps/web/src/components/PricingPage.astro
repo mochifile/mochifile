@@ -12,9 +12,8 @@
  */
 import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import mascot380 from '../assets/pricing/sheet-happy-380.webp'
-import mascot760 from '../assets/pricing/sheet-happy-760.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { illustration } from '../lib/illustrations'
 import { pagePaths } from '../lib/pages'
 import {
   formatUsd,
@@ -416,12 +415,8 @@ const check = 'M5 12.5l4.5 4.5L19 7'
           </div>
           {/* The approved "happy" mascot on its green block; decorative. */}
           <img
-            src={mascot380.src}
-            srcset={`${mascot380.src} 380w, ${mascot760.src} 760w`}
-            sizes="(min-width: 900px) 380px, 100vw"
+            {...illustration('sheet-happy', '(min-width: 900px) 380px, (min-width: 641px) calc(100vw - 146px), calc(100vw - 86px)')}
             alt=""
-            width="380"
-            height="225"
             loading="lazy"
             decoding="async"
             class="prc-mascot"

@@ -14,8 +14,6 @@ import { getCollection } from 'astro:content'
  */
 import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import sheetSquish380 from '../assets/brand/sheet-squish-380.webp'
-import sheetSquish700 from '../assets/brand/sheet-squish-700.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { cardSquish, topicTone } from '../lib/guide-style'
 import {
@@ -27,6 +25,7 @@ import {
   guideTopics,
   publishedGuides,
 } from '../lib/guides'
+import { illustration } from '../lib/illustrations'
 import { toolPaths, tools } from '../lib/tools'
 import GuideCard from './GuideCard.astro'
 import GuideCta from './GuideCta.astro'
@@ -111,12 +110,8 @@ const arrow = 'M5 12h14M13 6l6 6-6 6'
               </span>
             </span>
             <img
-              src={sheetSquish700.src}
-              srcset={`${sheetSquish380.src} 380w, ${sheetSquish700.src} 700w`}
-              sizes="(min-width: 1024px) 336px, 70vw"
+              {...illustration('sheet-squish', '(min-width: 1024px) 336px, 70vw')}
               alt=""
-              width={1100}
-              height={651}
               decoding="async"
               class="hidden h-auto w-full rounded-mascot sm:block"
             />

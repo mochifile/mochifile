@@ -13,12 +13,11 @@ import { getEntry, render } from 'astro:content'
  */
 import { type Locale, localePath } from '@mochifile/i18n'
 import { m } from '@mochifile/i18n/messages'
-import sheetWaiting380 from '../assets/brand/sheet-waiting-380.webp'
-import sheetWaiting696 from '../assets/brand/sheet-waiting-696.webp'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { cardImage } from '../lib/card-images'
 import { topicTone } from '../lib/guide-style'
 import { type Guide, guidePaths, guidesIndexPaths } from '../lib/guides'
+import { illustration } from '../lib/illustrations'
 import { toolPaths, tools } from '../lib/tools'
 import GuideCta from './GuideCta.astro'
 
@@ -86,12 +85,8 @@ const indexPath = guidesIndexPaths()[locale]
         <h1 id="guide-title" class="type-page-title-sm text-balance sm:type-page-title">{meta.title}</h1>
         <p class="type-body-sm text-ink-muted">{m.guide_byline({}, { locale })} · {m.guides_read_min({ minutes: meta.minutes }, { locale })}</p>
         <img
-          src={sheetWaiting696.src}
-          srcset={`${sheetWaiting380.src} 380w, ${sheetWaiting696.src} 696w`}
-          sizes="(min-width: 764px) 700px, calc(100vw - 32px)"
+          {...illustration('sheet-waiting', '(min-width: 764px) 700px, calc(100vw - 32px)')}
           alt=""
-          width={696}
-          height={428}
           decoding="async"
           class="h-auto w-full rounded-mascot"
         />
