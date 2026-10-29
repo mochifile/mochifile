@@ -165,8 +165,8 @@ settings:
 catalogs:
   default:
     '@types/node':
-      specifier: 24.19.1
-      version: 24.19.1
+      specifier: 24.19.2
+      version: 24.19.2
     '@types/react':
       specifier: 19.3.0
       version: 19.3.0
@@ -194,8 +194,8 @@ importers:
         specifier: 2.5.15
         version: 2.5.15
       '@types/node':
-        specifier: 24.19.1
-        version: 24.19.1
+        specifier: 24.19.2
+        version: 24.19.2
       turbo:
         specifier: 2.11.7
         version: 2.11.7
@@ -207,7 +207,7 @@ importers:
     dependencies:
       '@astrojs/react':
         specifier: 7.0.0
-        version: 7.0.0(@types/node@24.19.1)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(yaml@2.9.1)
+        version: 7.0.0(@types/node@24.19.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(yaml@2.9.1)
       '@astrojs/sitemap':
         specifier: 3.7.4
         version: 3.7.4
@@ -222,10 +222,10 @@ importers:
         version: link:../../packages/ui
       '@tailwindcss/vite':
         specifier: 4.3.3
-        version: 4.3.3(vite@8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))
+        version: 4.3.3(vite@8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))
       astro:
         specifier: 7.3.5
-        version: 7.3.5(@types/node@24.19.1)(jiti@2.7.0)(yaml@2.9.1)
+        version: 7.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)
       react:
         specifier: 'catalog:'
         version: 19.3.0
@@ -259,7 +259,7 @@ importers:
         version: 1.63.0
       '@types/node':
         specifier: 'catalog:'
-        version: 24.19.1
+        version: 24.19.2
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0
@@ -277,10 +277,10 @@ importers:
         version: 6.0.3
       vitest:
         specifier: 'catalog:'
-        version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+        version: 5.0.3(@types/node@24.19.2)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))
       wrangler:
         specifier: 4.143.0
-        version: 4.143.0(@types/node@24.19.1)
+        version: 4.143.0(@types/node@24.19.2)
 
   packages/engine-image:
     dependencies:
@@ -311,31 +311,31 @@ importers:
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
-        version: 24.19.1
+        version: 24.19.2
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
       vitest:
         specifier: 'catalog:'
-        version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+        version: 5.0.3(@types/node@24.19.2)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))
 
   packages/i18n:
     devDependencies:
       '@inlang/paraglide-js':
         specifier: 2.25.4
-        version: 2.25.4(typescript@6.0.3)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+        version: 2.25.4(typescript@6.0.3)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))
       '@inlang/plugin-message-format':
         specifier: 4.4.4
         version: 4.4.4
       '@types/node':
         specifier: 'catalog:'
-        version: 24.19.1
+        version: 24.19.2
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
       vitest:
         specifier: 'catalog:'
-        version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+        version: 5.0.3(@types/node@24.19.2)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))
 
   packages/tool-kit:
     dependencies:
@@ -348,13 +348,13 @@ importers:
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
-        version: 24.19.1
+        version: 24.19.2
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
       vitest:
         specifier: 'catalog:'
-        version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+        version: 5.0.3(@types/node@24.19.2)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))
 
   packages/tool-ui:
     dependencies:
@@ -391,7 +391,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: 'catalog:'
-        version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+        version: 5.0.3(@types/node@24.19.2)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))
 
   packages/tools/_template:
     dependencies:
@@ -416,7 +416,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: 'catalog:'
-        version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+        version: 5.0.3(@types/node@24.19.2)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))
 
   packages/tools/compress-image:
     dependencies:
@@ -444,7 +444,7 @@ importers:
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@types/node':
         specifier: 'catalog:'
-        version: 24.19.1
+        version: 24.19.2
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0
@@ -465,7 +465,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: 'catalog:'
-        version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+        version: 5.0.3(@types/node@24.19.2)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))
 
   packages/ui:
     devDependencies:
@@ -495,7 +495,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: 'catalog:'
-        version: 5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+        version: 5.0.3(@types/node@24.19.2)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))
 
 packages:
 
@@ -2168,8 +2168,8 @@ packages:
   '@types/nlcst@2.0.3':
     resolution: {integrity: sha512-vSYNSDe6Ix3q+6Z7ri9lyWqgGhJTmzRjZRqyq15N0Z/1/UnVsno9G/N40NBijoYx2seFDIl0+B2mgAb9mezUCA==}
 
-  '@types/node@24.19.1':
-    resolution: {integrity: sha512-aS3/DG0oM05K0RIXXP+hKjinGG5IgSSVGzswZxW3O0sS3pH4/fycXundUC9XsszgKCk4gHXylTEK6hyFxVxnoQ==}
+  '@types/node@24.19.2':
+    resolution: {integrity: sha512-93d49wCWJkCyN87MxLpNN6KXPCwFw7bVUg79mGUV1OS40JGWwVCr8n61DXCSqz7CV6/VfPkb7xec7uP2M+QHWQ==}
 
   '@types/react-dom@19.3.0':
     resolution: {integrity: sha512-ZI7bU42mZXXKHn/qNLEw2IrbiINU7X5+vfgdixBHkCNpYWXjKgfQ/P+uyGb5CjOLB9UcnTeg3rylQtV2hym44Q==}
@@ -3852,17 +3852,17 @@ snapshots:
     dependencies:
       prismjs: 1.30.0
 
-  '@astrojs/react@7.0.0(@types/node@24.19.1)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(yaml@2.9.1)':
+  '@astrojs/react@7.0.0(@types/node@24.19.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(esbuild@0.28.2)(jiti@2.7.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(yaml@2.9.1)':
     dependencies:
       '@astrojs/internal-helpers': 0.11.0
       '@types/react': 19.3.0
       '@types/react-dom': 19.3.0(@types/react@19.3.0)
-      '@vitejs/plugin-react': 6.1.1(vite@8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))
+      '@vitejs/plugin-react': 6.1.1(vite@8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))
       devalue: 5.9.4
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
       ultrahtml: 1.7.0
-      vite: 8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
     transitivePeerDependencies:
       - '@rolldown/plugin-babel'
       - '@types/node'
@@ -4537,7 +4537,7 @@ snapshots:
   '@img/sharp-win32-x64@0.35.5':
     optional: true
 
-  '@inlang/paraglide-js@2.25.4(typescript@6.0.3)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))':
+  '@inlang/paraglide-js@2.25.4(typescript@6.0.3)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))':
     dependencies:
       '@inlang/recommend-sherlock': 0.2.1
       '@inlang/sdk': 3.0.6
@@ -4550,7 +4550,7 @@ snapshots:
       valibot: 1.5.0(typescript@6.0.3)
     optionalDependencies:
       typescript: 6.0.3
-      vite: 8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
 
   '@inlang/plugin-message-format@4.4.4':
     dependencies:
@@ -4883,12 +4883,12 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.3.3
       '@tailwindcss/oxide-win32-x64-msvc': 4.3.3
 
-  '@tailwindcss/vite@4.3.3(vite@8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))':
+  '@tailwindcss/vite@4.3.3(vite@8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))':
     dependencies:
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
       tailwindcss: 4.3.3
-      vite: 8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
 
   '@testing-library/dom@10.4.2':
     dependencies:
@@ -4960,7 +4960,7 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
-  '@types/node@24.19.1':
+  '@types/node@24.19.2':
     dependencies:
       undici-types: 7.24.6
 
@@ -4974,25 +4974,25 @@ snapshots:
 
   '@types/sax@1.2.7':
     dependencies:
-      '@types/node': 24.19.1
+      '@types/node': 24.19.2
 
   '@types/unist@3.0.3': {}
 
   '@ungap/structured-clone@1.4.0': {}
 
-  '@vitejs/plugin-react@6.1.1(vite@8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))':
+  '@vitejs/plugin-react@6.1.1(vite@8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
-      vite: 8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
 
-  '@vitest/mocker@5.0.3(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))':
+  '@vitest/mocker@5.0.3(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       '@vitest/spy': 5.0.3
       estree-walker: 3.0.3
       magic-string: 1.4.2
     optionalDependencies:
-      vite: 8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
 
   '@vitest/spy@5.0.3': {}
 
@@ -5100,7 +5100,7 @@ snapshots:
 
   assertion-error@2.0.1: {}
 
-  astro@7.3.5(@types/node@24.19.1)(jiti@2.7.0)(yaml@2.9.1):
+  astro@7.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1):
     dependencies:
       '@astrojs/compiler-rs': 0.5.1
       '@astrojs/internal-helpers': 0.11.0
@@ -5150,13 +5150,13 @@ snapshots:
       unifont: 0.7.5
       unstorage: 1.17.5
       verkit: 0.4.1
-      vite: 8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
-      vitefu: 1.1.3(vite@8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))
+      vite: 8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
+      vitefu: 1.1.3(vite@8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1))
       xxhash-wasm: 1.1.0
       yargs-parser: 22.0.0
       zod: 4.6.5
     optionalDependencies:
-      sharp: 0.35.5(@types/node@24.19.1)
+      sharp: 0.35.5(@types/node@24.19.2)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -5723,10 +5723,10 @@ snapshots:
 
   micromark-util-types@2.0.3: {}
 
-  miniflare@5.20260926.0-alpha(@types/node@24.19.1):
+  miniflare@5.20260926.0-alpha(@types/node@24.19.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
-      sharp: 0.35.4(@types/node@24.19.1)
+      sharp: 0.35.4(@types/node@24.19.2)
       undici: 7.29.0
       workerd: 1.20260926.1
       ws: 8.21.0
@@ -5953,7 +5953,7 @@ snapshots:
 
   semver@7.8.5: {}
 
-  sharp@0.35.4(@types/node@24.19.1):
+  sharp@0.35.4(@types/node@24.19.2):
     dependencies:
       '@img/colour': 1.1.0
       detect-libc: 2.1.2
@@ -5984,9 +5984,9 @@ snapshots:
       '@img/sharp-win32-arm64': 0.35.4
       '@img/sharp-win32-ia32': 0.35.4
       '@img/sharp-win32-x64': 0.35.4
-      '@types/node': 24.19.1
+      '@types/node': 24.19.2
 
-  sharp@0.35.5(@types/node@24.19.1):
+  sharp@0.35.5(@types/node@24.19.2):
     dependencies:
       '@img/colour': 1.1.0
       detect-libc: 2.1.2
@@ -6017,7 +6017,7 @@ snapshots:
       '@img/sharp-win32-arm64': 0.35.5
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
-      '@types/node': 24.19.1
+      '@types/node': 24.19.2
     optional: true
 
   shiki@4.5.0:
@@ -6035,7 +6035,7 @@ snapshots:
 
   sitemap@9.0.1:
     dependencies:
-      '@types/node': 24.19.1
+      '@types/node': 24.19.2
       '@types/sax': 1.2.7
       arg: 5.0.2
       sax: 1.6.1
@@ -6233,7 +6233,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vite@8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1):
+  vite@8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
@@ -6241,20 +6241,20 @@ snapshots:
       rolldown: 1.2.12
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 24.19.1
+      '@types/node': 24.19.2
       esbuild: 0.28.2
       fsevents: 2.3.3
       jiti: 2.7.0
       yaml: 2.9.1
 
-  vitefu@1.1.3(vite@8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)):
+  vitefu@1.1.3(vite@8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)):
     optionalDependencies:
-      vite: 8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
 
-  vitest@5.0.3(@types/node@24.19.1)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0)):
+  vitest@5.0.3(@types/node@24.19.2)(jsdom@30.1.1)(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0)):
     dependencies:
       '@types/chai': 5.2.3
-      '@vitest/mocker': 5.0.3(vite@8.3.2(@types/node@24.19.1)(jiti@2.7.0))
+      '@vitest/mocker': 5.0.3(vite@8.3.2(@types/node@24.19.2)(jiti@2.7.0))
       chai: 6.3.0
       es-module-lexer: 2.3.2
       expect-type: 1.4.0
@@ -6265,10 +6265,10 @@ snapshots:
       tinybench: 6.2.0
       tinyexec: 1.3.1
       tinyglobby: 0.2.17
-      vite: 8.3.2(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
+      vite: 8.3.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(yaml@2.9.1)
       why-is-node-running: 3.2.1
     optionalDependencies:
-      '@types/node': 24.19.1
+      '@types/node': 24.19.2
       jsdom: 30.1.1
     transitivePeerDependencies:
       - msw
@@ -6427,13 +6427,13 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260926.1
       '@cloudflare/workerd-windows-64': 1.20260926.1
 
-  wrangler@4.143.0(@types/node@24.19.1):
+  wrangler@4.143.0(@types/node@24.19.2):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20260926.1)
       blake3-wasm: 2.1.5
       esbuild: 0.28.1
-      miniflare: 5.20260926.0-alpha(@types/node@24.19.1)
+      miniflare: 5.20260926.0-alpha(@types/node@24.19.2)
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.24
       workerd: 1.20260926.1
