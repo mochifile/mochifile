@@ -114,10 +114,11 @@ function joinName(stem: string, suffix: string, extension: string): string {
  * Makes one name fit for an archive, keeping as much of it as it can:
  * - no folders: `/` and `\` (which would point outside the folder the ZIP is extracted to), and the
  *   characters Windows refuses (`: * ? " < > |`; a `:` makes an alternate data stream there) and
- *   control characters become `_`;
+ *   the control characters U+0000–U+001F and U+007F become `_` (the C1 ones are kept);
  * - no dots or spaces at the end, no empty name, no `.` or `..`: `file`;
- * - no Windows device name (`CON`, `PRN`, `AUX`, `NUL`, `COM1`–`COM9`, `LPT1`–`LPT9`, with any
- *   extension): a `_` goes before it;
+ * - no Windows device name: when the part before the first dot, without trailing spaces, is `CON`,
+ *   `PRN`, `AUX`, `NUL`, or `COM` or `LPT` followed by one digit (0–9, or the superscripts ¹ ² ³),
+ *   in any case and with any extension, a `_` goes before the name;
  * - unpaired surrogates become U+FFFD;
  * - at most `MAX_NAME_BYTES` UTF-8 bytes, keeping the extension.
  */

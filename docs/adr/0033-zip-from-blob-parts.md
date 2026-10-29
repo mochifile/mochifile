@@ -53,12 +53,13 @@ We will build the ZIP ourselves, as a Blob of parts, and drop `client-zip`.
   person extracting, and one overwrote the other in every extractor tried. `createZip` now names
   the entries itself, through `zipEntries`, so no caller can skip it. For each file, in order:
   1. *Clean.* `/` and `\`, the characters Windows refuses (`: * ? " < > |`; a `:` makes an
-     alternate data stream there) and control characters become `_`; unpaired surrogates become
-     U+FFFD; dots and spaces at the end are removed (Windows does, so `a.` and `a` would meet);
-     an empty name, `.` and `..` become `file`; a name whose part before the first dot is a
-     Windows device (`CON`, `PRN`, `AUX`, `NUL`, `COM0`–`COM9`, `LPT0`–`LPT9`, also with the
-     superscript digits, in any case, with any extension) gets a `_` in front. The result cannot
-     point to a folder, inside or outside the one extracted to.
+     alternate data stream there) and the control characters U+0000–U+001F and U+007F become `_`
+     (the C1 controls, U+0080–U+009F, are kept); unpaired surrogates become U+FFFD; dots and
+     spaces at the end are removed (Windows does, so `a.` and `a` would meet); an empty name, `.`
+     and `..` become `file`; a name gets a `_` in front when the part before its first dot,
+     without trailing spaces, is `CON`, `PRN`, `AUX` or `NUL`, or `COM` or `LPT` followed by one
+     digit (0–9, or the superscripts ¹ ² ³), in any case and with any extension. The result
+     cannot point to a folder, inside or outside the one extracted to.
   2. *Cut* to 255 UTF-8 bytes, by characters, keeping an extension of up to 16 bytes. The format
      allows 65,535 bytes, but the file systems people extract to allow 255 per name, and extractors
      fail on longer ones. A name over the limit used to be an error, now it is shortened.
@@ -71,9 +72,11 @@ We will build the ZIP ourselves, as a Blob of parts, and drop `client-zip`.
   4. *Number.* A name the same as an earlier one gets ` (2)`, ` (3)`… before its extension
      (`photo.jpg`, `photo (2).jpg`), the first number that no entry has, so numbering never makes a
      new collision, and the result is the same for the same list in the same order. The names are
-     otherwise kept in their own form (an NFD name stays NFD), and a name that is already safe and
-     different is not touched. The number is made to fit the 255 bytes.
-
+     otherwise kept in their own form (an NFD name stays NFD). A name that is safe and not the same
+     as any other name of the list is kept, **unless an earlier repeated name has taken it as its
+     number**: numbering follows the order of the list, so `a.jpg`, `a.jpg`, `a (2).jpg` give
+     `a.jpg`, `a (2).jpg`, `a (2) (2).jpg`, and the same names in another order can number a
+     different file. The number is made to fit the 255 bytes.
 - **Failures.** A file that cannot be read, or gives fewer bytes than its size, rejects
   `createZip`, and `downloadZip` creates no URL and clicks nothing. A ZIP that is wrong is never
   offered.
@@ -81,7 +84,11 @@ We will build the ZIP ourselves, as a Blob of parts, and drop `client-zip`.
   in `third-party-licenses.ts`. The builder (`zip-archive.ts`: names, CRC-32, headers) is still
   loaded on the first sign of intent (`preloadZip`, called when the tool prepares), as the library
   was, through a dynamic `import()` in `zip.ts`. It must stay that way: imported statically it ends
-  up in the tool's first load (see Consequences).
+  up in the tool's first load (see Consequences). `zip.ts` forgets a failed load, so that its own
+  state does not stay stuck, and a test checks that with the module mocked. Whether a second
+  `import()` of the same chunk can then succeed is up to the browser: Chromium can keep the failed
+  result for the life of the page, so there a reload may be needed. That was not tested in real
+  browsers (same as before for `client-zip`) and is a follow-up.
 
 ## Measurements
 
@@ -160,6 +167,16 @@ What the table says, and does not say:
   ZIP can differ from the ones of the individual downloads (`Screenshot 14:31.png` is
   `Screenshot 14_31.png` in the ZIP); the individual download keeps its own name. Which of two
   files gets the number depends on their order in the list.
+- **Names that start with `._`, and C1 controls.** `._name` is how macOS stores the metadata of a
+  file on volumes that cannot (AppleDouble). Tried here with `._a.jpg` and `._lonely.jpg` in a
+  ZIP: `ditto -x -k` (what the macOS Archive Utility uses) wrote neither, without an error,
+  while `unzip`, `bsdtar` and Python wrote both. The policy keeps such names (they are not a
+  collision and are legal names), so a result file called `._…` may not appear when a ZIP is
+  extracted with the macOS built-in tool; photos are not normally called that. The C1 controls
+  (U+0080–U+009F) are not replaced: only U+0000–U+001F and U+007F are. The four extractors wrote
+  them, invisible, and that is all that was checked; some tools show or handle them badly. Other
+  invisible characters (zero width, bidirectional marks) are kept too. Neither case was
+  changed, and both are open follow-ups.
 - **The CRC runs on the page's main thread**, in slices (3–4 ms of stall measured at 460 MB, 1 GB
   and 2 GB). Moving it to a worker is possible (Blobs are posted by reference) but costs a second
   worker bundle for a few milliseconds; revisit if a slower device shows jank.
@@ -167,14 +184,40 @@ What the table says, and does not say:
   (it did not before). Nothing is downloaded, which is the safe outcome; the message needs a
   string in every language and a place in the V2 panel, so it is left as a follow-up.
 - One dependency fewer to keep, update and ship: its notice leaves `/third-party-licenses.txt`.
-- **The builder must load on demand.** JavaScript sent before any interaction on
-  `/compress-image-to-50kb/` (Save-Data, gzip, the method of the e2e budget of 90 KiB = 92,160
-  bytes), measured on production builds: `main` 88,004 bytes; the first version of this change,
-  with the builder imported statically, 88,970; with the names added, still static, **92,450,
-  over the budget**; loaded on demand, **87,886**. (An earlier figure here, "1.5 KB less
-  JavaScript", was the total of every chunk of the site, which is not what loads first.) The
-  budget test caught it; `zip.ts` is a small facade with a dynamic `import()` for that reason,
-  and its test checks that a failed load can be retried.
+- **The builder must load on demand, and the margin of the JavaScript budget is small.** The e2e
+  test limits the JavaScript sent before any interaction on `/compress-image-to-50kb/` to 90 KiB
+  (92,160 bytes) gzip, with Save-Data and nothing hovered. It was measured twice, by two people,
+  on production builds, and **the two series do not agree and were not reconciled**. Both are
+  recorded; neither is taken as the true figure.
+
+  | Version | Series A (author) | Series B (independent review) |
+  | --- | --- | --- |
+  | `main` (`71f6e27`) | 88,004 | 91,180 |
+  | first version of this change (`db358ba`), builder imported statically | 88,970 | 92,014 |
+  | with the names added, still imported statically | 92,450 | 92,450 |
+  | builder loaded on demand (`3512466`) | 87,886 | 91,042 |
+  | margin to 92,160, last row | 4,274 | 1,118 |
+
+  *Series A:* Chromium 153 with Save-Data; `astro build --outDir dist-e2e` rebuilt for each commit
+  and served with `apps/web/e2e/serve.ts`; wait for the file input, then 3 s; the sum of the gzip
+  size of every `.js` response, by a script that copies the test's logic, not by the test; five
+  runs of a build gave the same bytes. *Series B:* the official method, the e2e test's own
+  measurement, as reported by the review; its build and environment were not recorded here.
+  The author read `main` three times: 85,028 once, with a chunk set that matched no build
+  identified afterwards (not used); then 91,180, the same as series B, on a bundle built hours
+  earlier; and 88,004 after rebuilding the same commit. The two bundles split the tool's code
+  into different chunks (in the larger one the Paraglide runtime and `jsx-runtime` are separate
+  chunks requested before interaction). Why two builds of the same commit split differently was
+  not found, and it may be what separates the two series by about 3.1 KB.
+
+  What both series say: with the names and the builder imported statically the page went over the
+  budget (92,450 in both); with the builder loaded on demand it is under the budget and lower
+  than `main` (118 bytes lower in A, 138 in B); the first version was above `main` (966 bytes in
+  A, 834 in B), and left a margin of 3,190 bytes in A and 146 in B. The margin of the current version is
+  between 1,118 and 4,274 bytes, depending on the series. (An earlier figure in this ADR, "1.5 KB
+  less JavaScript", was the total of every chunk of the site, which is not what loads first.)
+  `zip.ts` is a small facade with a dynamic `import()` for that reason. Watching this budget is a
+  follow-up.
 - A ZIP writer of our own is a small piece of code to maintain. It writes one fixed shape of
   archive, and it is covered by a reader written separately in the tests, by Node's CRC-32, and
   by `unzip` and Python when they are installed (CI runners and developer machines). The names are
