@@ -5,6 +5,7 @@
   "description": "The Mochifile Tool contract and shared helpers for tools.",
   "license": "AGPL-3.0-only",
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
     "./worker": "./src/worker.ts",

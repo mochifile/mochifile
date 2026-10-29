@@ -5,6 +5,9 @@
   "description": "Shared Mochifile React components and design tokens.",
   "license": "AGPL-3.0-only",
   "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles.css"
