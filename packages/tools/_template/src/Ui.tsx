@@ -10,11 +10,11 @@ import {
 import { createToolClient } from '@mochifile/tool-kit/client'
 import { Button, buttonClasses, Dropzone, Notice, SizeChips } from '@mochifile/ui'
 import { useEffect, useRef, useState } from 'react'
-import { manifest, type TemplateOptions } from './manifest.ts'
+import { config, type TemplateOptions } from './config.ts'
 
 /** One client per page; the worker starts on the first run, not on page load. */
 const client = createToolClient(
-  manifest,
+  config,
   () => new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' }),
 )
 
@@ -34,7 +34,7 @@ interface Props {
 function initialMode(options: ToolOptions | undefined): TemplateOptions['mode'] {
   return options?.mode === 'lower' || options?.mode === 'upper'
     ? options.mode
-    : manifest.defaults.mode
+    : config.defaults.mode
 }
 
 export default function TemplateToolUi({ locale, initialOptions }: Props) {
@@ -92,11 +92,11 @@ export default function TemplateToolUi({ locale, initialOptions }: Props) {
       />
       <Dropzone
         onFiles={run}
-        accept={manifest.accepts.join(',')}
+        accept={config.accepts.join(',')}
         disabled={state.status === 'working'}
         label={m.template_tool_drop_label({}, { locale })}
         hint={m.template_tool_drop_hint(
-          { maxSize: formatBytes(manifest.limits.maxFileSizeBytes, locale) },
+          { maxSize: formatBytes(config.limits.maxFileSizeBytes, locale) },
           { locale },
         )}
       />

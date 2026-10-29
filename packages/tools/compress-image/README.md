@@ -8,7 +8,8 @@ from 5 KB to 20 MB), entirely in the browser. Pages: `/compress-image/`, one per
 compress-image/
 ├── content/{en,pt}/*.md   page copy: index.md plus one file per preset
 ├── messages/{en,pt}.json  UI text
-├── src/manifest.ts        id, limits, defaults, presets (variants) and SEO metadata
+├── src/config.ts          accepted types, limits, defaults and the options: what the UI imports
+├── src/manifest.ts        id, presets (variants) and SEO metadata of the pages, built from the config
 ├── src/sizes.ts           presets, KB/MB formatting and parsing (1 KB = 1,000 bytes)
 ├── src/process.ts         calls the engine for each file; output names like photo-50kb.jpg
 ├── src/worker.ts          creates the image engine once; `prepare` preloads it

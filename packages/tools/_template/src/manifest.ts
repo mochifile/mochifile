@@ -1,12 +1,5 @@
 import { defineToolManifest } from '@mochifile/tool-kit'
-
-/**
- * Options for this tool. Keep them plain data: they are posted to a Web Worker.
- * TODO(new tool): replace with your tool's options.
- */
-export interface TemplateOptions extends Record<string, unknown> {
-  mode: 'upper' | 'lower'
-}
+import { config, type TemplateOptions } from './config.ts'
 
 /**
  * The manifest is plain data. Pages, routes, the sitemap and SEO tags are generated from it,
@@ -18,12 +11,8 @@ export const manifest = defineToolManifest<TemplateOptions>({
   // TODO(new tool): 'image', 'media' or 'pdf'. The template uses 'pdf' (documents).
   category: 'pdf',
   runtime: 'browser',
-  accepts: ['text/plain'],
-  limits: {
-    maxFiles: 1,
-    maxFileSizeBytes: 5 * 1000 * 1000,
-  },
-  defaults: { mode: 'upper' },
+  // What the UI needs at run time is in `config.ts`.
+  ...config,
   meta: {
     en: {
       slug: 'template-tool',

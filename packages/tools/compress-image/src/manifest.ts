@@ -1,13 +1,5 @@
-import type { OutputFormat } from '@mochifile/engine-image'
 import { defineToolManifest } from '@mochifile/tool-kit'
-
-/** Plain data: posted to the worker with every run. */
-export interface CompressImageOptions extends Record<string, unknown> {
-  /** Maximum size of each result, in bytes (1 KB = 1,000 bytes). */
-  targetBytes: number
-  /** `original` keeps the input format when it can reach the target. */
-  format: OutputFormat
-}
+import { type CompressImageOptions, config } from './config.ts'
 
 const variant = (
   key: string,
@@ -42,12 +34,7 @@ export const manifest = defineToolManifest<CompressImageOptions>({
   id: 'compress-image',
   category: 'image',
   runtime: 'browser',
-  accepts: ['image/jpeg', 'image/png', 'image/webp'],
-  limits: {
-    maxFiles: 20,
-    maxFileSizeBytes: 50_000_000,
-  },
-  defaults: { targetBytes: 100_000, format: 'original' },
+  ...config,
   meta: {
     en: {
       slug: 'compress-image',

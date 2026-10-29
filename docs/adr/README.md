@@ -36,3 +36,4 @@ a PR. Accepted ADRs are not edited later except for their status; a new ADR supe
 | [0026](0026-institutional-pages.md) | Institutional pages: Markdown copy in the app, a form that cannot send yet | Proposed |
 | [0032](0032-v2-favicon-is-the-m-app-icon.md) | The favicon is the "m" app icon of the V2 Home | Proposed |
 | [0033](0033-zip-from-blob-parts.md) | Build the "Download all" ZIP from Blob parts, without a library | Proposed |
+| [0034](0034-keep-page-data-out-of-tool-islands.md) | Keep page data out of tool islands, and declare the internal packages side-effect free | Proposed |

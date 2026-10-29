@@ -3,14 +3,14 @@
  * plain promise. The worker is created lazily on the first run and reused afterwards.
  *
  * ```ts
- * const client = createToolClient(manifest, () =>
+ * const client = createToolClient(config, () =>
  *   new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' }),
  * )
  * const results = await client.run(files, options, { signal, onProgress })
  * ```
  */
 import { type Endpoint, proxy, type Remote, releaseProxy, wrap } from 'comlink'
-import type { ToolManifest, ToolOptions, ToolProgress, ToolResult } from './contract.ts'
+import type { ToolOptions, ToolProgress, ToolResult, ToolRuntimeConfig } from './contract.ts'
 import { deserializeError, ToolError } from './errors.ts'
 import { validateFiles } from './files.ts'
 import type { ToolWorkerApi } from './protocol.ts'
@@ -38,7 +38,7 @@ type WorkerLike = Endpoint & { terminate?: () => void }
 let jobCounter = 0
 
 export function createToolClient<O extends ToolOptions>(
-  manifest: ToolManifest<O>,
+  config: ToolRuntimeConfig<O>,
   createWorker: () => WorkerLike,
 ): ToolClient<O> {
   let worker: WorkerLike | undefined
@@ -107,7 +107,7 @@ export function createToolClient<O extends ToolOptions>(
     },
     async run(files, options = {}, { signal, onProgress } = {}) {
       // Validate before posting anything, for instant feedback. The worker validates again.
-      validateFiles(files, manifest)
+      validateFiles(files, config)
       if (signal?.aborted) throw new ToolError('aborted', 'Aborted')
 
       const { api, failed: workerFailed } = connect()
