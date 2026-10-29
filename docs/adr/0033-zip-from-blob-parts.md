@@ -86,9 +86,12 @@ We will build the ZIP ourselves, as a Blob of parts, and drop `client-zip`.
   was, through a dynamic `import()` in `zip.ts`. It must stay that way: imported statically it ends
   up in the tool's first load (see Consequences). `zip.ts` forgets a failed load, so that its own
   state does not stay stuck, and a test checks that with the module mocked. Whether a second
-  `import()` of the same chunk can then succeed is up to the browser: Chromium can keep the failed
-  result for the life of the page, so there a reload may be needed. That was not tested in real
-  browsers (same as before for `client-zip`) and is a follow-up.
+  `import()` of the same chunk can then succeed is up to the browser, and was measured (Playwright
+  1.63, the chunk's request blocked, then let through): **Chromium 153 never asks for it again**
+  after the first failure, whatever the failure (network error, HTTP 500 or 404), so in that page
+  only a reload helps; **WebKit 26.6 asks again and works once the network is back**. Firefox was
+  not measured (it does not start here). The panel therefore does not depend on either: see
+  "When it fails".
 
 ## Measurements
 
@@ -180,9 +183,27 @@ What the table says, and does not say:
 - **The CRC runs on the page's main thread**, in slices (3–4 ms of stall measured at 460 MB, 1 GB
   and 2 GB). Moving it to a worker is possible (Blobs are posted by reference) but costs a second
   worker bundle for a few milliseconds; revisit if a slower device shows jank.
-- **A failure of "Download all" is still silent**: the button's handler does not show an error
-  (it did not before). Nothing is downloaded, which is the safe outcome; the message needs a
-  string in every language and a place in the V2 panel, so it is left as a follow-up.
+- **When it fails, the panel says so** (the follow-up this ADR first left open). `downloadZip`
+  rejects with a `ZipError` whose `reason` is `load` (the builder did not load), `too-large` (a
+  `RangeError`: what the format, or the browser's memory, cannot hold) or `failed` (anything else:
+  a file that cannot be read, the archive, the browser refusing the download); its message and
+  cause say nothing that is shown. The panel shows a notice in the `danger` colours below the
+  "Ready!" banner, in a `role="status"` region that was already there, and leaves the photos, their
+  own downloads and the banner as they are: nothing is compressed again to make the ZIP. A first
+  failure says "Try again, or download them one by one" with a "Try again" button; a **second one
+  in a row for `load`** says that this page cannot prepare the ZIP, to download the photos one by
+  one or reload and compress them again (a reload loses the photos, which is why it is said), with
+  no "Try again" button, because in Chromium it cannot work; the main button still tries, and a
+  browser that can load the builder again lets it work. `too-large` has no wording of its own: it
+  cannot happen with 20 photos of up to 50 MB, and every message costs both languages in the first
+  load (about 100 bytes gzip); Convert image will need it. Nothing says or implies that the file
+  was saved: the browser decides that.
+- **Repeated clicks.** One run at a time for the list on screen (a lock in a ref, so clicks in the
+  same task are ignored too, and tied to the list, so after "Compress more" an old run neither
+  holds up the new list nor shows its failure over it). While it runs the button is
+  `aria-busy` and `aria-disabled` (not `disabled`, so it keeps keyboard focus), shows "Preparing
+  the ZIP…" and keeps its size (both labels share a grid cell). The photos' own downloads are not
+  held up.
 - One dependency fewer to keep, update and ship: its notice leaves `/third-party-licenses.txt`.
 - **The builder must load on demand, and the margin of the JavaScript budget is small.** The e2e
   test limits the JavaScript sent before any interaction on `/compress-image-to-50kb/` to 90 KiB
@@ -211,13 +232,15 @@ What the table says, and does not say:
   not found, and it may be what separates the two series by about 3.1 KB.
 
   What both series say: with the names and the builder imported statically the page went over the
-  budget (92,450 in both); with the builder loaded on demand it is under the budget and lower
-  than `main` (118 bytes lower in A, 138 in B); the first version was above `main` (966 bytes in
-  A, 834 in B), and left a margin of 3,190 bytes in A and 146 in B. The margin of the current version is
+  budget (92,450 in both); with the builder loaded on demand it is under the budget and lower than
+  `main` (118 bytes lower in A, 138 in B); the first version was above `main` (966 bytes in A, 834
+  in B), and left a margin of 3,190 bytes in A and 146 in B. The margin of the current version is
   between 1,118 and 4,274 bytes, depending on the series. (An earlier figure in this ADR, "1.5 KB
   less JavaScript", was the total of every chunk of the site, which is not what loads first.)
   `zip.ts` is a small facade with a dynamic `import()` for that reason. Watching this budget is a
-  follow-up.
+  follow-up. The failure notice, the busy label and their texts added 685 bytes to that first load
+  (series A: 87,886 → 88,571; series B was not measured again). A message costs both languages,
+  since the bundle holds EN and PT, which is why one message was dropped and one reused.
 - A ZIP writer of our own is a small piece of code to maintain. It writes one fixed shape of
   archive, and it is covered by a reader written separately in the tests, by Node's CRC-32, and
   by `unzip` and Python when they are installed (CI runners and developer machines). The names are
