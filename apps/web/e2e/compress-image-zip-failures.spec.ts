@@ -37,7 +37,7 @@ const COPY = {
       'Esta página não consegue preparar o ZIP agora. Baixe as fotos uma por uma ou recarregue a página e comprima de novo.',
     tryAgain: 'Tentar de novo',
     link: /^Baixar /,
-    more: 'Comprimir mais',
+    more: 'Comprimir outras',
   },
 } as const
 type Lang = keyof typeof COPY
@@ -143,6 +143,15 @@ function expectSameShape(actual: Awaited<ReturnType<typeof shape>>, expected: ty
     expect(Math.abs(actual[key] - expected[key]), key).toBeLessThan(1)
   }
 }
+
+/** Where the keyboard is: the "Download all" button (the one marked `data-after-run`), or not. */
+const onMainButton = (page: Page) =>
+  page.evaluate(() => document.activeElement?.hasAttribute('data-after-run') ?? false)
+const whatHasFocus = (page: Page) =>
+  page.evaluate(
+    () =>
+      `${document.activeElement?.tagName} «${document.activeElement?.textContent?.trim().slice(0, 30)}»`,
+  )
 
 /** Counts downloads from now on, so "exactly one" and "none" can be checked. */
 function countDownloads(page: Page) {
@@ -274,6 +283,72 @@ for (const lang of ['en', 'pt'] as const) {
     })
   })
 }
+
+test.describe('where the keyboard is after "Try again"', () => {
+  for (const lang of ['en', 'pt'] as const) {
+    for (const key of ['Enter', 'Space'] as const) {
+      test(`stays on "Download all" when ${key} presses it, failing again and working (${lang})`, async ({
+        page,
+      }) => {
+        const copy = COPY[lang]
+        const button = await ready(page, lang)
+        await setFault(page, 'read')
+        await button.click()
+        await expect(notice(page)).toBeVisible()
+
+        // Scrolled so that "Download all" is out of sight above: moving the focus must not bring it back.
+        await page.evaluate(() => window.scrollTo(0, 700))
+
+        // 1) It fails again. The keyboard was on "Try again", which goes with the notice.
+        const retry = notice(page).getByRole('button', { name: copy.tryAgain })
+        await retry.focus()
+        const scrollBefore = await page.evaluate(() => window.scrollY)
+        await page.keyboard.press(key)
+        await expect(notice(page)).toBeVisible()
+        expect(await whatHasFocus(page), 'after a retry that failed').toMatch(/^BUTTON/)
+        expect(await onMainButton(page)).toBe(true)
+        await expect(button).toBeFocused()
+        expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore)
+        // Busy or not, nothing was left half done: the label is back and nothing is held.
+        await expect(button).not.toHaveAttribute('aria-busy', /.*/)
+
+        // 2) It works. Same place, and the notice is gone.
+        await setFault(page, '')
+        await notice(page).getByRole('button', { name: copy.tryAgain }).focus()
+        const zip = page.waitForEvent('download')
+        await page.keyboard.press(key)
+        await zip
+        await expect(notice(page)).toHaveCount(0)
+        expect(await onMainButton(page)).toBe(true)
+        await expect(button).toBeFocused()
+        await expect(button).not.toHaveAttribute('aria-busy', /.*/)
+      })
+    }
+  }
+
+  test('does not take the focus from where the person went while it was working', async ({
+    page,
+  }) => {
+    const copy = COPY.en
+    const button = await ready(page, 'en')
+    await setFault(page, 'read')
+    await button.click()
+    await expect(notice(page)).toBeVisible()
+
+    // Hold the retry, go to the first photo's download, and let the work end (it fails).
+    await setFault(page, 'hold')
+    await notice(page).getByRole('button', { name: copy.tryAgain }).focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('button', { name: copy.preparing })).toBeVisible()
+    // The same button, now busy (so named for what it is doing).
+    await expect(page.locator('[data-after-run]')).toBeFocused()
+    const link = page.getByRole('link', { name: copy.link }).first()
+    await link.focus()
+    await releaseHeld(page, true)
+    await expect(notice(page)).toBeVisible()
+    await expect(link).toBeFocused()
+  })
+})
 
 test.describe('when the ZIP code cannot be loaded', () => {
   /** Blocks the request for the ZIP code (a network error, or while `block` is true). */
