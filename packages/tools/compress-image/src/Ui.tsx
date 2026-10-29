@@ -24,13 +24,13 @@ import normal from './assets/expr-normal-288.webp'
 import sad from './assets/expr-sad-288.webp'
 import smiling from './assets/expr-smiling-288.webp'
 import squishing from './assets/expr-squishing-288.webp'
-import { type CompressImageOptions, manifest } from './manifest.ts'
+import { type CompressImageOptions, config } from './config.ts'
 import './panel.css'
 import { formatSize, MAX_TARGET, MIN_TARGET, PRESETS, parseTarget, type SizeUnit } from './sizes.ts'
 
 /** One client per page; the worker starts on the first sign of intent, not on page load. */
 const client = createToolClient(
-  manifest,
+  config,
   () => new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' }),
 )
 
@@ -56,8 +56,8 @@ function initialSettings(options: ToolOptions | undefined): CompressImageOptions
     targetBytes:
       typeof target === 'number' && target >= MIN_TARGET && target <= MAX_TARGET
         ? target
-        : manifest.defaults.targetBytes,
-    format: OUTPUT_FORMATS.find((value) => value === format) ?? manifest.defaults.format,
+        : config.defaults.targetBytes,
+    format: OUTPUT_FORMATS.find((value) => value === format) ?? config.defaults.format,
   }
 }
 
@@ -119,8 +119,8 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
     // Files wait until the compressor has loaded and the person has started, so none fails only
     // because the code is missing, and nothing is fetched after a file is chosen.
     paused: engine !== 'ready' || !started,
-    maxFiles: manifest.limits.maxFiles,
-    validate: (file) => validateFiles([file], manifest),
+    maxFiles: config.limits.maxFiles,
+    validate: (file) => validateFiles([file], config),
     run: async (item, context) => {
       const [result] = await client.run([item.file], item.settings, context)
       if (!result) throw new Error('No result')
@@ -428,7 +428,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
       unsupportedType: () => m.compress_image_error_unsupported({}, { locale }),
       fileTooLarge: () =>
         m.compress_image_error_too_large(
-          { maxSize: formatSize(manifest.limits.maxFileSizeBytes, locale) },
+          { maxSize: formatSize(config.limits.maxFileSizeBytes, locale) },
           { locale },
         ),
       invalidFile: () => m.compress_image_error_invalid({}, { locale }),
@@ -579,7 +579,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
       <span className="cp-notice-body">
         <b>
           {m.compress_image_too_many_title(
-            { maxFiles: String(manifest.limits.maxFiles) },
+            { maxFiles: String(config.limits.maxFiles) },
             { locale },
           )}
         </b>
@@ -1144,8 +1144,8 @@ function Drop({
           <span id={hintId} className="cp-small cp-muted">
             {m.compress_image_drop_hint(
               {
-                maxFiles: String(manifest.limits.maxFiles),
-                maxSize: formatSize(manifest.limits.maxFileSizeBytes, locale),
+                maxFiles: String(config.limits.maxFiles),
+                maxSize: formatSize(config.limits.maxFileSizeBytes, locale),
               },
               { locale },
             )}
@@ -1161,7 +1161,7 @@ function Drop({
         data-focus-start
         aria-labelledby={labelId}
         aria-describedby={hintId}
-        accept={manifest.accepts.join(',')}
+        accept={config.accepts.join(',')}
         multiple
         disabled={disabled}
         onChange={(event) => {
