@@ -250,7 +250,9 @@ What the table says, and does not say:
   not a measurement. The two series still differ by about 3.1 KB (3,156 for `main`), as before,
   and the narrow margin is the one to trust: the one of series B. A message costs both
   languages, since the bundle holds EN and PT, which is why one message was dropped and one
-  reused. Recovering margin before Convert image arrives is tracked in #84.
+  reused. The reason for the 3.1 KB offset between the series (the e2e build includes the template
+  tool, so it has two tools and shared chunks) and the margin recovered afterwards (4,800 bytes by
+  the official method) are in ADR 0034, which resolves #84.
 - A ZIP writer of our own is a small piece of code to maintain. It writes one fixed shape of
   archive, and it is covered by a reader written separately in the tests, by Node's CRC-32, and
   by `unzip` and Python when they are installed (CI runners and developer machines). The names are

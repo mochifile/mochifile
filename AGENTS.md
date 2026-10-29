@@ -53,6 +53,9 @@ Internal packages are **source-only**: their `exports` point at `.ts`/`.tsx` fil
 compiles them. Only `@mochifile/i18n` has a build step (Paraglide). If a package must ever be
 published to npm (for example for the private cloud repo), it will first need a real build step
 (compiled JS + `.d.ts`) — do not publish source-only packages.
+`@mochifile/ui`, `@mochifile/tool-ui` and `@mochifile/tool-kit` declare `"sideEffects": false` (CSS
+excepted) so that a tool's page only ships what that tool uses; keep their module top levels free
+of side effects, or the flag is a lie (ADR 0034).
 
 ## Conventions
 
@@ -84,7 +87,10 @@ published to npm (for example for the private cloud repo), it will first need a 
 3. **`process()` is pure:** no DOM, no network, no globals, no logging of file data. It takes
    files + options + `{ signal, onProgress }` and returns results. It must honour `signal`.
 4. **Manifests are data.** Pages, routes, sitemap and SEO tags are generated from
-   `manifest.ts`. Never import processing code or heavy libraries from a manifest.
+   `manifest.ts`. Never import processing code or heavy libraries from a manifest. A tool's
+   `Ui.tsx` imports its `config.ts` (accepts, limits, defaults), **never the manifest**: the
+   manifest holds the pages' text in every language and its own validation, and would ship
+   them to every visitor of the tool (ADR 0034; a test enforces it).
 5. **Zero JavaScript by default.** Astro components render static HTML; only the tool island
    ships JS, and each tool page loads only its own tool. The one exception is the inline
    language-suggestion script on every page (ADR 0019), kept under 1 KB gzipped by an e2e
@@ -122,8 +128,9 @@ published to npm (for example for the private cloud repo), it will first need a 
 Follow [docs/contributing/adding-a-tool.md](docs/contributing/adding-a-tool.md). In short:
 
 1. Copy `packages/tools/_template` to `packages/tools/<tool-id>` and rename the package.
-2. Edit `src/manifest.ts` (id, category, accepts, limits, defaults, per-locale
-   slug/title/description/tagline, and optional `variants`: extra pages with preset options).
+2. Edit `src/config.ts` (accepts, limits, defaults: what the UI needs at run time) and
+   `src/manifest.ts` (id, category, per-locale slug/title/description/tagline, and optional
+   `variants`: extra pages with preset options). The UI imports the config, never the manifest.
 3. Implement `src/process.ts` and its tests; keep it pure.
 4. Build the UI in `src/Ui.tsx` with `@mochifile/ui` components.
 5. Add messages in `messages/{en,pt}.json` (keys prefixed with the tool id in snake_case) and add
