@@ -107,7 +107,7 @@ jobs:
       # Also uploaded when the job passes, so traces of flaky (retried) tests are kept, and when
       # it is cancelled: `always()` still runs after the job's own timeout, `!cancelled()` does
       # not. test-results/ holds traces only for failed attempts, so it is empty on a clean run.
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ always() }}
         with:
           name: playwright-report-${{ matrix.browser }}-${{ matrix.shard }}
