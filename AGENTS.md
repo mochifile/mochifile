@@ -53,9 +53,11 @@ Internal packages are **source-only**: their `exports` point at `.ts`/`.tsx` fil
 compiles them. Only `@mochifile/i18n` has a build step (Paraglide). If a package must ever be
 published to npm (for example for the private cloud repo), it will first need a real build step
 (compiled JS + `.d.ts`) — do not publish source-only packages.
-`@mochifile/ui`, `@mochifile/tool-ui` and `@mochifile/tool-kit` declare `"sideEffects": false` (CSS
-excepted) so that a tool's page only ships what that tool uses; keep their module top levels free
-of side effects, or the flag is a lie (ADR 0034).
+Side-effect flags (ADR 0034), so that a tool's page only ships what that tool uses: `@mochifile/ui`
+declares `"sideEffects": ["**/*.css"]` (its stylesheets are imported for their effect and must be
+kept; its code is pure), and `@mochifile/tool-ui` and `@mochifile/tool-kit` declare
+`"sideEffects": false` (they have no CSS). Keep the module top levels of all three free of side
+effects, or the flag is a lie. `@mochifile/i18n` and `@mochifile/engine-image` do not declare it.
 
 ## Conventions
 
@@ -88,9 +90,12 @@ of side effects, or the flag is a lie (ADR 0034).
    files + options + `{ signal, onProgress }` and returns results. It must honour `signal`.
 4. **Manifests are data.** Pages, routes, sitemap and SEO tags are generated from
    `manifest.ts`. Never import processing code or heavy libraries from a manifest. A tool's
-   `Ui.tsx` imports its `config.ts` (accepts, limits, defaults), **never the manifest**: the
-   manifest holds the pages' text in every language and its own validation, and would ship
-   them to every visitor of the tool (ADR 0034; a test enforces it).
+   `Ui.tsx` imports its `config.ts` (accepts, limits, defaults, the options type), **never the
+   manifest**, and neither does any file it imports: the manifest holds the pages' text in every
+   language and its own validation, and would ship them to every visitor of the tool. Only a
+   whole `import type { … }` declaration is allowed (it is erased); `import { type X }`,
+   `import './manifest.ts'` and `export … from` are kept at run time and are not. A test follows
+   the imports and enforces it (ADR 0034).
 5. **Zero JavaScript by default.** Astro components render static HTML; only the tool island
    ships JS, and each tool page loads only its own tool. The one exception is the inline
    language-suggestion script on every page (ADR 0019), kept under 1 KB gzipped by an e2e

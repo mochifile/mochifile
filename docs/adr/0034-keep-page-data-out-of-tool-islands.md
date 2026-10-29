@@ -64,16 +64,41 @@ output attributed to their original file, gzip estimated in proportion), for the
    and the worker need at run time: `accepts`, `limits`, `defaults` (typed `ToolRuntimeConfig`) and
    the options type. `manifest.ts` is built from it (`...config`), so there is one source, and keeps
    what only the pages need. `createToolClient` takes the config (a `ToolManifest` still fits it).
-   `defineToolManifest` and its validation now run in the pages, the registry and the tests, and
-   no longer in the browser.
-2. **`@mochifile/ui`, `@mochifile/tool-ui` and `@mochifile/tool-kit` declare `"sideEffects":
-   false`** (`**/*.css` excepted for the UI package). A tool's chunk then only draws in the modules
-   it uses, and the shared chunk of two tools holds what both use, not what either could reach
-   through a barrel. They have no code that runs on import; the flag says so and must stay true.
-3. **A test keeps it that way** (`apps/web/src/lib/tool-islands.test.ts`): no `Ui.tsx` imports a
-   value from `./manifest.ts`, every tool with a UI has a `config.ts`, and its manifest agrees with
-   it. A rule checked only by reading would not survive the next tool; the pattern it checks is
-   tested with the multi-line, semicolon-free imports this code has.
+   Validation of the manifest no longer runs **on the main thread before the visitor interacts**:
+   `defineToolManifest` runs in the pages (at build), the registry and the tests, and the
+   worker, which loads after the first intent and imports the whole manifest, still runs it
+   there. Nothing is validated less; it is validated where it costs the budget nothing.
+   The options type lives in `config.ts` and the manifest does **not** re-export it: a
+   `export type { Options }` in the manifest invites `import { type Options } from './manifest.ts'`
+   in a UI, which looks harmless and is not (below). `process.ts` imports it from `config.ts`.
+2. **`@mochifile/ui`, `@mochifile/tool-ui` and `@mochifile/tool-kit` declare side-effect
+   freedom**: `"sideEffects": ["**/*.css"]` in `@mochifile/ui` (its stylesheets are imported for
+   their effect and must be kept; its code is pure) and `"sideEffects": false` in the other two
+   (they have no CSS). `@mochifile/i18n` and `@mochifile/engine-image` do not declare it. A
+   tool's chunk then only draws in the modules it uses, and the shared chunk of two tools holds
+   what both use, not what either could reach through a barrel. They have no code that runs on
+   import; the flag says so and must stay true.
+3. **A test keeps it that way** (`apps/web/src/lib/tool-islands.test.ts`, over the analyzer in
+   `apps/web/integrations/tool-island-graph.ts`): the **transitive** graph of imports that each
+   `Ui.tsx` keeps at run time must not contain a `manifest.ts`, nor import
+   `defineToolManifest`, `validateManifest` or `assertUniqueTools`; every tool with a UI has a
+   `config.ts`, and its manifest agrees with it. The analyzer reads the syntax tree with the
+   `typescript` package the site already has (no new dependency, no regular expression over
+   source text), so comments and strings are not imports and semicolons and line breaks do not
+   matter. What is "kept at run time" is what TypeScript keeps under `verbatimModuleSyntax`
+   (set in `tsconfig.base.json`, and a test checks it): **only a whole `import type` or
+   `export type` declaration is erased.** `import { type X } from './manifest.ts'` is emitted as
+   `import {} from './manifest.ts'` and the module is still loaded (measured, official build:
+   +1,948 bytes), as are `import './manifest.ts'` (+1,948), a path without extension (+1,963), a
+   helper that imports the manifest (+1,963) and a barrel with `export *` or
+   `export { manifest } from` (+1,963); `import type` costs 0. All of those are reported with the
+   chain of files they go through. It follows relative specifiers (with or without extension, a
+   folder's `index`, `.js` for `.ts`) and the specifiers of the tools' own packages
+   (`@mochifile/tool-x/manifest`, through their `exports`), and it walks every folder of
+   `packages/tools` that has a `Ui.tsx`, so a tool added tomorrow is covered without editing the
+   test. The test of the analyzer includes the seven bypasses the independent review found, run
+   against fixtures and as mutations written into the compressor's UI in an isolated copy of the
+   real tools.
 4. The template tool, the guide (`docs/contributing/adding-a-tool.md`) and `AGENTS.md` show the
    pattern, because Convert image will start from them.
 
@@ -114,7 +139,14 @@ What is left in the official build before interaction: React's client 65.8 KB; t
   driven by the registry, one page per tool); not done here, and the limit was not changed.
 - **A new tool pays for what it imports, not for what other tools do.** That is what the flags
   and the guard are for; the figures above are the proof for the one pair that exists.
-- **`sideEffects: false` is a promise.** A module that registers something on import, in those
+- **What the guard does not see:** a package outside `packages/tools` (`react`,
+  `@mochifile/tool-ui`…) that imports a manifest (a test checks that the shared packages do not
+  depend on a tool package); `new URL('./worker.ts', import.meta.url)` and `import.meta.glob`
+  (the worker has a bundle of its own and imports the manifest on purpose); a specifier built at
+  run time; and a path alias, because there is none. It is a guard against mistakes, not against
+  someone who edits the guard; the budget test is the measure that does not depend on how the
+  code is written.
+- **`sideEffects` is a promise.** A module that registers something on import, in those
   three packages, would be dropped when nothing it exports is used. Keep top levels free of it.
 - **Not measured:** Firefox and WebKit before interaction (the test is Chromium-only: it needs
   `navigator.connection`), a slow device, and Convert image itself.
