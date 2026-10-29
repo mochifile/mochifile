@@ -410,6 +410,19 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
     }
   }
 
+  // "Try again" in the notice. The notice, and the button it was pressed on, go as the run starts, so
+  // a keyboard that was on that button would fall to the page: the focus goes to the button that
+  // stays, without scrolling. A tap or click that did not focus it leaves the focus where it is, and
+  // nothing moves it when the run ends (the person may be anywhere by then).
+  const retryZip = (pressed: HTMLElement) => {
+    if (document.activeElement === pressed) {
+      rootRef.current
+        ?.querySelector<HTMLElement>('[data-after-run]')
+        ?.focus({ preventScroll: true })
+    }
+    void downloadAll()
+  }
+
   const errorMessage = (item: Item) =>
     sharedErrorMessage(item.error, {
       unsupportedType: () => m.compress_image_error_unsupported({}, { locale }),
@@ -760,7 +773,7 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                     locale={locale}
                     reason={zipFailure.reason}
                     attempt={zipFailure.attempt}
-                    onRetry={() => void downloadAll()}
+                    onRetry={retryZip}
                   />
                 )}
               </div>
@@ -1027,7 +1040,7 @@ function ZipFailureNotice({
   locale: Locale
   reason: ZipFailure
   attempt: number
-  onRetry: () => void
+  onRetry: (pressed: HTMLElement) => void
 }) {
   const reload = reason === 'load' && attempt >= 2
   return (
@@ -1042,7 +1055,11 @@ function ZipFailureNotice({
         </span>
       </span>
       {!reload && (
-        <button type="button" className="cp-btn cp-btn-soft" onClick={onRetry}>
+        <button
+          type="button"
+          className="cp-btn cp-btn-soft"
+          onClick={(event) => onRetry(event.currentTarget)}
+        >
           {/* The same words as "Try again" for the compressor that did not load. */}
           {m.compress_image_engine_retry({}, { locale })}
         </button>

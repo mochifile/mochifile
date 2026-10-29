@@ -68,7 +68,7 @@ const COPY = {
       'Esta página não consegue preparar o ZIP agora. Baixe as fotos uma por uma ou recarregue a página e comprima de novo.',
     tryAgain: 'Tentar de novo',
     link: /^Baixar IMG_/,
-    more: 'Comprimir mais',
+    more: 'Comprimir outras',
   },
 }
 
@@ -298,6 +298,107 @@ describe('what failed', () => {
     fireEvent.click(await screen.findByRole('button', { name: COPY.en.compress }))
     await screen.findByRole('button', { name: COPY.en.all })
     expect(screen.queryByText(COPY.en.title)).toBeNull()
+  })
+})
+
+/** The button that stays: "Download all", whichever state the list is in. */
+const mainButton = () => document.querySelector<HTMLElement>('[data-after-run]')
+
+describe.each(['en', 'pt'] as const)('where the keyboard is after "Try again" (%s)', (locale) => {
+  const copy = COPY[locale]
+
+  it('stays on "Download all" when the notice, and the button pressed in it, go away', async () => {
+    zip
+      .mockRejectedValueOnce(fail('failed'))
+      .mockRejectedValueOnce(fail('failed'))
+      .mockResolvedValueOnce(undefined)
+    const button = await ready(locale)
+    fireEvent.click(button)
+    await screen.findByText(copy.title)
+
+    // First retry: the notice goes at once, and with it the button the person is on.
+    const retry = screen.getByRole('button', { name: copy.tryAgain })
+    retry.focus()
+    expect(document.activeElement).toBe(retry)
+    fireEvent.click(retry)
+    expect(document.activeElement).toBe(button)
+    expect(document.activeElement).toBe(mainButton())
+    // It fails again: a new notice, and the focus has not moved to it or to the page.
+    await screen.findByText(copy.title)
+    expect(document.activeElement).toBe(button)
+
+    // Second retry, which works: the same.
+    const again = screen.getByRole('button', { name: copy.tryAgain })
+    again.focus()
+    fireEvent.click(again)
+    expect(document.activeElement).toBe(button)
+    await waitFor(() => expect(screen.queryByText(copy.title)).toBeNull())
+    expect(zip).toHaveBeenCalledTimes(3)
+    expect(document.activeElement).toBe(button)
+    expect(button.getAttribute('aria-busy')).toBeNull()
+  })
+
+  it('does not take the focus from the person when the main button is the one that retries', async () => {
+    zip.mockRejectedValueOnce(fail('failed')).mockResolvedValueOnce(undefined)
+    const button = await ready(locale)
+    button.focus()
+    fireEvent.click(button)
+    await screen.findByText(copy.title)
+    expect(document.activeElement).toBe(button)
+    fireEvent.click(button)
+    await waitFor(() => expect(screen.queryByText(copy.title)).toBeNull())
+    expect(document.activeElement).toBe(button)
+  })
+
+  it('leaves the focus where it is when "Try again" was not what had it (a tap or a click)', async () => {
+    zip.mockRejectedValueOnce(fail('failed')).mockResolvedValueOnce(undefined)
+    fireEvent.click(await ready(locale))
+    await screen.findByText(copy.title)
+    const link = screen.getAllByRole('link', { name: copy.link })[0] as HTMLElement
+    link.focus()
+    fireEvent.click(screen.getByRole('button', { name: copy.tryAgain }))
+    await waitFor(() => expect(screen.queryByText(copy.title)).toBeNull())
+    expect(document.activeElement).toBe(link)
+  })
+
+  it('does not move the focus when the run ends: the person may have gone elsewhere', async () => {
+    let finish: () => void = () => {}
+    zip
+      .mockRejectedValueOnce(fail('failed'))
+      .mockReturnValueOnce(new Promise<void>((resolve) => (finish = resolve)))
+    const button = await ready(locale)
+    fireEvent.click(button)
+    await screen.findByText(copy.title)
+    const retry = screen.getByRole('button', { name: copy.tryAgain })
+    retry.focus()
+    fireEvent.click(retry)
+    expect(document.activeElement).toBe(button)
+
+    // While it works the person moves to another photo's download.
+    const link = screen.getAllByRole('link', { name: copy.link })[1] as HTMLElement
+    link.focus()
+    await act(async () => finish())
+    await waitFor(() => expect(button.getAttribute('aria-busy')).toBeNull())
+    expect(document.activeElement).toBe(link)
+  })
+
+  it('does not touch the focus once the list is another one', async () => {
+    let finish: () => void = () => {}
+    zip
+      .mockRejectedValueOnce(fail('failed'))
+      .mockReturnValueOnce(new Promise<void>((resolve) => (finish = resolve)))
+    const button = await ready(locale, ['IMG_0001.jpg', 'IMG_0002.jpg'])
+    fireEvent.click(button)
+    await screen.findByText(copy.title)
+    const retry = screen.getByRole('button', { name: copy.tryAgain })
+    retry.focus()
+    fireEvent.click(retry)
+    // Starting over: the list is cleared and the focus goes where the panel puts it.
+    fireEvent.click(await screen.findByRole('button', { name: copy.more }))
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]')
+    await waitFor(() => expect(document.activeElement).toBe(input))
+    await act(async () => finish())
+    expect(document.activeElement).toBe(input)
   })
 })
 
