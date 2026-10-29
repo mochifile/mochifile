@@ -90,6 +90,18 @@ export interface ToolManifest<O extends ToolOptions = ToolOptions> {
   relatedPagesLabel?: Record<Locale, string>
 }
 
+/**
+ * What a tool's UI (and its worker) need at run time: what it accepts, its limits and its default
+ * options. A tool declares this in its own `src/config.ts` and builds its manifest from it, so the
+ * UI can import it without the manifest. The manifest is for the pages (titles, descriptions,
+ * variants in every language, and its validation); a UI that imports it ships all of that to the
+ * browser (ADR 0034).
+ */
+export type ToolRuntimeConfig<O extends ToolOptions = ToolOptions> = Pick<
+  ToolManifest<O>,
+  'accepts' | 'limits' | 'defaults'
+>
+
 export interface ToolProgress {
   /** Completion between 0 and 1. */
   ratio: number
