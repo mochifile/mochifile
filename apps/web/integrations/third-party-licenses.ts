@@ -49,11 +49,6 @@ export const SHIPPED: readonly ShippedPackage[] = [
   },
   { name: 'comlink', from: { workspace: 'packages/tool-kit' }, usedFor: 'worker messaging' },
   {
-    name: 'client-zip',
-    from: { workspace: 'packages/tool-ui' },
-    usedFor: 'ZIP downloads',
-  },
-  {
     name: '@jsquash/jpeg',
     from: { workspace: 'packages/engine-image' },
     usedFor: 'JPEG encoding and decoding (mozjpeg)',

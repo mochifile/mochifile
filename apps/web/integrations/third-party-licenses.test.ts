@@ -16,7 +16,6 @@ describe('third-party notices', () => {
     expect(text).toContain('Copyright (c) 2010, Google Inc.') // libwebp
     expect(text).toContain('Joshua Holmer') // oxipng
     expect(text).toContain('@jsquash/resize')
-    expect(text).toContain('client-zip')
   })
 
   it('meets the LGPL for the HEIC decoder: license, copyright lines and exact sources (ADR 0022)', () => {

@@ -1,52 +1,36 @@
 /**
- * "Download all" as one ZIP file, built in the browser with `client-zip` (no upload, no server).
- * The library loads on the first sign of intent (`preloadZip`), so nothing is fetched after
- * files are chosen.
+ * "Download all" as one ZIP file, built in the browser (no upload, no server). The builder
+ * (`zip-archive.ts`: names, CRC-32 and headers) loads on the first sign of intent (`preloadZip`),
+ * as the library it replaced did: the tool's first load does not carry it, and nothing is fetched
+ * after files are chosen. Statically importing it from here would put it in that first load.
  */
-let zipModule: Promise<typeof import('client-zip')> | undefined
+import type { ZipFile } from './zip-archive.ts'
 
-function loadZip(): Promise<typeof import('client-zip')> {
-  if (!zipModule) {
-    const loading = import('client-zip')
-    zipModule = loading
+export type { ZipEntry, ZipFile } from './zip-archive.ts'
+
+let archive: Promise<typeof import('./zip-archive.ts')> | undefined
+
+function loadArchive(): Promise<typeof import('./zip-archive.ts')> {
+  if (!archive) {
+    const loading = import('./zip-archive.ts')
+    archive = loading
     // Forget a failed load (e.g. offline) so a later call can retry.
     loading.catch(() => {
-      if (zipModule === loading) zipModule = undefined
+      if (archive === loading) archive = undefined
     })
   }
-  return zipModule
+  return archive
 }
 
-/** Starts loading the ZIP library; call it when the tool prepares. */
+/** Starts loading the ZIP builder; call it when the tool prepares. */
 export function preloadZip(): void {
-  loadZip().catch(() => {})
+  loadArchive().catch(() => {})
 }
 
-/** ZIP entries for `files`, numbering repeated names: `a.jpg`, `a (2).jpg`, `a (3).jpg`. */
-export function zipEntries(files: ReadonlyArray<{ name: string; blob: Blob }>) {
-  const counts = new Map<string, number>()
-  const used = new Set<string>()
-  return files.map(({ name, blob }) => {
-    // A generated suffix may already be another file's name, so keep looking for a free one.
-    let count = (counts.get(name) ?? 0) + 1
-    let unique = count === 1 ? name : name.replace(/(\.[^.]*)?$/, ` (${count})$1`)
-    while (used.has(unique)) {
-      count += 1
-      unique = name.replace(/(\.[^.]*)?$/, ` (${count})$1`)
-    }
-    counts.set(name, count)
-    used.add(unique)
-    return { name: unique, input: blob, lastModified: new Date() }
-  })
-}
-
-/** Builds the ZIP and starts its download as `zipName`. */
-export async function downloadZip(
-  files: ReadonlyArray<{ name: string; blob: Blob }>,
-  zipName: string,
-): Promise<void> {
-  const { downloadZip: zip } = await loadZip()
-  const url = URL.createObjectURL(await zip(zipEntries(files)).blob())
+/** Builds the ZIP and starts its download as `zipName`. Nothing is downloaded if it fails. */
+export async function downloadZip(files: ReadonlyArray<ZipFile>, zipName: string): Promise<void> {
+  const { createZip } = await loadArchive()
+  const url = URL.createObjectURL(await createZip(files))
   const link = document.createElement('a')
   link.href = url
   link.download = zipName

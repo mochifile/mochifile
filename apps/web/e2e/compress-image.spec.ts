@@ -18,6 +18,7 @@ import {
   waitForEngine,
   webpPhoto,
 } from './images.ts'
+import { readZip } from './zip.ts'
 
 /** "Compress image to target size": the full flow in every engine, on a production build. */
 
@@ -239,10 +240,15 @@ test('several photos download together as a ZIP', async ({ page }) => {
   await page.getByRole('button', { name: 'Download all (ZIP)' }).click()
   const zip = await download
   expect(zip.suggestedFilename()).toBe('compressed-photos.zip')
-  const bytes = await downloadBytes(zip)
-  expect(bytes.subarray(0, 2).toString()).toBe('PK')
-  // One central-directory entry per photo.
-  expect(bytes.toString('latin1').split('PK\x01\x02').length - 1).toBe(3)
+  // A real archive: every file complete, with its CRC, and the same bytes as its own download.
+  const entries = readZip(await downloadBytes(zip))
+  expect(entries).toHaveLength(3)
+  for (const [i, entry] of entries.entries()) {
+    const single = await downloadResult(page, i)
+    expect(entry.name).toBe(single.name)
+    expect(isJpeg(entry.data)).toBe(true)
+    expect(entry.data.equals(single.bytes)).toBe(true)
+  }
   expect(requests).toEqual([])
 })
 
@@ -699,9 +705,9 @@ test.describe('on a phone, while photos are compressed', () => {
       await zipButton.tap()
       const zip = await download
       expect(zip.suggestedFilename()).toBe('compressed-photos.zip')
-      const bytes = await downloadBytes(zip)
-      expect(bytes.subarray(0, 2).toString()).toBe('PK')
-      expect(bytes.toString('latin1').split('PK\x01\x02').length - 1).toBe(5)
+      const entries = readZip(await downloadBytes(zip))
+      expect(entries).toHaveLength(5)
+      expect(entries.every((entry) => isJpeg(entry.data) && entry.data.length > 0)).toBe(true)
     } finally {
       await context.close()
     }
