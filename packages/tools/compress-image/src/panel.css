@@ -636,6 +636,32 @@
   min-width: 0;
 }
 
+/* A notice that says something went wrong: errors use `danger`, never a brand colour. */
+.cp-notice-danger {
+  background: var(--danger-tint);
+  color: var(--danger-ink);
+}
+
+/*
+ * A button that is busy keeps its focus (`aria-disabled`, not `disabled`) and its size: its two
+ * labels share one grid cell, and the one that is not shown is hidden from view and from screen
+ * readers, but still gives the width.
+ */
+.cp-btn[aria-disabled="true"] {
+  cursor: progress;
+  opacity: 0.7;
+}
+.cp-swap {
+  display: inline-grid;
+}
+.cp-swap > span {
+  grid-area: 1 / 1;
+  text-align: center;
+}
+.cp-swap > span:not([data-on]) {
+  visibility: hidden;
+}
+
 /* ---------- responsive ---------- */
 .cp-only-desk {
   display: block;

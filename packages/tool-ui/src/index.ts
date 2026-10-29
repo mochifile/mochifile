@@ -28,4 +28,11 @@ export {
   type PrepareState,
   usePrepareOnIntent,
 } from './use-prepare-on-intent.ts'
-export { downloadZip, preloadZip, type ZipEntry, type ZipFile } from './zip.ts'
+export {
+  downloadZip,
+  preloadZip,
+  type ZipEntry,
+  ZipError,
+  type ZipFailure,
+  type ZipFile,
+} from './zip.ts'

@@ -13,6 +13,8 @@ import {
   summarizeQueue,
   useFileQueue,
   usePrepareOnIntent,
+  ZipError,
+  type ZipFailure,
 } from '@mochifile/tool-ui'
 import { type DragEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react'
 import celebrate from './assets/expr-celebrate-288.webp'
@@ -365,13 +367,60 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
     setFocusTarget('input[type="file"]')
   }
 
+  // "Download all": one run at a time for the list on screen, and a failure shown beside the button
+  // with the photos left as they are (nothing is compressed again to make the ZIP). The lock is a
+  // ref, not state, so a second click before React has rendered the first is ignored too. All of
+  // it belongs to the list it was started for (`doneKey`): after "Compress more" a ZIP still being
+  // made for the old list neither holds up the new one nor shows its failure over it.
+  const doneKey = done.map((item) => item.id).join(',')
+  const zipRunning = useRef<string | null>(null)
+  const [zipBusyKey, setZipBusyKey] = useState<string | null>(null)
+  const zipBusy = zipBusyKey === doneKey
+  const [zipFailure, setZipFailure] = useState<{
+    key: string
+    reason: ZipFailure
+    attempt: number
+  } | null>(null)
+  // How many times in a row, for a list, it failed for the same reason.
+  const zipFailures = useRef({ key: '', reason: 'failed' as ZipFailure, count: 0 })
+
   const downloadAll = async () => {
-    await downloadZip(
-      done.flatMap((item) =>
-        item.result ? [{ name: item.result.name, blob: item.result.blob }] : [],
-      ),
-      m.compress_image_zip_name({}, { locale }),
-    )
+    const key = doneKey
+    if (zipRunning.current === key) return
+    zipRunning.current = key
+    setZipBusyKey(key)
+    setZipFailure((failure) => (failure?.key === key ? null : failure))
+    try {
+      await downloadZip(
+        done.flatMap((item) =>
+          item.result ? [{ name: item.result.name, blob: item.result.blob }] : [],
+        ),
+        m.compress_image_zip_name({}, { locale }),
+      )
+      zipFailures.current = { key, reason: 'failed', count: 0 }
+    } catch (error) {
+      const reason = error instanceof ZipError ? error.reason : 'failed'
+      const before = zipFailures.current
+      const attempt = before.key === key && before.reason === reason ? before.count + 1 : 1
+      zipFailures.current = { key, reason, count: attempt }
+      setZipFailure({ key, reason, attempt })
+    } finally {
+      if (zipRunning.current === key) zipRunning.current = null
+      setZipBusyKey((busy) => (busy === key ? null : busy))
+    }
+  }
+
+  // "Try again" in the notice. The notice, and the button it was pressed on, go as the run starts, so
+  // a keyboard that was on that button would fall to the page: the focus goes to the button that
+  // stays, without scrolling. A tap or click that did not focus it leaves the focus where it is, and
+  // nothing moves it when the run ends (the person may be anywhere by then).
+  const retryZip = (pressed: HTMLElement) => {
+    if (document.activeElement === pressed) {
+      rootRef.current
+        ?.querySelector<HTMLElement>('[data-after-run]')
+        ?.focus({ preventScroll: true })
+    }
+    void downloadAll()
   }
 
   const errorMessage = (item: Item) =>
@@ -444,15 +493,27 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
       )
     }
     return (
+      // `aria-disabled`, not `disabled`: the button keeps keyboard focus while the ZIP is made.
+      // Both labels sit in one grid cell, so the button does not change size between them; the one
+      // that is not shown is `aria-hidden`, so only the other is its name.
       <button
         type="button"
         data-after-run
         className="cp-btn cp-btn-lg cp-btn-primary"
+        aria-disabled={zipBusy || undefined}
+        aria-busy={zipBusy || undefined}
         onClick={() => void downloadAll()}
       >
-        {done.length === summary.total
-          ? m.compress_image_download_all({}, { locale })
-          : m.compress_image_download_count({ count: String(done.length) }, { locale })}
+        <span className="cp-swap">
+          <span data-on={!zipBusy || undefined} aria-hidden={zipBusy || undefined}>
+            {done.length === summary.total
+              ? m.compress_image_download_all({}, { locale })
+              : m.compress_image_download_count({ count: String(done.length) }, { locale })}
+          </span>
+          <span data-on={zipBusy || undefined} aria-hidden={!zipBusy || undefined}>
+            {m.compress_image_zip_preparing({}, { locale })}
+          </span>
+        </span>
       </button>
     )
   })()
@@ -704,6 +765,18 @@ export default function CompressImageUi({ locale, initialOptions }: Props) {
                     </div>
                   ),
               )}
+              {/* A live region that is always there, so the failure is announced when it appears. */}
+              <div role="status" className="empty:hidden">
+                {zipFailure?.key === doneKey && (
+                  <ZipFailureNotice
+                    key={zipFailure.attempt}
+                    locale={locale}
+                    reason={zipFailure.reason}
+                    attempt={zipFailure.attempt}
+                    onRetry={retryZip}
+                  />
+                )}
+              </div>
               {tooManyNotice}
               {list}
             </section>
@@ -947,6 +1020,51 @@ function Meter({ label, value }: { label: string; value: number | undefined }) {
     <progress className="cp-progress" max={100} value={percent} aria-label={label}>
       {percent}%
     </progress>
+  )
+}
+
+/**
+ * "Download all" failed. Says what to do next: try again, or download the photos one by one, which
+ * never needs the ZIP. After a second failure to load the ZIP code, trying again will not help in
+ * every browser (Chromium keeps the failure until the page is reloaded), so it says to reload, and
+ * that the photos then have to be compressed again. There is no wording for "too big for one ZIP"
+ * (`ZipFailure` `too-large`): 20 photos of up to 50 MB are far below what a ZIP can hold, so it
+ * cannot happen here; Convert image, with much bigger results, will need it.
+ */
+function ZipFailureNotice({
+  locale,
+  reason,
+  attempt,
+  onRetry,
+}: {
+  locale: Locale
+  reason: ZipFailure
+  attempt: number
+  onRetry: (pressed: HTMLElement) => void
+}) {
+  const reload = reason === 'load' && attempt >= 2
+  return (
+    <div className="cp-notice cp-notice-danger">
+      <WarningIcon />
+      <span className="cp-notice-body">
+        <b>{m.compress_image_zip_error_title({}, { locale })}</b>
+        <span className="cp-small">
+          {reload
+            ? m.compress_image_zip_error_reload({}, { locale })
+            : m.compress_image_zip_error_retry({}, { locale })}
+        </span>
+      </span>
+      {!reload && (
+        <button
+          type="button"
+          className="cp-btn cp-btn-soft"
+          onClick={(event) => onRetry(event.currentTarget)}
+        >
+          {/* The same words as "Try again" for the compressor that did not load. */}
+          {m.compress_image_engine_retry({}, { locale })}
+        </button>
+      )}
+    </div>
   )
 }
 
