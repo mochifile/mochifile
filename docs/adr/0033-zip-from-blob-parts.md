@@ -218,6 +218,10 @@ What the table says, and does not say:
   | with the names added, still imported statically | 92,450 | 92,450 |
   | builder loaded on demand (`3512466`) | 87,886 | 91,042 |
   | margin to 92,160, last row | 4,274 | 1,118 |
+  | with the failure notice and the busy label (#83, `bf24727`) | 88,571 | 91,769 |
+  | margin to 92,160, last row | 3,589 | **391** |
+  | the same plus the keyboard focus after "Try again" (this change) | 88,622 | not measured (about 91,820 by adding A's difference) |
+  | margin to 92,160, last row | 3,538 | about 340 |
 
   *Series A:* Chromium 153 with Save-Data; `astro build --outDir dist-e2e` rebuilt for each commit
   and served with `apps/web/e2e/serve.ts`; wait for the file input, then 3 s; the sum of the gzip
@@ -238,9 +242,15 @@ What the table says, and does not say:
   between 1,118 and 4,274 bytes, depending on the series. (An earlier figure in this ADR, "1.5 KB
   less JavaScript", was the total of every chunk of the site, which is not what loads first.)
   `zip.ts` is a small facade with a dynamic `import()` for that reason. Watching this budget is a
-  follow-up. The failure notice, the busy label and their texts added 685 bytes to that first load
-  (series A: 87,886 → 88,571; series B was not measured again). A message costs both languages,
-  since the bundle holds EN and PT, which is why one message was dropped and one reused.
+  follow-up (#84). The failure notice, the busy label and their texts (#83) added 685 bytes to
+  that first load in series A (87,886 → 88,571) and **727 in series B, the official method
+  reproduced by the independent review (91,042 → 91,769), which leaves a margin of 391 bytes**.
+  The focus fix that followed review added 51 more in series A (88,622); series B was not
+  measured again, so its margin is about 340 by adding that difference, which is an estimate and
+  not a measurement. The two series still differ by about 3.1 KB (3,156 for `main`), as before,
+  and the narrow margin is the one to trust: the one of series B. A message costs both
+  languages, since the bundle holds EN and PT, which is why one message was dropped and one
+  reused. Recovering margin before Convert image arrives is tracked in #84.
 - A ZIP writer of our own is a small piece of code to maintain. It writes one fixed shape of
   archive, and it is covered by a reader written separately in the tests, by Node's CRC-32, and
   by `unzip` and Python when they are installed (CI runners and developer machines). The names are
