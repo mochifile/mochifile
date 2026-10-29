@@ -11,7 +11,7 @@ import {
   ToolError,
   type ToolResult,
 } from '@mochifile/tool-kit'
-import type { CompressImageOptions } from './manifest.ts'
+import type { CompressImageOptions } from './config.ts'
 import { MAX_TARGET, MIN_TARGET, sizeSuffix } from './sizes.ts'
 
 const MIME: Record<EncodableFormat, string> = {

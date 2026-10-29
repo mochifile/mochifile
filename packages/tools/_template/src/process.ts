@@ -1,5 +1,5 @@
 import { type ProcessFn, renameFile, throwIfAborted } from '@mochifile/tool-kit'
-import type { TemplateOptions } from './manifest.ts'
+import type { TemplateOptions } from './config.ts'
 
 /**
  * The tool's work. It runs inside a Web Worker and must stay pure: no DOM, no network,

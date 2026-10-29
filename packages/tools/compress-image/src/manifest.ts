@@ -1,8 +1,6 @@
 import { defineToolManifest } from '@mochifile/tool-kit'
 import { type CompressImageOptions, config } from './config.ts'
 
-export type { CompressImageOptions } from './config.ts'
-
 const variant = (
   key: string,
   targetBytes: number,

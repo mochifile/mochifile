@@ -1,8 +1,6 @@
 import { defineToolManifest } from '@mochifile/tool-kit'
 import { config, type TemplateOptions } from './config.ts'
 
-export type { TemplateOptions } from './config.ts'
-
 /**
  * The manifest is plain data. Pages, routes, the sitemap and SEO tags are generated from it,
  * so it must stay small: never import processing code or heavy libraries here.
